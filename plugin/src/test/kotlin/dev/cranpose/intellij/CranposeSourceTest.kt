@@ -33,9 +33,10 @@ class CranposeSourceTest {
     }
 
     @Test fun starterUsesTheSameRootForDesktopAndPreview() {
-        assertTrue(CranposeStarter.source.contains("app.run_embedded(endpoint, App)"))
+        assertTrue(CranposeStarter.source.contains("#[cranpose::preview"))
         assertTrue(CranposeStarter.source.contains("app.run(App)"))
-        assertTrue(CranposeStarter.manifest("demo").contains("features = [\"desktop\", \"embed\"]"))
-        assertEquals(6, CranposeSnippets.all.map { it.key }.distinct().size)
+        assertTrue(CranposeStarter.manifest("demo").contains("features = [\"desktop\", \"preview\"]"))
+        assertEquals(CranposeSnippets.all.size, CranposeSnippets.all.map { it.key }.distinct().size)
+        assertTrue(CranposeSnippets.all.any { it.key == "cppreview" })
     }
 }

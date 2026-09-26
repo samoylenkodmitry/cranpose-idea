@@ -32,15 +32,16 @@ object CranposeStarter {
         edition = "2024"
 
         [dependencies]
-        cranpose = { git = "https://github.com/samoylenkodmitry/Cranpose", rev = "3c0f1045f68691c4b431fa75057d0e36ef7f4608", features = ["desktop", "embed"] }
+        cranpose = { git = "https://github.com/samoylenkodmitry/Cranpose", rev = "944f8377c67654092b7744dbdf82fee8b6871cc2", features = ["desktop", "preview"] }
     """.trimIndent() + "\n"
 
     val source = """
         use cranpose::{
             AppLauncher, Button, ButtonSpec, Column, ColumnSpec, Modifier, Text, TextStyle,
-            composable, embed::EmbedEndpoint, rememberMutableStateOf,
+            composable, rememberMutableStateOf,
         };
 
+        #[cranpose::preview(name = "Default", width = 480, height = 640)]
         #[composable]
         fn App() {
             let count = rememberMutableStateOf(|| 0);
@@ -59,10 +60,7 @@ object CranposeStarter {
 
         fn main() {
             let app = AppLauncher::new().with_title("Cranpose app").with_size(480, 640);
-            match EmbedEndpoint::from_env() {
-                Some(endpoint) => app.run_embedded(endpoint, App),
-                None => app.run(App),
-            }
+            app.run(App);
         }
     """.trimIndent() + "\n"
 }

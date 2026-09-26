@@ -31,6 +31,7 @@ data class ProjectSnapshot(
     val targets: List<CargoTarget> = emptyList(),
     val selected: String = "",
     val root: String = "",
+    val diagnostics: List<CargoDiagnostic> = emptyList(),
 )
 
 @Service(Service.Level.PROJECT)
@@ -43,6 +44,8 @@ class CranposeProjectService(private val project: Project) : Disposable {
     @Volatile private var disposed = false
     private var pendingPreview: String? = null
     private var activePreview: String? = null
+    private var activeReceiver: ((CargoTarget, Path) -> Unit)? = null
+    private var pendingReceiver: ((CargoTarget, Path) -> Unit)? = null
     private val gson = Gson()
 
     fun subscribe(parent: Disposable, listener: (ProjectSnapshot) -> Unit) {
@@ -87,22 +90,24 @@ class CranposeProjectService(private val project: Project) : Disposable {
         }
     }
 
-    fun execute(task: CargoTask, targetId: String = snapshot.selected) {
+    fun execute(task: CargoTask, targetId: String = snapshot.selected, receiver: ((CargoTarget, Path) -> Unit)? = null) {
         if (!trusted()) return
         val target = snapshot.targets.firstOrNull { it.id == targetId } ?: return
         if (!busy.compareAndSet(false, true)) {
-            if (task == CargoTask.PREVIEW) pendingPreview = targetId
+            if (task == CargoTask.PREVIEW) { pendingPreview = targetId; pendingReceiver = receiver }
             return
         }
         FileDocumentManager.getInstance().saveAllDocuments()
         activePreview = if (task == CargoTask.PREVIEW) targetId else null
-        publish(snapshot.copy(status = "${task.verb.replaceFirstChar(Char::uppercase)}: ${target.label}", busy = true))
+        activeReceiver = receiver
+        publish(snapshot.copy(status = "${task.verb.replaceFirstChar(Char::uppercase)}: ${target.label}", busy = true, diagnostics = emptyList()))
         try {
             val console = TextConsoleBuilderFactory.getInstance().createBuilder(project).console
             val handler = KillableColoredProcessHandler(command(Path.of(snapshot.root), CargoCommand.arguments(task, target)))
             process = handler
             val executable = java.util.concurrent.atomic.AtomicReference<Path?>()
             val lineBuffer = StringBuilder()
+            val diagnostics = CopyOnWriteArrayList<CargoDiagnostic>()
             handler.addProcessListener(object : ProcessListener {
                 override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
                     if (task != CargoTask.PREVIEW && task != CargoTask.CHECK) return
@@ -118,6 +123,7 @@ class CranposeProjectService(private val project: Project) : Disposable {
                             val line = lineBuffer.substring(0, end)
                             CargoCommand.executable(line, target)?.let(executable::set)
                             CargoDiagnostic.parse(line)?.let { diagnostic ->
+                                diagnostics.add(diagnostic)
                                 console.print(diagnostic.rendered.ifBlank { diagnostic.message + "\n" },
                                     if (diagnostic.level == "error") ConsoleViewContentType.ERROR_OUTPUT else ConsoleViewContentType.NORMAL_OUTPUT)
                                 if (diagnostic.file.isNotEmpty()) {
@@ -139,14 +145,18 @@ class CranposeProjectService(private val project: Project) : Disposable {
                         process = null
                         busy.set(false)
                         val pending = pendingPreview
+                        val pendingCallback = pendingReceiver
                         pendingPreview = null
+                        pendingReceiver = null
                         val openPreview = task == CargoTask.PREVIEW && activePreview == targetId
+                        val callback = activeReceiver
                         activePreview = null
+                        activeReceiver = null
                         publish(snapshot.copy(busy = false, status = if (event.exitCode == 0)
-                            "Finished: ${target.label}" else "Cargo failed (${event.exitCode}). See the Run console."))
-                        if (pending != null) execute(CargoTask.PREVIEW, pending)
+                            "Finished: ${target.label}" else "Cargo failed (${event.exitCode}). See the Run console.", diagnostics = diagnostics.toList()))
+                        if (pending != null) execute(CargoTask.PREVIEW, pending, pendingCallback)
                         else if (openPreview && event.exitCode == 0) {
-                            if (binary != null) PreviewController.open(project, target, binary)
+                            if (binary != null) (callback ?: { t, b -> PreviewController.open(project, t, b) })(target, binary)
                             else publish(snapshot.copy(status = "Cargo produced no executable for ${target.label}."))
                         }
                     }
@@ -165,12 +175,13 @@ class CranposeProjectService(private val project: Project) : Disposable {
         }
     }
 
-    fun stop() { pendingPreview = null; activePreview = null; process?.destroyProcess() }
+    fun stop() { pendingPreview = null; activePreview = null; activeReceiver = null; pendingReceiver = null; process?.destroyProcess() }
 
-    fun cancelPreview(targetId: String) {
-        if (pendingPreview == targetId) pendingPreview = null
-        if (activePreview == targetId) {
+    fun cancelPreview(targetId: String, receiver: ((CargoTarget, Path) -> Unit)? = null) {
+        if (pendingPreview == targetId && pendingReceiver === receiver) { pendingPreview = null; pendingReceiver = null }
+        if (activePreview == targetId && activeReceiver === receiver) {
             activePreview = null
+            activeReceiver = null
             process?.destroyProcess()
         }
     }

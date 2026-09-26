@@ -31,8 +31,8 @@ class CranposeLineMarker : LineMarkerProvider {
         if (file.virtualFile?.extension != "rs" || element.firstChild != null) return null
         val symbol = symbols(file).firstOrNull { it.offset == element.textRange.startOffset } ?: return null
         return LineMarkerInfo(element, element.textRange, cranposeIcon,
-            { "Cranpose composable: ${symbol.name}. Open targets and preview." },
-            { _, _ -> ToolWindowManager.getInstance(element.project).getToolWindow("Cranpose")?.show() },
+            { "Preview ${symbol.name} beside source" },
+            { _, _ -> PreviewController.showSource(element.project, file.virtualFile, symbol.name) },
             GutterIconRenderer.Alignment.LEFT, { "Cranpose composable" })
     }
 }
@@ -42,6 +42,7 @@ data class CranposeSnippet(val key: String, val title: String, val code: String)
 object CranposeSnippets {
     val all = listOf(
         CranposeSnippet("cpcomposable", "Composable function", "#[cranpose::composable]\nfn MyComponent() {\n    \n}"),
+        CranposeSnippet("cppreview", "Component preview", "#[cranpose::preview(name = \"Default\", width = 480, height = 640)]\n#[cranpose::composable]\nfn ComponentPreview() {\n    \n}"),
         CranposeSnippet("cpcolumn", "Column layout", "cranpose::Column(cranpose::Modifier::empty(), cranpose::ColumnSpec::default(), move || {\n    \n});"),
         CranposeSnippet("cprow", "Row layout", "cranpose::Row(cranpose::Modifier::empty(), cranpose::RowSpec::default(), move || {\n    \n});"),
         CranposeSnippet("cptext", "Text", "cranpose::Text(\"Hello\", cranpose::Modifier::empty(), cranpose::TextStyle::default());"),

@@ -7,19 +7,23 @@
         <ul>
             <li>Discover Cargo workspace binaries and examples that use Cranpose.</li>
             <li>Check, run and test targets with build output in the IDE.</li>
-            <li>Interactive embedded previews, theme switching and layout inspection.</li>
+            <li>Code / Split / Preview editors with compiled component fixtures, viewport controls and PNG export.</li>
+            <li>Live layout trees, element picking, bounds, modifier properties and navigation to composable origins.</li>
+            <li>Persistent Cargo run configurations and automatic preview rebuilds on save.</li>
             <li>Composable gutter markers, source navigation and component completions.</li>
             <li>Create a working Cranpose application in an empty project.</li>
         </ul>
         <p>Install JetBrains Rust support for full Rust language editing. Preview applications need
-        Cranpose's embed feature. See the repository for setup and supported framework versions.</p>
+        Cranpose's preview feature. See the repository for setup and supported framework revisions.</p>
     ]]></description>
-    <change-notes><![CDATA[Initial development release with Cargo integration, composable editing and interactive previews.]]></change-notes>
+    <change-notes><![CDATA[0.2: previews beside source, registered component variants, live layout inspection with picking and source origins, persistent run configurations, viewport scaling and image export. Failed builds preserve the last successful preview.]]></change-notes>
     <depends>com.intellij.modules.platform</depends>
     <extensions defaultExtensionNs="com.intellij">
         <toolWindow id="Cranpose" anchor="right" icon="/icons/cranpose.svg"
                     factoryClass="dev.cranpose.intellij.CranposeToolWindowFactory"/>
         <notificationGroup id="Cranpose" displayType="BALLOON"/>
+        <fileEditorProvider implementation="dev.cranpose.intellij.CranposePreviewEditorProvider"/>
+        <configurationType implementation="dev.cranpose.intellij.CranposeConfigurationType"/>
         <codeInsight.lineMarkerProvider language="ANY" implementationClass="dev.cranpose.intellij.CranposeLineMarker"/>
         <completion.contributor language="any" implementationClass="dev.cranpose.intellij.CranposeCompletion"/>
     </extensions>

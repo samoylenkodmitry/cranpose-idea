@@ -60,7 +60,7 @@ class EmbeddedUiEndToEndTest {
             override fun onMessage(channel: String, payload: String) { events.put(AppEvent.Message(channel, payload)) }
             override fun onExit(error: Throwable?) { events.put(Exit(error)) }
         }
-        CranposeSession.start(listOf(binary.toString()), null, listener, { println(it) }).use { session ->
+        CranposeSession.start(listOf(binary.toString()), null, listener, { println(it) }, environment = mapOf("CRANPOSE_PREVIEW" to "Counter")).use { session ->
             session.host.resize(0, 480, 640, 1f, 60f)
             session.host.visibility(0, true)
             await(session) { it is AppEvent.Frame && canvas.width == 480 && canvas.height == 640 }
@@ -85,7 +85,7 @@ class EmbeddedUiEndToEndTest {
     }
 
     private fun accentButton(): Pair<Int, Int>? {
-        for (y in 80 until canvas.height - 10) for (x in 12 until canvas.width - 40) {
+        for (y in 8 until canvas.height - 10) for (x in 12 until canvas.width - 40) {
             if (canvas.getRGB(x, y) == ACCENT && (0..30).all { canvas.getRGB(x + it, y) == ACCENT } &&
                 (0..8).all { canvas.getRGB(x, y + it) == ACCENT }) return x + 5 to y + 5
         }

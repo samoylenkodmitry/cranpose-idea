@@ -3,6 +3,9 @@ use cranpose::{
     rememberMutableStateOf,
 };
 
+mod gallery;
+
+#[cranpose::preview(name = "Counter", group = "Interaction", width = 480, height = 640)]
 #[composable]
 fn Counter() {
     let count = rememberMutableStateOf(|| 0);
@@ -32,7 +35,7 @@ fn IncrementLabel() {
 
 fn main() {
     AppLauncher::new()
-        .with_title("Cranpose counter")
+        .with_title("Field notes")
         .with_size(480, 640)
-        .run(Counter);
+        .run(gallery::FieldNotes);
 }
