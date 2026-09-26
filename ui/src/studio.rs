@@ -42,6 +42,8 @@ fn toggle_menu(state: MutableState<Studio>, menu: &str) {
 pub fn PreviewStudio() {
     let palette = rememberPalette();
     let state = rememberMutableStateOf(Studio::default);
+    // Keep the search field when inspection moves between the side and bottom panels.
+    let query = remember(|| TextFieldState::new("")).with(|value| *value);
     let last_checkpoint =
         remember(|| std::rc::Rc::new(std::cell::RefCell::new(String::new()))).with(Clone::clone);
     for channel in [
@@ -188,12 +190,12 @@ pub fn PreviewStudio() {
                                 },
                             );
                             if inspector_width > 0.0 {
-                                Inspector(state, palette, inspector_width, stage_height);
+                                Inspector(state, query, palette, inspector_width, stage_height);
                             }
                         },
                     );
                     if inspector_height > 0.0 {
-                        Inspector(state, palette, width, inspector_height);
+                        Inspector(state, query, palette, width, inspector_height);
                     }
                     if problems_height > 0.0 {
                         Column(
@@ -613,8 +615,13 @@ fn Menu(state: MutableState<Studio>, palette: Palette, width: f32, height: f32) 
 }
 
 #[composable]
-fn Inspector(state: MutableState<Studio>, palette: Palette, width: f32, height: f32) {
-    let query = remember(|| TextFieldState::new("")).with(|value| *value);
+fn Inspector(
+    state: MutableState<Studio>,
+    query: TextFieldState,
+    palette: Palette,
+    width: f32,
+    height: f32,
+) {
     let narrow = width < 560.0;
     let controls_scroll = remember(|| ScrollState::new(0.0)).with(|value| *value);
     Column(
