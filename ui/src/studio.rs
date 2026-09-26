@@ -42,8 +42,13 @@ fn toggle_menu(state: MutableState<Studio>, menu: &str) {
 pub fn PreviewStudio() {
     let palette = rememberPalette();
     let state = rememberMutableStateOf(Studio::default);
+    // Keep the search field when inspection moves between the side and bottom panels.
+    let query = remember(|| TextFieldState::new("")).with(|value| *value);
+    let last_checkpoint =
+        remember(|| std::rc::Rc::new(std::cell::RefCell::new(String::new()))).with(Clone::clone);
     for channel in [
         "studio.init",
+        "studio.viewport",
         "cranpose.project",
         "studio.command",
         "studio.child",
@@ -69,30 +74,44 @@ pub fn PreviewStudio() {
             }
         })
     });
+    // Observe the model in this composition scope so restored settings update layout immediately.
+    let view = state.get();
     BoxWithConstraints(
         Modifier::empty()
             .fill_max_size()
             .background(palette.background),
         move |scope| {
             let size = scope.constraints();
-            let width = size.max_width.max(300.0);
-            let height = size.max_height.max(240.0);
-            let studio = state.get();
+            let studio = view.clone();
+            // The IDE owns the embedded viewport. Observe its live dimensions so
+            // split-editor changes invalidate this composition as well as measurement.
+            let (width, height) = studio
+                .viewport
+                .map_or((size.max_width, size.max_height), |(width, height)| {
+                    (width as f32, height as f32)
+                });
+            let width = width.max(300.0);
+            let height = height.max(240.0);
             let menu_height = menu_height(&studio);
-            let inspector_height = if studio.settings.inspect {
-                (height * 0.32).clamp(130.0, 300.0)
-            } else {
-                0.0
-            };
             let problems_height = if studio.diagnostics.is_empty() {
                 0.0
             } else {
                 66.0
             };
-            let top = 126.0 + menu_height;
-            let stage_height = (height - top - inspector_height - problems_height - 28.0).max(40.0);
+            let geometry = crate::studio_model::StudioLayout::new(
+                width,
+                height,
+                studio.settings.inspect,
+                menu_height,
+                problems_height,
+            );
+            let top = geometry.top;
+            let stage_height = geometry.stage_height;
+            let stage_width = geometry.stage_width;
+            let inspector_height = geometry.inspector_height;
+            let inspector_width = geometry.inspector_width;
             let scale = if studio.settings.fit {
-                ((width - 32.0) / studio.settings.width as f32)
+                ((stage_width - 32.0) / studio.settings.width as f32)
                     .min((stage_height - 28.0) / studio.settings.height as f32)
                     .clamp(0.05, 1.0)
             } else {
@@ -100,10 +119,10 @@ pub fn PreviewStudio() {
             };
             let frame_width = studio.settings.width as f32 * scale;
             let frame_height = studio.settings.height as f32 * scale;
-            let x = if frame_width <= width {
-                (width - frame_width) * 0.5
+            let x = if frame_width <= stage_width {
+                (stage_width - frame_width) * 0.5
             } else {
-                studio.pan_x.clamp(width - frame_width, 0.0)
+                studio.pan_x.clamp(stage_width - frame_width, 0.0)
             };
             let y = top
                 + if frame_height <= stage_height {
@@ -112,11 +131,19 @@ pub fn PreviewStudio() {
                     studio.pan_y.clamp(stage_height - frame_height, 0.0)
                 };
             let selected = studio.snapshot.nodes.iter().find(|node| node.id == studio.selected).map(|node| json!({"x": node.x, "y": node.y, "width": node.width, "height": node.height}));
-            let layout = json!({"action": "layout", "session": studio.session, "x": x, "y": y, "width": frame_width, "height": frame_height, "viewport": {"y": top, "height": stage_height}, "logicalWidth": studio.settings.width, "logicalHeight": studio.settings.height, "scale": scale, "dark": studio.settings.dark, "pick": studio.pick, "selected": selected});
-            let settings = studio.settings.clone();
+            let layout = json!({"action": "layout", "session": studio.session, "x": x, "y": y, "width": frame_width, "height": frame_height, "viewport": {"y": top, "width": stage_width, "height": stage_height}, "logicalWidth": studio.settings.width, "logicalHeight": studio.settings.height, "scale": scale, "dark": studio.settings.dark, "pick": studio.pick, "selected": selected});
+            let initialized = studio.initialized;
+            let checkpoint = serde_json::to_value(&studio).unwrap_or(Value::Null);
+            let checkpoint_text = checkpoint.to_string();
+            let last_checkpoint = last_checkpoint.clone();
             SideEffect(move || {
-                send(layout.clone());
-                send(json!({"action": "settings", "value": settings}));
+                if initialized {
+                    send(layout.clone());
+                    if *last_checkpoint.borrow() != checkpoint_text {
+                        send(json!({"action": "checkpoint", "value": checkpoint}));
+                        *last_checkpoint.borrow_mut() = checkpoint_text;
+                    }
+                }
             });
             Column(
                 Modifier::empty().fill_max_size(),
@@ -124,39 +151,51 @@ pub fn PreviewStudio() {
                 move || {
                     Toolbar(state, palette, width);
                     Menu(state, palette, width, menu_height);
-                    Column(
-                        Modifier::empty()
-                            .fill_max_width()
-                            .height(stage_height)
-                            .background(stage_color(palette))
-                            .padding(16.0),
-                        ColumnSpec::default(),
+                    Row(
+                        Modifier::empty().fill_max_width().height(stage_height),
+                        RowSpec::default(),
                         move || {
-                            if !state.get().connected {
-                                Text(
-                                    if state.get().busy {
-                                        "Building your application…"
-                                    } else {
-                                        "Your application, running here"
-                                    },
-                                    Modifier::empty().padding(8.0),
-                                    style(palette.text, 15.0, true),
-                                );
-                                Text(
-                                    "Rust rendering · native input · live state",
-                                    Modifier::empty().padding(8.0),
-                                    style(palette.muted, 12.0, false),
-                                );
-                                if !state.get().busy {
-                                    Chip("Start preview".into(), palette, true, move || {
-                                        start(state)
-                                    });
-                                }
+                            Column(
+                                Modifier::empty()
+                                    .width(stage_width)
+                                    .height(stage_height)
+                                    .background(stage_color(palette))
+                                    .padding(16.0),
+                                ColumnSpec::default(),
+                                move || {
+                                    if !state.get().connected {
+                                        Text(
+                                            if state.get().busy {
+                                                "Building your application…"
+                                            } else {
+                                                "Your application, running here"
+                                            },
+                                            Modifier::empty().padding(8.0),
+                                            style(palette.text, 15.0, true),
+                                        );
+                                        Text(
+                                            "Rust rendering · native input · live state",
+                                            Modifier::empty().padding(8.0),
+                                            style(palette.muted, 12.0, false),
+                                        );
+                                        if !state.get().busy {
+                                            Chip(
+                                                "Start preview".into(),
+                                                palette,
+                                                true,
+                                                move || start(state),
+                                            );
+                                        }
+                                    }
+                                },
+                            );
+                            if inspector_width > 0.0 {
+                                Inspector(state, query, palette, inspector_width, stage_height);
                             }
                         },
                     );
                     if inspector_height > 0.0 {
-                        Inspector(state, palette, width, inspector_height);
+                        Inspector(state, query, palette, width, inspector_height);
                     }
                     if problems_height > 0.0 {
                         Column(
@@ -218,142 +257,169 @@ pub fn PreviewStudio() {
 
 #[composable]
 fn Toolbar(state: MutableState<Studio>, palette: Palette, width: f32) {
+    let wide = width >= 760.0;
+    let first_scroll = remember(|| ScrollState::new(0.0)).with(|s| *s);
+    let second_scroll = remember(|| ScrollState::new(0.0)).with(|s| *s);
+    let third_scroll = remember(|| ScrollState::new(0.0)).with(|s| *s);
     Column(
         Modifier::empty()
             .fill_max_width()
-            .height(126.0)
+            .height(if wide { 88.0 } else { 126.0 })
             .padding(6.0),
         ColumnSpec::default().vertical_arrangement(LinearArrangement::spaced_by(4.0)),
         move || {
             Row(
-                Modifier::empty().fill_max_width().height(34.0),
+                Modifier::empty()
+                    .fill_max_width()
+                    .height(34.0)
+                    .horizontal_scroll(first_scroll, false),
+                RowSpec::default().horizontal_arrangement(LinearArrangement::spaced_by(5.0)),
+                move || TargetControls(state, palette, width),
+            );
+            Row(
+                Modifier::empty()
+                    .fill_max_width()
+                    .height(34.0)
+                    .horizontal_scroll(second_scroll, false),
                 RowSpec::default().horizontal_arrangement(LinearArrangement::spaced_by(5.0)),
                 move || {
-                    let studio = state.get();
-                    let target = studio
-                        .target()
-                        .map(|target| target.name.clone())
-                        .unwrap_or_else(|| "Select application".into());
-                    Chip(format!("{target} ▾"), palette, false, move || {
-                        toggle_menu(state, "target")
-                    });
-                    Chip(
-                        if studio.session == 0 {
-                            "Run"
-                        } else {
-                            "Restart"
-                        }
-                        .into(),
-                        palette,
-                        true,
-                        move || start(state),
-                    );
-                    Chip("Stop".into(), palette, false, move || {
-                        let session = state.get().session;
-                        send(json!({"action": "stop", "session": session}));
-                        edit(state, |studio| {
-                            studio.connected = false;
-                            studio.busy = false;
-                            studio.session = 0;
-                            studio.pid = 0;
-                            studio.status = "Preview stopped".into();
-                        });
-                    });
-                    if width > 510.0 {
-                        Chip("Run config".into(), palette, false, move || {
-                            send(
-                                json!({"action": "configure", "target": state.get().settings.target}),
-                            )
-                        });
+                    ViewControls(state, palette);
+                    if wide {
+                        InspectionControls(state, palette, width);
                     }
                 },
             );
-            Row(
-                Modifier::empty().fill_max_width().height(34.0),
-                RowSpec::default().horizontal_arrangement(LinearArrangement::spaced_by(5.0)),
-                move || {
-                    let studio = state.get();
-                    let variant = studio
-                        .previews
-                        .iter()
-                        .find(|preview| preview.id == studio.settings.preview)
-                        .map(|preview| preview.name.clone())
-                        .unwrap_or_else(|| "Application".into());
-                    Chip(format!("{variant} ▾"), palette, false, move || {
-                        toggle_menu(state, "preview")
-                    });
-                    Chip(
-                        format!("{} × {} ▾", studio.settings.width, studio.settings.height),
-                        palette,
-                        false,
-                        move || toggle_menu(state, "size"),
-                    );
-                    Chip(
-                        if studio.settings.dark {
-                            "Dark"
-                        } else {
-                            "Light"
-                        }
-                        .into(),
-                        palette,
-                        studio.settings.dark,
-                        move || edit(state, |studio| studio.settings.dark = !studio.settings.dark),
-                    );
-                    Chip(
-                        if studio.settings.fit {
-                            "Fit ▾".into()
-                        } else {
-                            format!("{}% ▾", (studio.settings.zoom * 100.0) as u32)
-                        },
-                        palette,
-                        false,
-                        move || toggle_menu(state, "zoom"),
-                    );
-                },
-            );
-            Row(
-                Modifier::empty().fill_max_width().height(34.0),
-                RowSpec::default().horizontal_arrangement(LinearArrangement::spaced_by(4.0)),
-                move || {
-                    let studio = state.get();
-                    Chip(
-                        "Reload ▾".into(),
-                        palette,
-                        studio.settings.hot_reload,
-                        move || toggle_menu(state, "reload"),
-                    );
-                    Chip("Pick".into(), palette, studio.pick, move || {
-                        edit(state, |studio| {
-                            studio.pick = !studio.pick;
-                            if studio.pick {
-                                studio.settings.inspect = true;
-                            }
-                        });
-                        request_snapshot(&state.get());
-                    });
-                    Chip(
-                        "Inspect".into(),
-                        palette,
-                        studio.settings.inspect,
-                        move || {
-                            edit(state, |studio| {
-                                studio.settings.inspect = !studio.settings.inspect
-                            });
-                            request_snapshot(&state.get());
-                        },
-                    );
-                    Chip("PNG".into(), palette, false, move || {
-                        send(json!({"action": "export", "session": state.get().session}))
-                    });
-                    if width > 420.0 {
-                        Chip("Source".into(), palette, false, move || {
-                            navigate_selected(&state.get())
-                        });
-                    }
-                },
-            );
+            if !wide {
+                Row(
+                    Modifier::empty()
+                        .fill_max_width()
+                        .height(34.0)
+                        .horizontal_scroll(third_scroll, false),
+                    RowSpec::default().horizontal_arrangement(LinearArrangement::spaced_by(5.0)),
+                    move || InspectionControls(state, palette, width),
+                );
+            }
         },
     );
+}
+
+#[composable]
+fn TargetControls(state: MutableState<Studio>, palette: Palette, width: f32) {
+    let studio = state.get();
+    let target = studio
+        .target()
+        .map(|target| target.name.clone())
+        .unwrap_or_else(|| "Select application".into());
+    Chip(format!("{target} ▾"), palette, false, move || {
+        toggle_menu(state, "target")
+    });
+    Chip(
+        if studio.session == 0 {
+            "Run"
+        } else {
+            "Restart"
+        }
+        .into(),
+        palette,
+        true,
+        move || start(state),
+    );
+    Chip("Stop".into(), palette, false, move || {
+        let session = state.get().session;
+        send(json!({"action": "stop", "session": session}));
+        edit(state, |studio| {
+            studio.connected = false;
+            studio.busy = false;
+            studio.session = 0;
+            studio.pid = 0;
+            studio.status = "Preview stopped".into();
+        });
+    });
+    if width > 510.0 {
+        Chip("Run config".into(), palette, false, move || {
+            send(json!({"action": "configure", "target": state.get().settings.target}))
+        });
+    }
+}
+
+#[composable]
+fn ViewControls(state: MutableState<Studio>, palette: Palette) {
+    let studio = state.get();
+    let variant = studio
+        .previews
+        .iter()
+        .find(|preview| preview.id == studio.settings.preview)
+        .map(|preview| preview.name.clone())
+        .unwrap_or_else(|| "Application".into());
+    Chip(format!("{variant} ▾"), palette, false, move || {
+        toggle_menu(state, "preview")
+    });
+    Chip(
+        format!("{} × {} ▾", studio.settings.width, studio.settings.height),
+        palette,
+        false,
+        move || toggle_menu(state, "size"),
+    );
+    Chip(
+        if studio.settings.dark {
+            "Dark"
+        } else {
+            "Light"
+        }
+        .into(),
+        palette,
+        studio.settings.dark,
+        move || edit(state, |studio| studio.settings.dark = !studio.settings.dark),
+    );
+    Chip(
+        if studio.settings.fit {
+            "Fit ▾".into()
+        } else {
+            format!("{}% ▾", (studio.settings.zoom * 100.0) as u32)
+        },
+        palette,
+        false,
+        move || toggle_menu(state, "zoom"),
+    );
+}
+
+#[composable]
+fn InspectionControls(state: MutableState<Studio>, palette: Palette, width: f32) {
+    let studio = state.get();
+    Chip(
+        "Reload ▾".into(),
+        palette,
+        studio.settings.hot_reload,
+        move || toggle_menu(state, "reload"),
+    );
+    Chip("Pick".into(), palette, studio.pick, move || {
+        edit(state, |studio| {
+            studio.pick = !studio.pick;
+            if studio.pick {
+                studio.settings.inspect = true;
+            }
+        });
+        request_snapshot(&state.get());
+    });
+    Chip(
+        "Inspect".into(),
+        palette,
+        studio.settings.inspect,
+        move || {
+            edit(state, |studio| {
+                studio.settings.inspect = !studio.settings.inspect
+            });
+            request_snapshot(&state.get());
+        },
+    );
+    Chip("PNG".into(), palette, false, move || {
+        send(json!({"action": "export", "session": state.get().session}))
+    });
+    if width > 420.0 {
+        Chip("Source".into(), palette, false, move || {
+            navigate_selected(&state.get())
+        });
+    }
 }
 
 fn menu_height(studio: &Studio) -> f32 {
@@ -549,133 +615,402 @@ fn Menu(state: MutableState<Studio>, palette: Palette, width: f32, height: f32) 
 }
 
 #[composable]
-fn Inspector(state: MutableState<Studio>, palette: Palette, width: f32, height: f32) {
-    let tree_scroll = remember(|| ScrollState::new(0.0)).with(|value| *value);
-    let properties_scroll = remember(|| ScrollState::new(0.0)).with(|value| *value);
-    Row(
+fn Inspector(
+    state: MutableState<Studio>,
+    query: TextFieldState,
+    palette: Palette,
+    width: f32,
+    height: f32,
+) {
+    let narrow = width < 560.0;
+    let controls_scroll = remember(|| ScrollState::new(0.0)).with(|value| *value);
+    Column(
         Modifier::empty()
             .fill_max_width()
             .height(height)
             .background(palette.surface),
-        RowSpec::default(),
+        ColumnSpec::default(),
         move || {
-            Column(
+            Row(
                 Modifier::empty()
-                    .width(width * 0.48)
-                    .height(height)
-                    .vertical_scroll(tree_scroll, false)
-                    .padding(8.0),
-                ColumnSpec::default(),
-                move || {
-                    Text(
-                        "LAYOUT",
-                        Modifier::empty().padding(4.0),
-                        style(palette.muted, 10.0, true),
-                    );
-                    let studio = state.get();
-                    let mut depths = std::collections::HashMap::new();
-                    for node in studio.snapshot.nodes {
-                        let depth = node
-                            .parent
-                            .as_ref()
-                            .and_then(|parent| depths.get(parent))
-                            .copied()
-                            .unwrap_or(0);
-                        depths.insert(node.id.clone(), depth + 1);
-                        let label = format!("{}{}", "  ".repeat(depth), node.label());
-                        let id = node.id;
-                        Text(
-                            label,
-                            Modifier::empty()
-                                .fill_max_width()
-                                .padding(5.0)
-                                .background(if id == studio.selected {
-                                    palette.background
-                                } else {
-                                    palette.surface
-                                })
-                                .clickable(move |_| {
-                                    edit(state, |studio| studio.selected = id.clone())
-                                }),
-                            style(palette.text, 11.0, false),
-                        );
-                    }
-                },
-            );
-            Column(
-                Modifier::empty()
-                    .width(width * 0.52)
-                    .height(height)
-                    .vertical_scroll(properties_scroll, false)
-                    .padding(8.0),
-                ColumnSpec::default().vertical_arrangement(LinearArrangement::spaced_by(4.0)),
+                    .fill_max_width()
+                    .height(38.0)
+                    .horizontal_scroll(controls_scroll, false)
+                    .padding(4.0),
+                RowSpec::default().horizontal_arrangement(LinearArrangement::spaced_by(6.0)),
                 move || {
                     let studio = state.get();
-                    Text(
-                        "PROPERTIES",
-                        Modifier::empty().padding(4.0),
-                        style(palette.muted, 10.0, true),
-                    );
-                    if let Some(node) = studio
-                        .snapshot
-                        .nodes
-                        .iter()
-                        .find(|node| node.id == studio.selected)
-                    {
-                        Text(
-                            node.kind.clone(),
-                            Modifier::empty(),
-                            style(palette.text, 12.0, true),
+                    if narrow {
+                        Chip(
+                            "Layout".into(),
+                            palette,
+                            !studio.inspector_details,
+                            move || edit(state, |s| s.inspector_details = false),
                         );
-                        Text(
-                            format!(
-                                "Position  {:.1}, {:.1}\nSize  {:.1} × {:.1}",
-                                node.x, node.y, node.width, node.height
-                            ),
-                            Modifier::empty(),
-                            style(palette.muted, 11.0, false),
+                        Chip(
+                            "Details".into(),
+                            palette,
+                            studio.inspector_details,
+                            move || edit(state, |s| s.inspector_details = true),
                         );
-                        for (index, source) in node.sources.iter().enumerate() {
-                            let source = source.clone();
-                            let path = studio.resolve_source(&source);
-                            cranpose::key(index, move || {
-                                Chip(
-                                    format!("{} :{} ↗", source.name, source.line),
-                                    palette,
-                                    false,
-                                    move || {
-                                        send(
-                                            json!({"action": "navigate", "file": path, "line": source.line}),
-                                        )
-                                    },
-                                );
-                            });
-                        }
-                        for modifier in &node.modifiers {
-                            Text(
-                                modifier.name.clone(),
-                                Modifier::empty().padding(2.0),
-                                style(palette.text, 11.0, true),
-                            );
-                            for property in &modifier.properties {
-                                Text(
-                                    format!("{}  {}", property.name, property.value),
-                                    Modifier::empty(),
-                                    style(palette.muted, 11.0, false),
-                                );
-                            }
-                        }
                     } else {
                         Text(
-                            "Pick an element in the preview or select a layout node.",
-                            Modifier::empty(),
-                            style(palette.muted, 12.0, false),
+                            "Layout inspector",
+                            Modifier::empty().padding(8.0),
+                            style(palette.text, 12.0, true),
+                        );
+                    }
+                    Chip(
+                        if studio.live { "Pause" } else { "Resume" }.into(),
+                        palette,
+                        !studio.live,
+                        move || {
+                            edit(state, |s| s.live = !s.live);
+                            if state.get().live {
+                                request_snapshot(&state.get());
+                            }
+                        },
+                    );
+                    Chip("Refresh".into(), palette, false, move || {
+                        request_snapshot(&state.get())
+                    });
+                    Chip("Expand all".into(), palette, false, move || {
+                        edit(state, |s| s.collapsed.clear())
+                    });
+                    Chip("Collapse all".into(), palette, false, move || {
+                        edit(state, |s| {
+                            s.collapsed = s
+                                .snapshot
+                                .nodes
+                                .iter()
+                                .filter_map(|n| n.parent.clone())
+                                .collect();
+                        })
+                    });
+                },
+            );
+            Row(
+                Modifier::empty().fill_max_width().height(height - 38.0),
+                RowSpec::default(),
+                move || {
+                    if !narrow || !state.get().inspector_details {
+                        LayoutTree(
+                            state,
+                            query,
+                            palette,
+                            if narrow { width } else { width * 0.48 },
+                            height - 38.0,
+                        );
+                    }
+                    if !narrow || state.get().inspector_details {
+                        NodeDetails(
+                            state,
+                            palette,
+                            if narrow { width } else { width * 0.52 },
+                            height - 38.0,
                         );
                     }
                 },
             );
         },
     );
+}
+
+#[composable]
+fn LayoutTree(
+    state: MutableState<Studio>,
+    query: TextFieldState,
+    palette: Palette,
+    width: f32,
+    height: f32,
+) {
+    let scroll = remember(|| ScrollState::new(0.0)).with(|value| *value);
+    let text = query.text();
+    // Return to the first match after editing a filter, preserving scroll during live snapshots.
+    let previous_query =
+        remember(|| std::rc::Rc::new(std::cell::RefCell::new(String::new()))).with(Clone::clone);
+    SideEffect(move || {
+        if *previous_query.borrow() != text {
+            let studio = state.get();
+            let first_match = studio
+                .snapshot
+                .rows(&text, &studio.collapsed)
+                .iter()
+                .position(|row| row.matches)
+                .unwrap_or(0);
+            scroll.scroll_to(first_match.saturating_sub(1) as f32 * 28.0);
+            *previous_query.borrow_mut() = text;
+        }
+    });
+    Column(
+        Modifier::empty().width(width).height(height).padding(8.0),
+        ColumnSpec::default().vertical_arrangement(LinearArrangement::spaced_by(4.0)),
+        move || {
+            Text(
+                "Filter · name, text, source or modifier",
+                Modifier::empty(),
+                style(palette.muted, 10.0, false),
+            );
+            Row(
+                Modifier::empty().fill_max_width().height(32.0),
+                RowSpec::default().horizontal_arrangement(LinearArrangement::spaced_by(4.0)),
+                move || {
+                    BasicTextField(
+                        query,
+                        Modifier::empty()
+                            .width((width - 82.0).max(100.0))
+                            .height(30.0)
+                            .background(palette.background)
+                            .rounded_corners(5.0)
+                            .padding(6.0),
+                        style(palette.text, 12.0, false),
+                    );
+                    Chip("Clear".into(), palette, false, move || {
+                        query.set_text("");
+                    });
+                },
+            );
+            let studio = state.get();
+            let filtering = !query.text().trim().is_empty();
+            let rows = studio.snapshot.rows(&query.text(), &studio.collapsed);
+            let count = if filtering {
+                rows.iter().filter(|row| row.matches).count()
+            } else {
+                studio.snapshot.nodes.len()
+            };
+            Text(
+                format!(
+                    "{count} {}{}",
+                    if filtering { "matches" } else { "nodes" },
+                    if studio.snapshot.truncated {
+                        " · partial snapshot"
+                    } else if !studio.live {
+                        " · paused"
+                    } else {
+                        ""
+                    }
+                ),
+                Modifier::empty(),
+                style(palette.muted, 10.0, false),
+            );
+            Column(
+                Modifier::empty()
+                    .fill_max_width()
+                    .height((height - 94.0).max(25.0))
+                    .vertical_scroll(scroll, false),
+                ColumnSpec::default(),
+                move || {
+                    if rows.is_empty() {
+                        Text(
+                            if filtering {
+                                "No matching nodes. Try text, a source file or a modifier."
+                            } else if studio.connected {
+                                "Waiting for a layout snapshot…"
+                            } else {
+                                "Start a preview to inspect its layout."
+                            },
+                            Modifier::empty().padding(8.0),
+                            style(palette.muted, 12.0, false),
+                        );
+                    }
+                    for row in rows.iter().cloned() {
+                        let node = studio.snapshot.nodes[row.index].clone();
+                        let id = node.id.clone();
+                        let selected = id == studio.selected;
+                        let indent = (row.depth as f32 * 12.0).min((width - 130.0).max(0.0));
+                        cranpose::key(node.id.clone(), move || {
+                            Row(
+                                Modifier::empty()
+                                    .fill_max_width()
+                                    .background(if selected {
+                                        palette.accent
+                                    } else {
+                                        palette.surface
+                                    })
+                                    .rounded_corners(4.0),
+                                RowSpec::default(),
+                                move || {
+                                    Text(
+                                        "",
+                                        Modifier::empty().width(indent).height(28.0),
+                                        style(palette.muted, 11.0, false),
+                                    );
+                                    let toggle = id.clone();
+                                    let select = id.clone();
+                                    Text(
+                                        if row.has_children {
+                                            if row.expanded { "▾" } else { "▸" }
+                                        } else {
+                                            "·"
+                                        },
+                                        Modifier::empty().width(24.0).padding(6.0).clickable(
+                                            move |_| {
+                                                if row.has_children && !filtering {
+                                                    edit(state, |s| {
+                                                        if !s.collapsed.remove(&toggle) {
+                                                            s.collapsed.insert(toggle.clone());
+                                                        }
+                                                    });
+                                                }
+                                            },
+                                        ),
+                                        style(
+                                            if selected {
+                                                palette.on_accent
+                                            } else {
+                                                palette.muted
+                                            },
+                                            12.0,
+                                            true,
+                                        ),
+                                    );
+                                    Text(
+                                        node.label(),
+                                        Modifier::empty()
+                                            .width((width - indent - 40.0).max(70.0))
+                                            .padding(6.0)
+                                            .clickable(move |_| {
+                                                edit(state, |s| s.select_node(select.clone()))
+                                            }),
+                                        style(
+                                            if selected {
+                                                palette.on_accent
+                                            } else {
+                                                palette.text
+                                            },
+                                            11.0,
+                                            selected || row.matches,
+                                        ),
+                                    );
+                                },
+                            );
+                        });
+                    }
+                },
+            );
+        },
+    );
+}
+
+#[composable]
+fn NodeDetails(state: MutableState<Studio>, palette: Palette, width: f32, height: f32) {
+    let scroll = remember(|| ScrollState::new(0.0)).with(|value| *value);
+    Column(
+        Modifier::empty()
+            .width(width)
+            .height(height)
+            .vertical_scroll(scroll, false)
+            .padding(12.0),
+        ColumnSpec::default().vertical_arrangement(LinearArrangement::spaced_by(6.0)),
+        move || {
+            let studio = state.get();
+            if let Some(node) = studio
+                .snapshot
+                .nodes
+                .iter()
+                .find(|node| node.id == studio.selected)
+            {
+                Text(
+                    node.kind.clone(),
+                    Modifier::empty(),
+                    style(palette.text, 15.0, true),
+                );
+                Text(
+                    format!(
+                        "{} × {}  ·  x {}  y {}",
+                        concise(node.width),
+                        concise(node.height),
+                        concise(node.x),
+                        concise(node.y)
+                    ),
+                    Modifier::empty(),
+                    style(palette.muted, 11.0, false),
+                );
+                if let Some(text) = node.text.as_ref().filter(|text| !text.is_empty()) {
+                    Text(
+                        text.clone(),
+                        Modifier::empty()
+                            .fill_max_width()
+                            .background(palette.background)
+                            .rounded_corners(5.0)
+                            .padding(8.0),
+                        style(palette.text, 12.0, false),
+                    );
+                }
+                Text(
+                    "Hierarchy",
+                    Modifier::empty().padding(2.0),
+                    style(palette.muted, 10.0, true),
+                );
+                for ancestor in studio.selection_path() {
+                    let id = ancestor.id.clone();
+                    let label = ancestor.kind.clone();
+                    cranpose::key(&ancestor.id, move || {
+                        Chip(label, palette, id == state.get().selected, move || {
+                            edit(state, |s| s.select_node(id.clone()))
+                        });
+                    });
+                }
+                if !node.sources.is_empty() {
+                    Text(
+                        "Source",
+                        Modifier::empty().padding(2.0),
+                        style(palette.muted, 10.0, true),
+                    );
+                }
+                for (index, source) in node.sources.iter().enumerate() {
+                    let path = studio.resolve_source(source);
+                    let line = source.line;
+                    let label = format!("{} :{} ↗", source.name, line);
+                    cranpose::key(index, move || {
+                        Chip(label, palette, false, move || {
+                            send(json!({"action":"navigate","file":path,"line":line}))
+                        })
+                    });
+                }
+                if !node.modifiers.is_empty() {
+                    Text(
+                        "Modifiers",
+                        Modifier::empty().padding(2.0),
+                        style(palette.muted, 10.0, true),
+                    );
+                }
+                for modifier in &node.modifiers {
+                    Text(
+                        modifier.name.clone(),
+                        Modifier::empty(),
+                        style(palette.text, 11.0, true),
+                    );
+                    for property in &modifier.properties {
+                        Text(
+                            format!("{}  {}", property.name, property.value),
+                            Modifier::empty(),
+                            style(palette.muted, 11.0, false),
+                        );
+                    }
+                }
+            } else {
+                Text(
+                    "Explore the layout",
+                    Modifier::empty(),
+                    style(palette.text, 14.0, true),
+                );
+                Text(
+                    "Select a node to see its bounds, text, source and modifiers. Use Pick to select directly in the preview.",
+                    Modifier::empty(),
+                    style(palette.muted, 12.0, false),
+                );
+            }
+        },
+    );
+}
+
+fn concise(value: f32) -> String {
+    if value.fract().abs() < 0.05 {
+        format!("{value:.0}")
+    } else {
+        format!("{value:.1}")
+    }
 }
 
 #[composable]

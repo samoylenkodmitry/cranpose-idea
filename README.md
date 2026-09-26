@@ -13,7 +13,10 @@ and event handlers.
   Choose named variants with their own dimensions and light or dark theme.
 - **Layout inspector:** pick an element on the canvas to select its layout node.
   Inspect bounds, text, modifier values and composable origins, then jump to source.
-  Live updates preserve the selected node; pause them to examine a captured layout.
+  Search by text, component, source file or modifier. Matching nodes keep their ancestor
+  context. Fold branches, follow the hierarchy, or pause and refresh a captured layout.
+  Wide workspaces dock inspection beside the preview and use a compact toolbar.
+  Narrow panels switch between Layout and Details; larger inspector panels show both.
 - **Viewport controls:** change logical dimensions, Fit or fixed zoom, switch theme,
   and export the rendered surface as PNG.
 - **Hot code reload:** compatible Rust literal edits compile and appear on save while
@@ -167,10 +170,13 @@ cargo run -p xtask -- ide-test --ide /path/to/IntelliJ-IDEA
 
 ```
 
-Local packaging writes a ZIP for this machine under `target/plugin`.
+Local packaging writes a ZIP for this machine under `target/plugin`. Rebuilding the
+plugin UI reconnects its controls to the running preview without starting another
+application. Session checkpoints stay in the IDE process and omit layout frames.
 The native IDE suite starts a separate headless IDEA with isolated settings and
 runs Rust assertions through the real plugin class loader. It checks frame updates,
 native rendering, configuration persistence and stale-result handling for badges.
+It also rebuilds the Studio UI and checks that its controller state reconnects.
 Its logs, JSON results and rendered images are under `target/ide-tests`.
 Use IDEA for the headless suite; RustRover's standalone launcher requires a license
 in the isolated configuration. Both products are checked by Plugin Verifier.
@@ -187,9 +193,9 @@ One ZIP contains all six platforms. See [Publishing](docs/publishing.md).
 ## Architecture
 
 - `ui`: Cranpose workspace controls, Studio, inspector, run settings and analyzer integration.
-- `ide-host`: Rust project services, editor integration, inline badges, persistent run configurations, input, native surfaces and authenticated transport.
-- `jvm-bridge`: a Rust class-file writer for thin IntelliJ extension adapters. All behavior is dispatched to the native Rust host.
-- `xtask`: Rust packaging, IDE tests, hot-reload tests, source-language checks, verification, signing and release tools.
+- `ide-host`: a small Rust entry point configuring the template's shared native host.
+- `xtask`: a small Rust entry point configuring the template's shared build and release tools.
+- [Template SDK](https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template/tree/main/sdk): owns the JNI host, JVM classfile writer, packaging and IDE tests, theme model and searchable trees. This plugin pins those crates by commit; the template has no dependency back on this repository.
 - `dev-runner` / `dev-macros`: private debug workspace, compiler provisioning, edit compatibility checks and hot-call instrumentation.
 - [Cranpose Stability](https://github.com/samoylenkodmitry/cranpose-stability): the separate Rust analyzer and CI action, pinned by commit.
 - Cranpose supplies component registration, layout metadata, source origins and rendering.
