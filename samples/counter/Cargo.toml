@@ -7,4 +7,4 @@ publish = false
 [workspace]
 
 [dependencies]
-cranpose = { git = "https://github.com/samoylenkodmitry/Cranpose", rev = "3c0f1045f68691c4b431fa75057d0e36ef7f4608", features = ["desktop", "embed"] }
+cranpose = { git = "https://github.com/samoylenkodmitry/Cranpose", rev = "e177b19985c303a13fcf40d61decc7253fdbe057", features = ["desktop", "preview"] }

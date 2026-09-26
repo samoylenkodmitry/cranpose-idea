@@ -53,6 +53,20 @@ class CranposeIdeController(
             "stop" -> service.stop()
             "create" -> CranposeStarter.create(project)
             "docs" -> BrowserUtil.browse("https://docs.rs/cranpose/latest/cranpose/")
+            "configure" -> service.snapshot.targets.firstOrNull { it.id == service.snapshot.selected }?.let {
+                CranposeRunConfiguration.create(project, it)
+            }
+            "component" -> FileEditorManager.getInstance(project).selectedFiles.firstOrNull()?.let {
+                PreviewController.showSource(project, it, fields["value"])
+            }
+            "diagnostic" -> fields["value"]?.toIntOrNull()?.let { index ->
+                service.snapshot.diagnostics.getOrNull(index)?.let { diagnostic ->
+                    val path = java.nio.file.Path.of(service.snapshot.root).resolve(diagnostic.file).normalize()
+                    com.intellij.openapi.vfs.LocalFileSystem.getInstance().findFileByPath(path.toString())?.let {
+                        com.intellij.openapi.fileEditor.OpenFileDescriptor(project, it, diagnostic.line - 1, diagnostic.column - 1).navigate(true)
+                    }
+                }
+            }
             "navigate" -> {
                 val editor = FileEditorManager.getInstance(project).selectedTextEditor ?: return true
                 val offset = fields["value"]?.toIntOrNull() ?: return true

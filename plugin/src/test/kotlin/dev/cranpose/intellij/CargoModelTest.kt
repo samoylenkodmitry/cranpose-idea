@@ -26,7 +26,7 @@ class CargoModelTest {
     @Test fun previewPreservesRequiredFeaturesAndDependencyAlias() {
         val target = CargoWorkspace.parse(metadata).targets.first()
         assertEquals(listOf("build", "--manifest-path", "/work/a b/Cargo.toml", "--package", "app", "--bin", "app",
-            "--features", "desktop,ui/embed", "--message-format=json"), CargoCommand.arguments(CargoTask.PREVIEW, target))
+            "--features", "desktop,ui/preview", "--message-format=json"), CargoCommand.arguments(CargoTask.PREVIEW, target))
         assertFalse(CargoCommand.arguments(CargoTask.TEST, target).contains("--bin"))
         assertFalse(CargoCommand.arguments(CargoTask.RUN, target).joinToString().contains("/embed"))
     }
@@ -34,7 +34,7 @@ class CargoModelTest {
     @Test fun frameworkExamplesEnableTheirOwnEmbedFeature() {
         val target = CargoWorkspace.parse(metadata).targets.first().copy(packageName = "cranpose", cranposeDependency = null)
         val arguments = CargoCommand.arguments(CargoTask.PREVIEW, target)
-        assertEquals("desktop,embed", arguments[arguments.indexOf("--features") + 1])
+        assertEquals("desktop,preview", arguments[arguments.indexOf("--features") + 1])
     }
 
     @Test fun readsExecutableOnlyFromSelectedTargetArtifact() {

@@ -55,8 +55,8 @@ object CargoCommand {
         if (task != CargoTask.TEST) addAll(listOf("--${target.kind}", target.name))
         val features = target.features + when {
             task != CargoTask.PREVIEW -> emptyList()
-            target.cranposeDependency != null -> listOf("${target.cranposeDependency}/embed")
-            target.packageName == "cranpose" -> listOf("embed")
+            target.cranposeDependency != null -> listOf("${target.cranposeDependency}/preview")
+            target.packageName == "cranpose" -> listOf("preview")
             else -> emptyList()
         }
         if (features.isNotEmpty()) addAll(listOf("--features", features.distinct().joinToString(",")))
