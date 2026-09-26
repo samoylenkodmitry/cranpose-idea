@@ -6,6 +6,7 @@
 
 pub mod dashboard;
 pub mod ide;
+pub mod stability;
 pub mod studio;
 pub mod studio_model;
 

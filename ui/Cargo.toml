@@ -24,5 +24,6 @@ desktop = ["cranpose/desktop"]
 cranpose = { version = "0.1.164", features = ["embed"], git = "https://github.com/samoylenkodmitry/Cranpose", rev = "e177b19985c303a13fcf40d61decc7253fdbe057" }
 cranpose-core = { git = "https://github.com/samoylenkodmitry/Cranpose", rev = "e177b19985c303a13fcf40d61decc7253fdbe057", version = "0.1.164" }
 cranpose-dev-runner = { version = "0.1.0", path = "../dev-runner" }
+cranpose-stability = { git = "https://github.com/samoylenkodmitry/cranpose-stability", rev = "a7109ad90e90e725b57a99d8bdf39146e048eed7" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"

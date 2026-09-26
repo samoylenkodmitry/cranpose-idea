@@ -1,0 +1,6 @@
+[[allow]]
+path = "src/gallery.rs"
+function = "ObservationCounter"
+parameter = "on_add"
+rule = "CP001"
+reason = "Intentional interaction boundary: the button needs the latest state callback."

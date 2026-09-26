@@ -230,14 +230,7 @@ impl DevWorkspace {
             use syn::spanned::Spanned;
             let start = file.items.first().map(|item| item.span().start());
             let offset = start
-                .map(|start| {
-                    output
-                        .split_inclusive('\n')
-                        .take(start.line - 1)
-                        .map(str::len)
-                        .sum::<usize>()
-                        + start.column
-                })
+                .map(|start| crate::instrumentation::byte_offset(&output, start.line, start.column))
                 .unwrap_or(output.len());
             output.insert_str(offset, &format!("extern crate {alias} as __cranpose_api; #[allow(dead_code)] mod __cranpose_dev {{ include!(concat!(env!(\"CARGO_MANIFEST_DIR\"), \"/.cranpose-dev/runtime.rs\")); }} "));
         }
