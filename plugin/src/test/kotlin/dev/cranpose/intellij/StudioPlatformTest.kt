@@ -48,6 +48,8 @@ class StudioPlatformTest : BasePlatformTestCase() {
         try {
             assertSame(file, editor.file)
             assertTrue(editor.component.componentCount > 0)
+            val layers = editor.workspace.components.map { editor.workspace.getLayer(it) }.sorted()
+            assertEquals(listOf(javax.swing.JLayeredPane.DEFAULT_LAYER, javax.swing.JLayeredPane.PALETTE_LAYER), layers)
         } finally {
             editor.dispose()
         }

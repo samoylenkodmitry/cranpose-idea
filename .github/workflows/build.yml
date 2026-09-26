@@ -58,8 +58,8 @@ jobs:
           java-version: 21
       - uses: gradle/actions/setup-gradle@v6
       - run: cargo fmt --all --check
-      - run: cargo clippy --locked --no-default-features -p cranpose-intellij-ui --all-targets -- -D warnings
-      - run: cargo test --locked --no-default-features -p cranpose-intellij-ui
+      - run: cargo clippy --locked --no-default-features --workspace --all-targets -- -D warnings
+      - run: cargo test --locked --no-default-features --workspace
       - run: python3 -m unittest discover -s scripts/tests
       - working-directory: plugin
         run: ./gradlew test
@@ -72,9 +72,32 @@ jobs:
             plugin/build/reports/tests
           if-no-files-found: ignore
 
+  hot-reload:
+    name: Live code, state and recovery (macOS)
+    runs-on: macos-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo build --locked -p cranpose-dev-runner
+      - name: Binary application
+        run: |
+          cp -R dev-runner/tests/fixtures/counter "$RUNNER_TEMP/counter"
+          python3 scripts/hot_reload_smoke.py --runner target/debug/cranpose-dev-runner --workspace "$RUNNER_TEMP/counter" --cache "$RUNNER_TEMP/hot-cache" --log counter-hot-reload.log
+      - name: Library and binary application
+        run: |
+          cp -R dev-runner/tests/fixtures/library "$RUNNER_TEMP/library"
+          python3 scripts/hot_reload_smoke.py --runner target/debug/cranpose-dev-runner --workspace "$RUNNER_TEMP/library" --source src/lib.rs --cache "$RUNNER_TEMP/hot-cache" --log library-hot-reload.log
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: hot-reload-evidence
+          path: '*-hot-reload.log'
+
   plugin:
     name: Verified plugin (all platforms)
-    needs: [native, test]
+    needs: [native, test, hot-reload]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7

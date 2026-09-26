@@ -25,12 +25,14 @@ class CranposePanel(
     private val workingDirectory: Path? = null,
     private val log: (String) -> Unit = {},
     private val environment: () -> Map<String, String> = { emptyMap() },
+    private val connectTimeoutMillis: Int = 15_000,
 ) : SurfaceView(CranposeProtocol.PRIMARY_SURFACE, SessionLink()), AutoCloseable {
     /** Called on the UI thread each time a process has connected. */
     var onConnected: () -> Unit = {}
 
     /** Called before a pointer press. Return false to inspect without activating the app. */
     var onPointerPress: (Point) -> Boolean = { true }
+    var onScroll: (java.awt.event.MouseWheelEvent) -> Boolean = { true }
 
     /** Paints host decorations over the live surface. */
     var paintOverlay: (Graphics2D) -> Unit = {}
@@ -114,6 +116,7 @@ class CranposePanel(
             if (!connected) start()
             connected && onPointerPress(event.point)
         }
+        input.onScroll = { event -> onScroll(event) }
     }
 
     /** Starts the process, replacing any that is running. */
@@ -126,7 +129,7 @@ class CranposePanel(
             repaint()
             try {
                 val listener = Connection()
-                val started = CranposeSession.start(command(), workingDirectory, listener, log, environment = environment())
+                val started = CranposeSession.start(command(), workingDirectory, listener, log, connectTimeoutMillis, environment(), cancelled = { launcher.isShutdown })
                 connection = listener
                 session = started
                 link.host = started.host

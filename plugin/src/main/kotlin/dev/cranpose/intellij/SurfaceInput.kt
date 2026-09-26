@@ -18,6 +18,7 @@ import javax.swing.SwingUtilities
 class SurfaceInput(private val view: SurfaceView) {
     /** Runs on every press before it is forwarded; returning `false` swallows the press. */
     var onPress: (MouseEvent) -> Boolean = { view.requestFocusInWindow(); true }
+    var onScroll: (MouseWheelEvent) -> Boolean = { true }
 
     private var pressed = false
     private var pressedAt: Point? = null
@@ -60,6 +61,7 @@ class SurfaceInput(private val view: SurfaceView) {
             }
 
             override fun mouseWheelMoved(event: MouseWheelEvent) {
+                if (!onScroll(event)) { event.consume(); return }
                 val delta = -event.preciseWheelRotation.toFloat() * LINE_PIXELS
                 val horizontal = event.isShiftDown
                 host()?.scroll(

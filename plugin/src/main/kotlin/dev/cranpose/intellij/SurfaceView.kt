@@ -43,7 +43,7 @@ open class SurfaceView(
     /** Magnification of logical application coordinates inside this surface. */
     var contentScale: Double = 1.0
         set(value) {
-            require(value.isFinite() && value in 0.25..4.0)
+            require(value.isFinite() && value in 0.05..4.0)
             field = value
             sendSize()
         }

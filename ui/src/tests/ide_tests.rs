@@ -61,6 +61,9 @@ fn an_editor_payload_names_the_open_file() {
 
 #[test]
 fn requests_go_to_the_ide_as_json_and_report_a_missing_ide() {
+    let _guard = crate::TEST_OUTBOX_LOCK
+        .lock()
+        .expect("host outbox test lock");
     let sent = std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
     let recorder = std::sync::Arc::clone(&sent);
     cranpose::install_host_outbox(move |message| {

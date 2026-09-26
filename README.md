@@ -1,12 +1,12 @@
 # Cranpose for IntelliJ IDEA
 
 Build Cranpose applications in IntelliJ IDEA and RustRover, with interactive previews
-beside Rust source and a tool window written in Cranpose.
+beside Rust source. The Studio controls, inspector and tool window are written in Rust and rendered by Cranpose.
 
 ## Preview and inspect
 
 Open a Rust source file and choose **Split**. Select a Cargo binary or example, then
-**Build preview**. The preview runs your compiled application, including its state
+**Run**. The preview runs your compiled application, including its state
 and event handlers.
 
 - **Component previews:** register parameterless fixtures with `#[cranpose::preview]`.
@@ -16,8 +16,10 @@ and event handlers.
   Live updates preserve the selected node; pause them to examine a captured layout.
 - **Viewport controls:** change logical dimensions, Fit or fixed zoom, switch theme,
   and export the rendered surface as PNG.
-- **Rebuild on save:** Rust, WGSL and manifest saves rebuild the active preview.
-  Compiler errors link to source, while the last successful preview stays interactive.
+- **Hot code reload:** compatible Rust literal edits compile and appear on save while
+  retaining the process, remembered state and input connection. Compiler errors link
+  to source and leave the previous preview interactive. Structural edits show
+  **Restart required**. The Reload menu controls hot reload and file watching.
 - **Editor integration:** Code / Split / Preview modes, composable gutter actions,
   source navigation and seven completions including `cppreview`.
 
@@ -43,6 +45,36 @@ fn CardPreview() {
 Keep the normal `AppLauncher::run(App)` entry point. The framework selects a
 registered fixture when launched by the IDE. Functions taking parameters need a
 parameterless fixture that supplies their inputs.
+
+## Hot reload and release isolation
+
+The plugin owns the compiler runner, source instrumentation, patch handling and UI.
+It copies the Cargo workspace to the IDE cache and adds Subsecond only to that
+private debug copy. Your sources, manifests, lockfile, profiles and release builds
+remain unchanged. Cranpose itself has no new hot-reload dependency or runtime code.
+The injected runtime refuses to compile without debug assertions.
+
+The first hot preview downloads the official Dioxus CLI 0.7.10 for your platform
+and verifies its pinned SHA-256. It uses Subsecond 0.7.10 through the CLI's native
+desktop compiler. A normal Rust toolchain and platform linker are required.
+Set `CRANPOSE_DX` to an existing 0.7.10 CLI for offline development.
+
+This release accepts literal changes inside function bodies when types, captures
+and call-site locations stay unchanged: labels, colors, dimensions and callback
+amounts are examples. Type changes, new hooks, changed captures, macro tokens,
+manifest edits and moved call sites require **Restart**, which resets live state.
+Invalid syntax and failed patches keep the last successful code running. The
+plugin never attempts to reinterpret existing Rust values under a new type.
+
+Binary targets and binary-plus-library packages are supported. The latter get a
+private binary launcher to work around the compiler's library/binary reload boundary.
+Explicit and qualified `composable` attributes are instrumented; aliases and
+macro-generated declarations are not. Symlinked workspaces currently require an
+ordinary Cargo run. Dependencies outside the workspace are read from their real
+paths and are not watched for patches.
+
+Use **Fit** for the whole viewport, or a fixed zoom and **Alt+wheel** to pan
+vertically (**Alt+Shift+wheel** horizontally). The size menu also accepts custom dimensions.
 
 ## Cargo workflow
 
@@ -81,7 +113,7 @@ Marketplace publication is a separate step.
 
 - Previews run local Cargo binaries and examples. Library components need a fixture
   reachable from one of those targets.
-- Rebuilds restart the process and reset its in-memory state.
+- Explicit restarts reset in-memory state; compatible hot patches preserve it.
 - Inspection covers the primary surface. Source origins identify enclosing
   composable functions; they are not individual modifier call-site locations.
 - Rust language analysis and debugging use the JetBrains Rust plugin. Cranpose's
@@ -95,8 +127,8 @@ Marketplace publication is a separate step.
 
 ```sh
 cargo fmt --all --check
-cargo test --locked --no-default-features -p cranpose-intellij-ui
-cargo clippy --locked --no-default-features -p cranpose-intellij-ui --all-targets -- -D warnings
+cargo test --locked --no-default-features --workspace
+cargo clippy --locked --no-default-features --workspace --all-targets -- -D warnings
 python3 -m unittest discover -s scripts/tests
 cd plugin
 ./gradlew test buildPlugin
@@ -118,7 +150,9 @@ See [Publishing](docs/publishing.md) for signing and the separate Marketplace st
 
 - `ui/src/dashboard.rs`: Cranpose-rendered workspace controls and source navigation.
 - `CranposeProjectService.kt`: project-scoped Cargo processes and compiler diagnostics.
-- `PreviewFileEditor.kt` / `PreviewWorkspace.kt`: source preview, process lifecycle and inspector.
+- `ui/src/studio.rs` / `studio_model.rs`: native preview controls, session state, layout inspector, picking and diagnostics.
+- `dev-runner` / `dev-macros`: private debug workspace, compiler provisioning, compatible edit checks and hot-call instrumentation.
+- `PreviewFileEditor.kt` / `PreviewWorkspace.kt`: IntelliJ editor services, native surface placement, process lifecycle and source navigation.
 - `CranposeRunConfiguration.kt`: persistent IDE run configurations.
 - `CranposeEditorSupport.kt`: completions and gutter markers.
 - The template's session and surface code provides authenticated native transport,
@@ -130,6 +164,8 @@ See [Publishing](docs/publishing.md) for signing and the separate Marketplace st
 Apache-2.0. Built from the
 [Cranpose IntelliJ plugin template](https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template)
 and powered by [Cranpose](https://github.com/samoylenkodmitry/Cranpose).
+Hot reload uses [Dioxus Subsecond and the Dioxus CLI](https://github.com/DioxusLabs/dioxus),
+dual-licensed under MIT and Apache-2.0.
 
 The signing setup and publishing conventions follow Dmitry Samoylenko's
 [Zeus Thunderbolt](https://github.com/samoylenkodmitry/Zeus-Thunderbolt-Idea-Plugin)

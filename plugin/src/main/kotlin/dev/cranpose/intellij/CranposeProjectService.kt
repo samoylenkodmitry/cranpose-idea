@@ -97,6 +97,10 @@ class CranposeProjectService(private val project: Project) : Disposable {
     private fun executeOnEdt(task: CargoTask, targetId: String, receiver: ((CargoTarget, Path) -> Unit)?) {
         if (!trusted()) return
         val target = snapshot.targets.firstOrNull { it.id == targetId } ?: return
+        if (task == CargoTask.PREVIEW && receiver == null) {
+            PreviewController.showTarget(project, target)
+            return
+        }
         if (!busy.compareAndSet(false, true)) {
             if (task == CargoTask.PREVIEW) { pendingPreview = targetId; pendingReceiver = receiver }
             return

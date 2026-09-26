@@ -17,6 +17,9 @@ fn editor_accepts_source_offsets_and_unicode_names() {
 
 #[test]
 fn standalone_commands_have_no_host() {
+    let _guard = crate::TEST_OUTBOX_LOCK
+        .lock()
+        .expect("host outbox test lock");
     assert!(!command("preview", ""));
 }
 
