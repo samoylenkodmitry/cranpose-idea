@@ -24,8 +24,8 @@
         <notificationGroup id="Cranpose" displayType="BALLOON"/>
         <fileEditorProvider implementation="dev.cranpose.intellij.CranposePreviewEditorProvider"/>
         <configurationType implementation="dev.cranpose.intellij.CranposeConfigurationType"/>
-        <codeInsight.lineMarkerProvider language="ANY" implementationClass="dev.cranpose.intellij.CranposeLineMarker"/>
-        <completion.contributor language="any" implementationClass="dev.cranpose.intellij.CranposeCompletion"/>
+        <codeInsight.lineMarkerProvider language="Rust" implementationClass="dev.cranpose.intellij.CranposeLineMarker"/>
+        <completion.contributor language="Rust" implementationClass="dev.cranpose.intellij.CranposeCompletion"/>
     </extensions>
     <actions>
         <group id="Cranpose.Actions" text="Cranpose" popup="true">

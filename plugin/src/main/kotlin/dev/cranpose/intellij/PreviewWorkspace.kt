@@ -77,6 +77,7 @@ class PreviewWorkspace(private val project: Project, private val source: Virtual
     private var connected = false
     private var sessionDisposable: Disposable? = null
     private var buildWhenReady = false
+    private var sourceChanged = false
     private val receiveBinary: (CargoTarget, Path) -> Unit = { target, executable ->
         if (!closed) {
             binary = executable
@@ -88,7 +89,7 @@ class PreviewWorkspace(private val project: Project, private val source: Virtual
         if (connected && isShowing && (inspect.isSelected || pick.isSelected) && live.isSelected) requestSnapshot()
     }
     private val rebuild = Timer(700) {
-        if (auto.isSelected && binary != null && !closed) buildPreview()
+        if (sourceChanged && auto.isSelected && binary != null && isShowing && !closed) buildPreview()
     }.apply { isRepeats = false }
 
     init {
@@ -161,13 +162,13 @@ class PreviewWorkspace(private val project: Project, private val source: Virtual
             override fun getListCellRendererComponent(list: JList<*>?, value: Any?, index: Int, selected: Boolean, focus: Boolean): Component {
                 val diagnostic = value as? CargoDiagnostic
                 return super.getListCellRendererComponent(list, diagnostic?.let {
-                    "${it.level}: ${it.message}  ·  ${it.file}:${it.line}"
+                    "${it.level}: ${it.message}" + if (it.file.isBlank()) "" else "  ·  ${it.file}:${it.line}"
                 } ?: value, index, selected, focus)
             }
         }
         problems.addMouseListener(object : MouseAdapter() {
             override fun mouseClicked(e: MouseEvent) {
-                if (e.clickCount == 2) problems.selectedValue?.let { navigate(it.file, it.line, it.column) }
+                if (e.clickCount == 2) problems.selectedValue?.takeIf { it.file.isNotBlank() }?.let { navigate(it.file, it.line, it.column) }
             }
         })
         body.add(content, BorderLayout.CENTER)
@@ -202,7 +203,10 @@ class PreviewWorkspace(private val project: Project, private val source: Virtual
         heightInput.addChangeListener { updateSize() }
         zoom.addActionListener { updateSize() }
         dark.addActionListener { saved.dark = dark.isSelected; panel?.setTheme(dark.isSelected) }
-        auto.addActionListener { saved.autoBuild = auto.isSelected }
+        auto.addActionListener { saved.autoBuild = auto.isSelected; if (sourceChanged) rebuild.restart() }
+        addHierarchyListener { event ->
+            if (event.changeFlags and java.awt.event.HierarchyEvent.SHOWING_CHANGED.toLong() != 0L && isShowing && sourceChanged) rebuild.restart()
+        }
         inspect.addActionListener {
             saved.inspect = inspect.isSelected
             content.bottomComponent = if (inspect.isSelected) inspector else null
@@ -253,7 +257,7 @@ class PreviewWorkspace(private val project: Project, private val source: Virtual
                     val path = Path.of(it.path)
                     path.startsWith(root) && path.none { part -> part.toString() in setOf("target", ".git") } &&
                         (it.path.endsWith(".rs") || it.path.endsWith(".wgsl") || path.fileName.toString() == "Cargo.toml")
-                }) rebuild.restart()
+                }) { sourceChanged = true; rebuild.restart() }
             }
         })
         capture.start()
@@ -295,7 +299,7 @@ class PreviewWorkspace(private val project: Project, private val source: Virtual
     private fun target(): CargoTarget? = targetBox.selectedItem as? CargoTarget
 
     fun buildPreview() {
-        target()?.let { service.execute(CargoTask.PREVIEW, it.id, receiveBinary) }
+        target()?.let { sourceChanged = false; service.execute(CargoTask.PREVIEW, it.id, receiveBinary) }
     }
 
     private fun startPreview() {
