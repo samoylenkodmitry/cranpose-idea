@@ -97,18 +97,8 @@ impl DevWorkspace {
         for entry in walkdir::WalkDir::new(&original)
             .into_iter()
             .filter_entry(|entry| {
-                !matches!(
-                    entry.file_name().to_str(),
-                    Some(
-                        ".git"
-                            | ".idea"
-                            | "target"
-                            | "node_modules"
-                            | ".gradle"
-                            | ".intellijPlatform"
-                            | ".venv"
-                    )
-                ) && entry.path() != metadata.target_directory
+                !ignored_path(entry.path().strip_prefix(&original).unwrap_or(entry.path()))
+                    && entry.path() != metadata.target_directory
             })
         {
             let entry = entry?;
@@ -363,3 +353,21 @@ fn write_support(directory: &Path) -> Result<()> {
 #[cfg(test)]
 #[path = "../tests/unit/workspace.rs"]
 mod tests;
+
+/// Directories excluded from both the private copy and change observation.
+pub(crate) fn ignored_path(path: &Path) -> bool {
+    path.components().any(|part| {
+        matches!(
+            part.as_os_str().to_str(),
+            Some(
+                ".git"
+                    | ".idea"
+                    | "target"
+                    | "node_modules"
+                    | ".gradle"
+                    | ".intellijPlatform"
+                    | ".venv"
+            )
+        )
+    })
+}

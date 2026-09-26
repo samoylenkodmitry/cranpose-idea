@@ -146,7 +146,8 @@ fn picking_reveals_ancestors_and_snapshot_removal_clears_stale_selection() {
     studio.start();
     studio.snapshot =
         Snapshot::parse(r#"{"schema":2,"nodes":[{"id":"root"},{"id":"child","parent":"root"}]}"#)
-            .expect("snapshot");
+            .expect("snapshot")
+            .into();
     studio.collapsed.insert("root".into());
     studio.select_node("child".into());
     assert!(studio.collapsed.is_empty());
@@ -247,4 +248,59 @@ fn viewport_changes_are_live_and_not_restored_from_checkpoints() {
         studio.handle("studio.viewport", invalid);
         assert_eq!(studio.viewport, Some((480, 620)));
     }
+}
+
+/// Opt-in, fixed workload; report raw timings without machine-dependent CI thresholds.
+#[test]
+#[ignore = "run with --ignored --nocapture to measure inspector model costs"]
+fn benchmark_inspector_model() {
+    use std::{hint::black_box, time::Instant};
+    for count in [100, 1_000, 10_000] {
+        let nodes: Vec<_> = (0..count)
+            .map(|id| {
+                json!({
+                    "id":format!("node-{id}"), "parent":if id == 0 { None } else { Some("node-0") },
+                    "kind":"Text", "text":format!("Counter item {id}"), "width":100, "height":24,
+                    "sources":[{"name":"CounterRow","file":"src/counter.rs","line":42}],
+                    "modifiers":[{"name":"padding","properties":[{"name":"all","value":"12"}]}]
+                })
+            })
+            .collect();
+        let mut model = studio();
+        model.snapshot = Snapshot::parse(&json!({"schema":2,"nodes":nodes}).to_string())
+            .expect("snapshot")
+            .into();
+        let start = Instant::now();
+        for _ in 0..200 {
+            black_box(black_box(&model).clone());
+        }
+        let clone_micros = start.elapsed().as_secs_f64() * 1e6 / 200.0;
+        let start = Instant::now();
+        for _ in 0..100 {
+            black_box(model.snapshot.rows(black_box(""), &Default::default()));
+        }
+        println!(
+            "{}",
+            json!({"nodes":count,"cloneMicros":clone_micros,"unfilteredRowsMicros":start.elapsed().as_secs_f64()*1e6/100.0})
+        );
+    }
+}
+
+#[test]
+fn model_clones_share_immutable_inspection_and_old_views_survive_new_snapshots() {
+    let mut model = studio();
+    model.start();
+    let message = |id, text| {
+        json!({"session":1,"event":"message","channel":"cranpose.inspector.v2.snapshot",
+        "payload":json!({"schema":2,"requestId":id,"nodes":[{"id":"label","text":text}]}).to_string()}).to_string()
+    };
+    model.handle("studio.child", &message(1, "before"));
+    let old = model.clone();
+    assert!(std::rc::Rc::ptr_eq(&model.snapshot, &old.snapshot));
+    model.handle("studio.child", &message(2, "after"));
+    assert!(!std::rc::Rc::ptr_eq(&model.snapshot, &old.snapshot));
+    assert_eq!(old.snapshot.nodes[0].text.as_deref(), Some("before"));
+    assert_eq!(model.snapshot.nodes[0].text.as_deref(), Some("after"));
+    model.handle("studio.child", &message(1, "stale"));
+    assert_eq!(model.snapshot.nodes[0].text.as_deref(), Some("after"));
 }
