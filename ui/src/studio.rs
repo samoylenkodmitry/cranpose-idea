@@ -71,6 +71,8 @@ pub fn PreviewStudio() {
             }
         })
     });
+    // Observe the model in this composition scope so restored settings update layout immediately.
+    let view = state.get();
     BoxWithConstraints(
         Modifier::empty()
             .fill_max_size()
@@ -79,7 +81,7 @@ pub fn PreviewStudio() {
             let size = scope.constraints();
             let width = size.max_width.max(300.0);
             let height = size.max_height.max(240.0);
-            let studio = state.get();
+            let studio = view.clone();
             let menu_height = menu_height(&studio);
             let inspector_height = if studio.settings.inspect {
                 (height * 0.40).clamp(220.0, 380.0)
@@ -670,7 +672,14 @@ fn LayoutTree(
         remember(|| std::rc::Rc::new(std::cell::RefCell::new(String::new()))).with(Clone::clone);
     SideEffect(move || {
         if *previous_query.borrow() != text {
-            scroll.scroll_to(0.0);
+            let studio = state.get();
+            let first_match = studio
+                .snapshot
+                .rows(&text, &studio.collapsed)
+                .iter()
+                .position(|row| row.matches)
+                .unwrap_or(0);
+            scroll.scroll_to(first_match.saturating_sub(1) as f32 * 28.0);
             *previous_query.borrow_mut() = text;
         }
     });
