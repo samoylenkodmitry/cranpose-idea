@@ -73,7 +73,18 @@ pub fn build(
     let directory = staging.path().join(&crate::config().directory);
     fs::create_dir_all(directory.join("lib"))?;
     let mut xml = fs::read_to_string(root.join("plugin/src/main/resources/META-INF/plugin.xml"))?;
-    xml=xml.replace("<idea-plugin>","<idea-plugin>\n    <version>VERSION</version>\n    <idea-version since-build=\"261\"/>").replace("VERSION",version);
+    let root_start = xml
+        .find("<idea-plugin")
+        .context("Missing plugin descriptor root")?;
+    let root_end = root_start
+        + xml[root_start..]
+            .find('>')
+            .context("Invalid plugin descriptor root")?
+        + 1;
+    xml.insert_str(
+        root_end,
+        &format!("\n    <version>{version}</version>\n    <idea-version since-build=\"261\"/>"),
+    );
     let mut jar = ZipWriter::new(fs::File::create(directory.join("lib/cranpose.jar"))?);
     let options = SimpleFileOptions::default()
         .compression_method(zip::CompressionMethod::Deflated)

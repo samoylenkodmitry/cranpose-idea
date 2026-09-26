@@ -129,7 +129,9 @@ impl Panel {
         self.send(Packet::message(channel, payload));
     }
     #[cfg(feature = "ide-tests")]
-    pub fn connected(&self)->bool {self.state.lock().expect("panel").connected}
+    pub fn connected(&self) -> bool {
+        self.state.lock().expect("panel").connected
+    }
     pub fn set_theme(&self, dark: bool) {
         let changed = {
             let mut state = self.state.lock().expect("panel");

@@ -268,6 +268,10 @@ pub fn check_zip(path: &Path, host_only: bool) -> Result<()> {
         xml.contains(&format!("<id>{}</id>", crate::config().plugin_id)),
         "Unexpected plugin ID"
     );
+    ensure!(
+        xml.contains("require-restart=\"true\""),
+        "Native host updates require an IDE restart"
+    );
     for (name, _) in crate::bridge::classes() {
         ensure!(
             jar.by_name(&format!("{name}.class"))?.size() > 0,

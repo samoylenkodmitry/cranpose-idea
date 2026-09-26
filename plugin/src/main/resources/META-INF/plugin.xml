@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin require-restart="true">
     <id>dev.cranpose.idea</id>
     <name>Cranpose</name>
     <vendor url="https://github.com/samoylenkodmitry">Dmitry Samoylenko</vendor>

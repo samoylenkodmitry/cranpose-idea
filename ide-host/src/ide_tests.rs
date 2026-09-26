@@ -273,13 +273,21 @@ fn configuration(j: &mut J<'_>) -> Result<()> {
     // The platform may reset an editor repeatedly while opening a modal dialog.
     // Keep the native UI alive beyond its first frame and exercise those resets.
     for _ in 0..3 {
-        j.void(&editor,"resetFrom","(Ljava/lang/Object;)V",&[A::O(&restored)])?;
-        let deadline=Instant::now()+Duration::from_millis(500);
-        while Instant::now()<deadline {
+        j.void(
+            &editor,
+            "resetFrom",
+            "(Ljava/lang/Object;)V",
+            &[A::O(&restored)],
+        )?;
+        let deadline = Instant::now() + Duration::from_millis(500);
+        while Instant::now() < deadline {
             panel.tick(j)?;
             std::thread::sleep(Duration::from_millis(10));
         }
-        ensure!(panel.connected(),"Cranpose settings exited after resetting a populated form");
+        ensure!(
+            panel.connected(),
+            "Cranpose settings exited after resetting a populated form"
+        );
     }
     j.void(
         &editor,
