@@ -73,6 +73,7 @@ class CranposeSession private constructor(
         runCatching { host.close() }
         runCatching { socket.close() }
         if (!process.waitFor(2, TimeUnit.SECONDS)) {
+            process.descendants().use { descendants -> descendants.forEach { it.destroy() } }
             process.destroy()
             if (!process.waitFor(2, TimeUnit.SECONDS)) process.destroyForcibly()
         }
@@ -95,6 +96,7 @@ class CranposeSession private constructor(
             log: (String) -> Unit,
             connectTimeoutMillis: Int = 15_000,
             environment: Map<String, String> = emptyMap(),
+            cancelled: () -> Boolean = { false },
         ): CranposeSession {
             val token = newToken()
             ServerSocket(0, 1, InetAddress.getLoopbackAddress()).use { server ->
@@ -109,9 +111,9 @@ class CranposeSession private constructor(
                     .start()
                 pumpOutput(process, log)
                 val socket = try {
-                    acceptWhileAlive(server, process, connectTimeoutMillis)
+                    acceptWhileAlive(server, process, connectTimeoutMillis, cancelled)
                 } catch (error: IOException) {
-                    process.destroyForcibly()
+                    terminateTree(process)
                     throw IOException("${command.first()} did not connect: ${error.message}", error)
                 }
                 try {
@@ -131,16 +133,17 @@ class CranposeSession private constructor(
                     return CranposeSession(process, socket, reader, host).also { it.startReading(listener) }
                 } catch (error: IOException) {
                     socket.close()
-                    process.destroyForcibly()
+                    terminateTree(process)
                     throw error
                 }
             }
         }
 
-        private fun acceptWhileAlive(server: ServerSocket, process: Process, timeoutMillis: Int): Socket {
+        private fun acceptWhileAlive(server: ServerSocket, process: Process, timeoutMillis: Int, cancelled: () -> Boolean): Socket {
             val deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeoutMillis.toLong())
             server.soTimeout = ACCEPT_POLL_MILLIS
             while (true) {
+                if (cancelled()) throw IOException("Preview launch cancelled")
                 try {
                     return server.accept()
                 } catch (_: SocketTimeoutException) {
@@ -148,6 +151,11 @@ class CranposeSession private constructor(
                     if (System.nanoTime() > deadline) throw IOException("no connection within $timeoutMillis ms")
                 }
             }
+        }
+
+        private fun terminateTree(process: Process) {
+            process.descendants().use { descendants -> descendants.forEach { it.destroyForcibly() } }
+            process.destroyForcibly()
         }
 
         private fun socketAddress(server: ServerSocket): String {

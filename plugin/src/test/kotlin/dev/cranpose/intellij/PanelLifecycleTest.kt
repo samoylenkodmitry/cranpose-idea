@@ -9,6 +9,28 @@ import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.SwingUtilities
 
 class PanelLifecycleTest {
+    @Test fun cancellingAPendingCompilerLaunchDoesNotWaitForItsConnectionTimeout() {
+        org.junit.Assume.assumeFalse(System.getProperty("os.name").startsWith("Windows"))
+        val started = CountDownLatch(1)
+        val cancelled = java.util.concurrent.atomic.AtomicBoolean()
+        val pid = java.util.concurrent.atomic.AtomicLong()
+        val executor = java.util.concurrent.Executors.newSingleThreadExecutor()
+        try {
+            val future = executor.submit<Boolean> {
+                try {
+                    CranposeSession.start(listOf("sh", "-c", "echo \$\$; sleep 60"), null, object : CranposeListener { override fun onFrame(frame: AppEvent.Frame) {} }, { line -> line.toLongOrNull()?.let { pid.set(it); started.countDown() } }, connectTimeoutMillis = 1_200_000, cancelled = cancelled::get).close()
+                    false
+                } catch (error: java.io.IOException) { error.message.orEmpty().contains("cancelled") }
+            }
+            assertTrue(started.await(5, TimeUnit.SECONDS))
+            cancelled.set(true)
+            assertTrue(future.get(3, TimeUnit.SECONDS))
+            val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(2)
+            while (ProcessHandle.of(pid.get()).map { it.isAlive }.orElse(false) && System.nanoTime() < deadline) Thread.sleep(20)
+            assertFalse(ProcessHandle.of(pid.get()).map { it.isAlive }.orElse(false))
+        } finally { cancelled.set(true); executor.shutdownNow() }
+    }
+
     @Test fun aClosedUiProcessCanBeRestartedByClickingThePanel() {
         val binary = requireNotNull(System.getProperty(UiBinary.OVERRIDE_PROPERTY))
         val connections = AtomicInteger()

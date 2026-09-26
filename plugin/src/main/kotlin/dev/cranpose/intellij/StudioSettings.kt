@@ -19,6 +19,7 @@ class StudioSettings : PersistentStateComponent<StudioSettings.Data> {
         var zoom = 1.0
         var dark = false
         var autoBuild = true
+        var hotReload = true
         var inspect = false
         var fit = true
     }

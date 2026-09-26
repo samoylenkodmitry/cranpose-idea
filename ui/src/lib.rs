@@ -6,5 +6,10 @@
 
 pub mod dashboard;
 pub mod ide;
+pub mod studio;
+pub mod studio_model;
+
+#[cfg(test)]
+pub(crate) static TEST_OUTBOX_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
 pub use dashboard::Dashboard as ToolWindow;

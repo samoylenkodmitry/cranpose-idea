@@ -9,14 +9,15 @@
             <li>Check, run and test targets with build output in the IDE.</li>
             <li>Code / Split / Preview editors with compiled component fixtures, viewport controls and PNG export.</li>
             <li>Live layout trees, element picking, bounds, modifier properties and navigation to composable origins.</li>
-            <li>Persistent Cargo run configurations and automatic preview rebuilds on save.</li>
+            <li>Rust/Cranpose preview controls and inspector, with plugin-owned debug hot reload that preserves compatible live state.</li>
+            <li>Persistent Cargo run configurations and source-linked compiler diagnostics.</li>
             <li>Composable gutter markers, source navigation and component completions.</li>
             <li>Create a working Cranpose application in an empty project.</li>
         </ul>
         <p>Install JetBrains Rust support for full Rust language editing. Preview applications need
         Cranpose's preview feature. See the repository for setup and supported framework revisions.</p>
     ]]></description>
-    <change-notes><![CDATA[0.2: previews beside source, registered component variants, live layout inspection with picking and source origins, persistent run configurations, viewport scaling and image export. Failed builds preserve the last successful preview.]]></change-notes>
+    <change-notes><![CDATA[0.3: native Rust/Cranpose Studio controls and inspector; Subsecond hot reload in a private debug workspace; state-preserving compatible patches; compiler error recovery; explicit restart for structural edits. Application release builds remain unchanged.]]></change-notes>
     <depends>com.intellij.modules.platform</depends>
     <extensions defaultExtensionNs="com.intellij">
         <toolWindow id="Cranpose" anchor="right" icon="/icons/cranpose.svg"

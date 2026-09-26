@@ -1,5 +1,5 @@
 [workspace]
-members = ["ui"]
+members = ["ui", "dev-runner", "dev-macros"]
 resolver = "3"
 
 [workspace.package]

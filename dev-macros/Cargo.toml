@@ -1,0 +1,16 @@
+[package]
+name = "cranpose-dev-macros"
+version = "0.1.0"
+edition = "2024"
+publish = false
+license = "Apache-2.0"
+
+[lib]
+proc-macro = true
+
+[lints]
+workspace = true
+
+[dependencies]
+quote = "1.0.47"
+syn = { version = "3.0.6", features = ["full"] }

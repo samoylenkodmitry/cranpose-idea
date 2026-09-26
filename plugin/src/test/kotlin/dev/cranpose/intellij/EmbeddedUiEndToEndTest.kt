@@ -84,6 +84,49 @@ class EmbeddedUiEndToEndTest {
         }
     }
 
+    @Test fun nativeStudioRendersControlsAndRequestsAnIsolatedDebugSession() {
+        val binary = Path.of(System.getProperty("cranpose.idea.ui.binary"))
+        val listener = object : CranposeListener {
+            override fun onFrame(frame: AppEvent.Frame) { events.put(frame) }
+            override fun onMessage(channel: String, payload: String) { events.put(AppEvent.Message(channel, payload)) }
+            override fun onExit(error: Throwable?) { events.put(Exit(error)) }
+        }
+        CranposeSession.start(listOf(binary.toString()), null, listener, { println(it) }, environment = mapOf("CRANPOSE_STUDIO" to "1")).use { session ->
+            session.host.resize(0, 800, 900, 1f, 60f)
+            session.host.visibility(0, true)
+            session.host.message("ide.theme", """{"dark":true,"background":"#2b2d30","surface":"#393b40","text":"#dfe1e5","muted":"#868a91","accent":"#3574f0"}""")
+            session.host.message("studio.init", """{"root":"/demo","cache":"/cache","settings":{"width":480,"height":640,"inspect":true}}""")
+            session.host.message("cranpose.project", """{"targets":[{"manifest":"/demo/Cargo.toml","packageName":"demo","name":"app","kind":"bin"}]}""")
+            await(session) { it is AppEvent.Frame && canvas.width == 800 && accentButton() != null }
+            pump(session, 300)
+            save("native-studio-dark.png")
+            val (x, y) = requireNotNull(accentButton())
+            session.host.pointerDown(0, x.toFloat(), y.toFloat())
+            pump(session, 40)
+            session.host.pointerUp(0, x.toFloat(), y.toFloat())
+            val started = await(session) { it is AppEvent.Message && it.channel == "studio.host" && com.google.gson.JsonParser.parseString(it.payload).asJsonObject.get("action")?.asString == "start" } as AppEvent.Message
+            val request = com.google.gson.JsonParser.parseString(started.payload).asJsonObject
+            assertEquals("/cache", request.getAsJsonObject("options").get("cache").asString)
+            assertTrue(request.getAsJsonObject("options").get("hotReload").asBoolean)
+            assertFalse(request.getAsJsonObject("options").has("release"))
+            session.host.message("studio.child", """{"session":1,"event":"connected"}""")
+            val inspection = await(session) { it is AppEvent.Message && it.channel == "studio.host" && it.payload.contains("cranpose.inspector.v2.request") } as AppEvent.Message
+            assertEquals("message", FlatJson.decodeStrings(inspection.payload)?.get("action"))
+            val snapshot = """{"schema":2,"requestId":1,"nodes":[{"id":"node","kind":"Text","text":"Nested component","width":80,"height":20,"sources":[{"name":"Column","file":"src/main.rs","manifestDir":"/demo","line":12},{"name":"Column","file":"src/main.rs","manifestDir":"/demo","line":12}]}]}"""
+            session.host.message("studio.child", com.google.gson.Gson().toJson(mapOf("session" to 1, "event" to "message", "channel" to "cranpose.inspector.v2.snapshot", "payload" to snapshot)))
+            pump(session, 300)
+            session.host.pointerDown(0, 30f, 625f)
+            pump(session, 40)
+            session.host.pointerUp(0, 30f, 625f)
+            await(session) { it is AppEvent.Message && it.channel == "studio.host" && com.google.gson.JsonParser.parseString(it.payload).asJsonObject.get("selected")?.let { selected -> !selected.isJsonNull } == true }
+            pump(session, 300)
+            save("native-studio-inspector.png")
+            session.host.resize(0, 320, 700, 1f, 60f)
+            await(session) { it is AppEvent.Frame && canvas.width == 320 && canvas.height == 700 }
+            save("native-studio-narrow.png")
+        }
+    }
+
     private fun accentButton(): Pair<Int, Int>? {
         for (y in 8 until canvas.height - 10) for (x in 12 until canvas.width - 40) {
             if (canvas.getRGB(x, y) == ACCENT && (0..30).all { canvas.getRGB(x + it, y) == ACCENT } &&

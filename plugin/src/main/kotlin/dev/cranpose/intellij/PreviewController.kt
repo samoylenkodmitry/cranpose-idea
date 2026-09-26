@@ -11,6 +11,10 @@ import com.intellij.ui.content.ContentFactory
 import java.nio.file.Path
 
 object PreviewController {
+    fun showTarget(project: Project, target: CargoTarget) {
+        val file = LocalFileSystem.getInstance().findFileByPath(target.source) ?: return
+        showSource(project, file)?.previewTarget(target)
+    }
     fun showSource(project: Project, file: VirtualFile, function: String? = null): PreviewWorkspace? {
         val manager = FileEditorManager.getInstance(project)
         val editor = manager.openFile(file, true).filterIsInstance<CranposeSplitEditor>().firstOrNull() ?: return null
