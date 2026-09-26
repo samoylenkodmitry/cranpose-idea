@@ -231,7 +231,7 @@ fn viewport_changes_are_live_and_not_restored_from_checkpoints() {
     let mut studio = Studio::default();
     studio.handle("studio.viewport", r#"{"width":1024,"height":620}"#);
     assert_eq!(studio.viewport, Some((1024, 620)));
-    let checkpoint = serde_json::to_value(&studio).unwrap();
+    let checkpoint = serde_json::to_value(&studio).expect("serialize Studio checkpoint");
     assert!(checkpoint.get("viewport").is_none());
     studio.handle("studio.viewport", r#"{"width":480,"height":620}"#);
     studio.handle(
