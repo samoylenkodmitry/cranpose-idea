@@ -651,3 +651,37 @@ impl Studio {
 #[cfg(test)]
 #[path = "tests/studio_model_tests.rs"]
 mod tests;
+
+/// Placement shared by the Cranpose layout and the native viewport clip.
+#[derive(Clone, Copy, Debug)]
+pub struct StudioLayout {
+    pub top: f32,
+    pub stage_width: f32,
+    pub stage_height: f32,
+    pub inspector_width: f32,
+    pub inspector_height: f32,
+}
+impl StudioLayout {
+    pub fn new(width: f32, height: f32, inspect: bool, menu: f32, problems: f32) -> Self {
+        let wide = width >= 760.0;
+        let top = (if wide { 88.0 } else { 126.0 }) + menu;
+        let body = (height - top - problems - 28.0).max(0.0);
+        let inspector_width = if inspect && wide {
+            (width * 0.4).clamp(320.0, 420.0)
+        } else {
+            0.0
+        };
+        let inspector_height = if inspect && !wide {
+            (height * 0.4).clamp(180.0, 380.0).min(body * 0.6)
+        } else {
+            0.0
+        };
+        Self {
+            top,
+            stage_width: width - inspector_width,
+            stage_height: body - inspector_height,
+            inspector_width,
+            inspector_height,
+        }
+    }
+}

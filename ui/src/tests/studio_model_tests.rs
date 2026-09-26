@@ -209,3 +209,19 @@ fn native_session_state_wins_over_a_stale_ui_checkpoint() {
     assert_eq!(restored.pid, 0);
     assert!(!restored.connected && !restored.busy);
 }
+
+#[test]
+fn wide_inspection_preserves_preview_height_and_clips_before_the_sidebar() {
+    let wide = StudioLayout::new(1000.0, 600.0, true, 0.0, 0.0);
+    assert_eq!(wide.inspector_width, 400.0);
+    assert_eq!(wide.stage_width, 600.0);
+    assert_eq!(wide.inspector_height, 0.0);
+    assert_eq!(wide.stage_height + wide.top + 28.0, 600.0);
+    let small = StudioLayout::new(500.0, 240.0, true, 0.0, 0.0);
+    assert_eq!(small.inspector_width, 0.0);
+    assert!(small.stage_height > 0.0);
+    assert_eq!(
+        small.stage_height + small.inspector_height + small.top + 28.0,
+        240.0
+    );
+}

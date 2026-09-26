@@ -83,20 +83,25 @@ pub fn PreviewStudio() {
             let height = size.max_height.max(240.0);
             let studio = view.clone();
             let menu_height = menu_height(&studio);
-            let inspector_height = if studio.settings.inspect {
-                (height * 0.40).clamp(220.0, 380.0)
-            } else {
-                0.0
-            };
             let problems_height = if studio.diagnostics.is_empty() {
                 0.0
             } else {
                 66.0
             };
-            let top = 126.0 + menu_height;
-            let stage_height = (height - top - inspector_height - problems_height - 28.0).max(40.0);
+            let geometry = crate::studio_model::StudioLayout::new(
+                width,
+                height,
+                studio.settings.inspect,
+                menu_height,
+                problems_height,
+            );
+            let top = geometry.top;
+            let stage_height = geometry.stage_height;
+            let stage_width = geometry.stage_width;
+            let inspector_height = geometry.inspector_height;
+            let inspector_width = geometry.inspector_width;
             let scale = if studio.settings.fit {
-                ((width - 32.0) / studio.settings.width as f32)
+                ((stage_width - 32.0) / studio.settings.width as f32)
                     .min((stage_height - 28.0) / studio.settings.height as f32)
                     .clamp(0.05, 1.0)
             } else {
@@ -104,10 +109,10 @@ pub fn PreviewStudio() {
             };
             let frame_width = studio.settings.width as f32 * scale;
             let frame_height = studio.settings.height as f32 * scale;
-            let x = if frame_width <= width {
-                (width - frame_width) * 0.5
+            let x = if frame_width <= stage_width {
+                (stage_width - frame_width) * 0.5
             } else {
-                studio.pan_x.clamp(width - frame_width, 0.0)
+                studio.pan_x.clamp(stage_width - frame_width, 0.0)
             };
             let y = top
                 + if frame_height <= stage_height {
@@ -116,7 +121,7 @@ pub fn PreviewStudio() {
                     studio.pan_y.clamp(stage_height - frame_height, 0.0)
                 };
             let selected = studio.snapshot.nodes.iter().find(|node| node.id == studio.selected).map(|node| json!({"x": node.x, "y": node.y, "width": node.width, "height": node.height}));
-            let layout = json!({"action": "layout", "session": studio.session, "x": x, "y": y, "width": frame_width, "height": frame_height, "viewport": {"y": top, "height": stage_height}, "logicalWidth": studio.settings.width, "logicalHeight": studio.settings.height, "scale": scale, "dark": studio.settings.dark, "pick": studio.pick, "selected": selected});
+            let layout = json!({"action": "layout", "session": studio.session, "x": x, "y": y, "width": frame_width, "height": frame_height, "viewport": {"y": top, "width": stage_width, "height": stage_height}, "logicalWidth": studio.settings.width, "logicalHeight": studio.settings.height, "scale": scale, "dark": studio.settings.dark, "pick": studio.pick, "selected": selected});
             let initialized = studio.initialized;
             let checkpoint = serde_json::to_value(&studio).unwrap_or(Value::Null);
             let checkpoint_text = checkpoint.to_string();
@@ -136,34 +141,46 @@ pub fn PreviewStudio() {
                 move || {
                     Toolbar(state, palette, width);
                     Menu(state, palette, width, menu_height);
-                    Column(
-                        Modifier::empty()
-                            .fill_max_width()
-                            .height(stage_height)
-                            .background(stage_color(palette))
-                            .padding(16.0),
-                        ColumnSpec::default(),
+                    Row(
+                        Modifier::empty().fill_max_width().height(stage_height),
+                        RowSpec::default(),
                         move || {
-                            if !state.get().connected {
-                                Text(
-                                    if state.get().busy {
-                                        "Building your application…"
-                                    } else {
-                                        "Your application, running here"
-                                    },
-                                    Modifier::empty().padding(8.0),
-                                    style(palette.text, 15.0, true),
-                                );
-                                Text(
-                                    "Rust rendering · native input · live state",
-                                    Modifier::empty().padding(8.0),
-                                    style(palette.muted, 12.0, false),
-                                );
-                                if !state.get().busy {
-                                    Chip("Start preview".into(), palette, true, move || {
-                                        start(state)
-                                    });
-                                }
+                            Column(
+                                Modifier::empty()
+                                    .width(stage_width)
+                                    .height(stage_height)
+                                    .background(stage_color(palette))
+                                    .padding(16.0),
+                                ColumnSpec::default(),
+                                move || {
+                                    if !state.get().connected {
+                                        Text(
+                                            if state.get().busy {
+                                                "Building your application…"
+                                            } else {
+                                                "Your application, running here"
+                                            },
+                                            Modifier::empty().padding(8.0),
+                                            style(palette.text, 15.0, true),
+                                        );
+                                        Text(
+                                            "Rust rendering · native input · live state",
+                                            Modifier::empty().padding(8.0),
+                                            style(palette.muted, 12.0, false),
+                                        );
+                                        if !state.get().busy {
+                                            Chip(
+                                                "Start preview".into(),
+                                                palette,
+                                                true,
+                                                move || start(state),
+                                            );
+                                        }
+                                    }
+                                },
+                            );
+                            if inspector_width > 0.0 {
+                                Inspector(state, palette, inspector_width, stage_height);
                             }
                         },
                     );
@@ -230,142 +247,169 @@ pub fn PreviewStudio() {
 
 #[composable]
 fn Toolbar(state: MutableState<Studio>, palette: Palette, width: f32) {
+    let wide = width >= 760.0;
+    let first_scroll = remember(|| ScrollState::new(0.0)).with(|s| *s);
+    let second_scroll = remember(|| ScrollState::new(0.0)).with(|s| *s);
+    let third_scroll = remember(|| ScrollState::new(0.0)).with(|s| *s);
     Column(
         Modifier::empty()
             .fill_max_width()
-            .height(126.0)
+            .height(if wide { 88.0 } else { 126.0 })
             .padding(6.0),
         ColumnSpec::default().vertical_arrangement(LinearArrangement::spaced_by(4.0)),
         move || {
             Row(
-                Modifier::empty().fill_max_width().height(34.0),
+                Modifier::empty()
+                    .fill_max_width()
+                    .height(34.0)
+                    .horizontal_scroll(first_scroll, false),
+                RowSpec::default().horizontal_arrangement(LinearArrangement::spaced_by(5.0)),
+                move || TargetControls(state, palette, width),
+            );
+            Row(
+                Modifier::empty()
+                    .fill_max_width()
+                    .height(34.0)
+                    .horizontal_scroll(second_scroll, false),
                 RowSpec::default().horizontal_arrangement(LinearArrangement::spaced_by(5.0)),
                 move || {
-                    let studio = state.get();
-                    let target = studio
-                        .target()
-                        .map(|target| target.name.clone())
-                        .unwrap_or_else(|| "Select application".into());
-                    Chip(format!("{target} ▾"), palette, false, move || {
-                        toggle_menu(state, "target")
-                    });
-                    Chip(
-                        if studio.session == 0 {
-                            "Run"
-                        } else {
-                            "Restart"
-                        }
-                        .into(),
-                        palette,
-                        true,
-                        move || start(state),
-                    );
-                    Chip("Stop".into(), palette, false, move || {
-                        let session = state.get().session;
-                        send(json!({"action": "stop", "session": session}));
-                        edit(state, |studio| {
-                            studio.connected = false;
-                            studio.busy = false;
-                            studio.session = 0;
-                            studio.pid = 0;
-                            studio.status = "Preview stopped".into();
-                        });
-                    });
-                    if width > 510.0 {
-                        Chip("Run config".into(), palette, false, move || {
-                            send(
-                                json!({"action": "configure", "target": state.get().settings.target}),
-                            )
-                        });
+                    ViewControls(state, palette);
+                    if wide {
+                        InspectionControls(state, palette, width);
                     }
                 },
             );
-            Row(
-                Modifier::empty().fill_max_width().height(34.0),
-                RowSpec::default().horizontal_arrangement(LinearArrangement::spaced_by(5.0)),
-                move || {
-                    let studio = state.get();
-                    let variant = studio
-                        .previews
-                        .iter()
-                        .find(|preview| preview.id == studio.settings.preview)
-                        .map(|preview| preview.name.clone())
-                        .unwrap_or_else(|| "Application".into());
-                    Chip(format!("{variant} ▾"), palette, false, move || {
-                        toggle_menu(state, "preview")
-                    });
-                    Chip(
-                        format!("{} × {} ▾", studio.settings.width, studio.settings.height),
-                        palette,
-                        false,
-                        move || toggle_menu(state, "size"),
-                    );
-                    Chip(
-                        if studio.settings.dark {
-                            "Dark"
-                        } else {
-                            "Light"
-                        }
-                        .into(),
-                        palette,
-                        studio.settings.dark,
-                        move || edit(state, |studio| studio.settings.dark = !studio.settings.dark),
-                    );
-                    Chip(
-                        if studio.settings.fit {
-                            "Fit ▾".into()
-                        } else {
-                            format!("{}% ▾", (studio.settings.zoom * 100.0) as u32)
-                        },
-                        palette,
-                        false,
-                        move || toggle_menu(state, "zoom"),
-                    );
-                },
-            );
-            Row(
-                Modifier::empty().fill_max_width().height(34.0),
-                RowSpec::default().horizontal_arrangement(LinearArrangement::spaced_by(4.0)),
-                move || {
-                    let studio = state.get();
-                    Chip(
-                        "Reload ▾".into(),
-                        palette,
-                        studio.settings.hot_reload,
-                        move || toggle_menu(state, "reload"),
-                    );
-                    Chip("Pick".into(), palette, studio.pick, move || {
-                        edit(state, |studio| {
-                            studio.pick = !studio.pick;
-                            if studio.pick {
-                                studio.settings.inspect = true;
-                            }
-                        });
-                        request_snapshot(&state.get());
-                    });
-                    Chip(
-                        "Inspect".into(),
-                        palette,
-                        studio.settings.inspect,
-                        move || {
-                            edit(state, |studio| {
-                                studio.settings.inspect = !studio.settings.inspect
-                            });
-                            request_snapshot(&state.get());
-                        },
-                    );
-                    Chip("PNG".into(), palette, false, move || {
-                        send(json!({"action": "export", "session": state.get().session}))
-                    });
-                    if width > 420.0 {
-                        Chip("Source".into(), palette, false, move || {
-                            navigate_selected(&state.get())
-                        });
-                    }
-                },
-            );
+            if !wide {
+                Row(
+                    Modifier::empty()
+                        .fill_max_width()
+                        .height(34.0)
+                        .horizontal_scroll(third_scroll, false),
+                    RowSpec::default().horizontal_arrangement(LinearArrangement::spaced_by(5.0)),
+                    move || InspectionControls(state, palette, width),
+                );
+            }
         },
     );
+}
+
+#[composable]
+fn TargetControls(state: MutableState<Studio>, palette: Palette, width: f32) {
+    let studio = state.get();
+    let target = studio
+        .target()
+        .map(|target| target.name.clone())
+        .unwrap_or_else(|| "Select application".into());
+    Chip(format!("{target} ▾"), palette, false, move || {
+        toggle_menu(state, "target")
+    });
+    Chip(
+        if studio.session == 0 {
+            "Run"
+        } else {
+            "Restart"
+        }
+        .into(),
+        palette,
+        true,
+        move || start(state),
+    );
+    Chip("Stop".into(), palette, false, move || {
+        let session = state.get().session;
+        send(json!({"action": "stop", "session": session}));
+        edit(state, |studio| {
+            studio.connected = false;
+            studio.busy = false;
+            studio.session = 0;
+            studio.pid = 0;
+            studio.status = "Preview stopped".into();
+        });
+    });
+    if width > 510.0 {
+        Chip("Run config".into(), palette, false, move || {
+            send(json!({"action": "configure", "target": state.get().settings.target}))
+        });
+    }
+}
+
+#[composable]
+fn ViewControls(state: MutableState<Studio>, palette: Palette) {
+    let studio = state.get();
+    let variant = studio
+        .previews
+        .iter()
+        .find(|preview| preview.id == studio.settings.preview)
+        .map(|preview| preview.name.clone())
+        .unwrap_or_else(|| "Application".into());
+    Chip(format!("{variant} ▾"), palette, false, move || {
+        toggle_menu(state, "preview")
+    });
+    Chip(
+        format!("{} × {} ▾", studio.settings.width, studio.settings.height),
+        palette,
+        false,
+        move || toggle_menu(state, "size"),
+    );
+    Chip(
+        if studio.settings.dark {
+            "Dark"
+        } else {
+            "Light"
+        }
+        .into(),
+        palette,
+        studio.settings.dark,
+        move || edit(state, |studio| studio.settings.dark = !studio.settings.dark),
+    );
+    Chip(
+        if studio.settings.fit {
+            "Fit ▾".into()
+        } else {
+            format!("{}% ▾", (studio.settings.zoom * 100.0) as u32)
+        },
+        palette,
+        false,
+        move || toggle_menu(state, "zoom"),
+    );
+}
+
+#[composable]
+fn InspectionControls(state: MutableState<Studio>, palette: Palette, width: f32) {
+    let studio = state.get();
+    Chip(
+        "Reload ▾".into(),
+        palette,
+        studio.settings.hot_reload,
+        move || toggle_menu(state, "reload"),
+    );
+    Chip("Pick".into(), palette, studio.pick, move || {
+        edit(state, |studio| {
+            studio.pick = !studio.pick;
+            if studio.pick {
+                studio.settings.inspect = true;
+            }
+        });
+        request_snapshot(&state.get());
+    });
+    Chip(
+        "Inspect".into(),
+        palette,
+        studio.settings.inspect,
+        move || {
+            edit(state, |studio| {
+                studio.settings.inspect = !studio.settings.inspect
+            });
+            request_snapshot(&state.get());
+        },
+    );
+    Chip("PNG".into(), palette, false, move || {
+        send(json!({"action": "export", "session": state.get().session}))
+    });
+    if width > 420.0 {
+        Chip("Source".into(), palette, false, move || {
+            navigate_selected(&state.get())
+        });
+    }
 }
 
 fn menu_height(studio: &Studio) -> f32 {

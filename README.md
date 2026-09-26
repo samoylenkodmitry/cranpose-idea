@@ -15,7 +15,8 @@ and event handlers.
   Inspect bounds, text, modifier values and composable origins, then jump to source.
   Search by text, component, source file or modifier. Matching nodes keep their ancestor
   context. Fold branches, follow the hierarchy, or pause and refresh a captured layout.
-  Narrow panels switch between Layout and Details; larger panels show both.
+  Wide workspaces dock inspection beside the preview and use a compact toolbar.
+  Narrow panels switch between Layout and Details; larger inspector panels show both.
 - **Viewport controls:** change logical dimensions, Fit or fixed zoom, switch theme,
   and export the rendered surface as PNG.
 - **Hot code reload:** compatible Rust literal edits compile and appear on save while
