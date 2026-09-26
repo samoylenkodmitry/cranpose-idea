@@ -144,13 +144,12 @@ pub fn run(options: RunOptions) -> Result<()> {
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .stdin(Stdio::null());
-    #[cfg(unix)]
-    {
-        use std::os::unix::process::CommandExt;
-        command.process_group(0);
-    }
-    let mut child = command.spawn().context("start development compiler")?;
-    let mut guard = ChildGuard(child.id());
+    let mut child = cranpose_plugin_process::Process::spawn_worker(command)
+        .context("start development compiler")?;
+    println!(
+        "{}",
+        serde_json::json!({"cranposeDev":"compiler", "pid":child.id()})
+    );
     if let Some(stdout) = child.stdout.take() {
         pump(stdout, workspace.source_maps());
     }
@@ -193,7 +192,6 @@ pub fn run(options: RunOptions) -> Result<()> {
             break;
         }
         if let Some(status) = child.try_wait()? {
-            guard.0 = 0;
             if !status.success() {
                 bail!("development compiler exited with {status}");
             }
@@ -271,8 +269,9 @@ pub fn run(options: RunOptions) -> Result<()> {
             }
         }
     }
-    drop(guard);
-    let _ = child.wait();
+    child
+        .terminate(Duration::from_millis(500))
+        .context("stop development compiler")?;
     Ok(())
 }
 
@@ -362,28 +361,4 @@ fn emit(kind: &str, message: &str) {
         "{}",
         serde_json::json!({"cranposeDev": kind, "message": message})
     );
-}
-
-struct ChildGuard(u32);
-impl Drop for ChildGuard {
-    fn drop(&mut self) {
-        if self.0 != 0 {
-            terminate(self.0);
-        }
-    }
-}
-
-fn terminate(pid: u32) {
-    #[cfg(unix)]
-    {
-        let _ = Command::new("kill")
-            .args(["-TERM", "--", &format!("-{pid}")])
-            .status();
-    }
-    #[cfg(windows)]
-    {
-        let _ = Command::new("taskkill")
-            .args(["/T", "/F", "/PID", &pid.to_string()])
-            .status();
-    }
 }

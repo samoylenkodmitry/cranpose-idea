@@ -57,6 +57,12 @@ private debug copy. Your sources, manifests, lockfile, profiles and release buil
 remain unchanged. Cranpose itself has no new hot-reload dependency or runtime code.
 The injected runtime refuses to compile without debug assertions.
 
+Stopping or replacing a preview also stops its compiler and application. The shared
+Rust SDK owns their process group on Unix and their Job Object on Windows. Shutdown
+signals immediately, allows bounded cleanup, and force-stops remaining descendants.
+Connection failures, failed authentication and closed preview connections use the
+same cleanup path. Cancellation runs off the IDE event thread.
+
 The source watcher filters build and IDE output before batching. Compatible edits
 settle for 60 ms, with a 240 ms maximum batch delay during continuous writes.
 Duplicate paths share one queue entry. Lost events or too many pending files require
