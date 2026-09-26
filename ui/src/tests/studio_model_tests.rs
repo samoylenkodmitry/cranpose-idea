@@ -128,3 +128,84 @@ fn maps_binary_launcher_paths_before_workspace_paths() {
     });
     assert_eq!(path, PathBuf::from("/project/app/src/main.rs"));
 }
+
+#[test]
+fn inspector_search_includes_full_text_source_and_modifier_values() {
+    let snapshot = Snapshot::parse(r#"{"schema":2,"nodes":[{"id":"root","kind":"Column"},{"id":"label","parent":"root","kind":"Text","text":"Café quiet morning","sources":[{"name":"Card","file":"src/card.rs"}],"modifiers":[{"name":"padding","properties":[{"name":"all","value":"12"}]}]}]}"#).expect("snapshot");
+    for query in ["café morning", "card.rs", "padding 12"] {
+        let rows = snapshot.rows(query, &Default::default());
+        assert_eq!(rows.len(), 2);
+        assert!(!rows[0].matches);
+        assert!(rows[1].matches);
+    }
+}
+
+#[test]
+fn picking_reveals_ancestors_and_snapshot_removal_clears_stale_selection() {
+    let mut studio = studio();
+    studio.start();
+    studio.snapshot =
+        Snapshot::parse(r#"{"schema":2,"nodes":[{"id":"root"},{"id":"child","parent":"root"}]}"#)
+            .expect("snapshot");
+    studio.collapsed.insert("root".into());
+    studio.select_node("child".into());
+    assert!(studio.collapsed.is_empty());
+    assert!(studio.inspector_details);
+    assert_eq!(
+        studio
+            .selection_path()
+            .iter()
+            .map(|n| n.id.as_str())
+            .collect::<Vec<_>>(),
+        vec!["root", "child"]
+    );
+    studio.handle("studio.child", r#"{"session":1,"event":"message","channel":"cranpose.inspector.v2.snapshot","payload":"{\"schema\":2,\"requestId\":2,\"nodes\":[]}"}"#);
+    assert!(studio.selected.is_empty());
+}
+
+#[test]
+fn rebuilt_ui_restores_running_session_without_restarting_application() {
+    let mut previous = studio();
+    previous.start();
+    previous.start();
+    previous.connected = true;
+    previous.pid = 42;
+    previous.settings.inspect = true;
+    previous.selected = "child".into();
+    previous
+        .source_maps
+        .push(("/cache/launcher".into(), "/project".into()));
+    let checkpoint = serde_json::to_value(&previous).expect("checkpoint");
+    assert!(
+        checkpoint.get("snapshot").is_none(),
+        "layout frames must not be copied into every checkpoint"
+    );
+    let mut restored = Studio::default();
+    let requests = restored.handle("studio.init", &json!({"root":"/project","cache":"/cache","checkpoint":checkpoint,"activeSession":2,"candidateSession":0}).to_string());
+    assert!(
+        requests.is_empty(),
+        "reconnection must not start another application"
+    );
+    assert!(restored.connected && restored.initialized && !restored.busy);
+    assert_eq!(restored.pid, 42);
+    assert_eq!(restored.selected, "child");
+    assert_eq!(restored.source_maps, previous.source_maps);
+    restored.targets = previous.targets;
+    assert_eq!(restored.start().expect("target")["session"], 3);
+}
+
+#[test]
+fn native_session_state_wins_over_a_stale_ui_checkpoint() {
+    let mut previous = studio();
+    previous.start();
+    previous.connected = true;
+    previous.pid = 42;
+    let mut restored = Studio::default();
+    restored.handle(
+        "studio.init",
+        &json!({"checkpoint":previous,"activeSession":0,"candidateSession":0}).to_string(),
+    );
+    assert_eq!(restored.session, 0);
+    assert_eq!(restored.pid, 0);
+    assert!(!restored.connected && !restored.busy);
+}

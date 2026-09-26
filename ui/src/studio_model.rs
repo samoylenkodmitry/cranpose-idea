@@ -61,7 +61,7 @@ impl Settings {
     }
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Deserialize)]
+#[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
 #[serde(default)]
 pub struct Preview {
     pub id: String,
@@ -145,6 +145,42 @@ pub struct Snapshot {
     pub nodes: Vec<Node>,
 }
 impl Snapshot {
+    pub fn rows(
+        &self,
+        query: &str,
+        collapsed: &std::collections::HashSet<String>,
+    ) -> Vec<cranpose_plugin_ux::tree::TreeRow> {
+        use cranpose_plugin_ux::tree::{TreeEntry, filter_tree};
+        let entries: Vec<_> = self
+            .nodes
+            .iter()
+            .map(|node| {
+                let mut text = format!(
+                    "{} {} {}",
+                    node.id,
+                    node.kind,
+                    node.text.as_deref().unwrap_or_default()
+                );
+                for source in &node.sources {
+                    text.push_str(&format!(" {} {}", source.name, source.file));
+                }
+                for modifier in &node.modifiers {
+                    text.push_str(&format!(" {}", modifier.name));
+                    for property in &modifier.properties {
+                        text.push_str(&format!(" {} {}", property.name, property.value));
+                    }
+                }
+                TreeEntry {
+                    id: &node.id,
+                    parent: node.parent.as_deref(),
+                    search_text: text.into(),
+                }
+            })
+            .collect();
+        // parse() validates all IDs and parent order before a snapshot can enter Studio.
+        filter_tree(&entries, query, collapsed).unwrap_or_default()
+    }
+
     pub fn parse(payload: &str) -> Result<Self, String> {
         let snapshot: Self = serde_json::from_str(payload).map_err(|error| error.to_string())?;
         if snapshot.schema != 2 {
@@ -177,20 +213,27 @@ impl Snapshot {
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct Diagnostic {
     pub message: String,
     pub file: Option<PathBuf>,
     pub line: u64,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[serde(default)]
 pub struct Studio {
     pub settings: Settings,
+    #[serde(skip)]
     pub targets: Vec<Target>,
     pub previews: Vec<Preview>,
+    #[serde(skip)]
     pub snapshot: Snapshot,
+    #[serde(skip)]
+    pub initialized: bool,
     pub selected: String,
+    pub collapsed: std::collections::HashSet<String>,
+    pub inspector_details: bool,
     pub status: String,
     pub menu: String,
     pub pick: bool,
@@ -220,7 +263,10 @@ impl Default for Studio {
             targets: vec![],
             previews: vec![],
             snapshot: Snapshot::default(),
+            initialized: false,
             selected: String::new(),
+            collapsed: Default::default(),
+            inspector_details: false,
             status: "Choose an application to start a preview".into(),
             menu: String::new(),
             pick: false,
@@ -247,6 +293,38 @@ impl Default for Studio {
 }
 
 impl Studio {
+    /// Picking or navigating a node reveals its ancestors without losing other folds.
+    pub fn select_node(&mut self, id: String) {
+        let mut current = self.snapshot.nodes.iter().find(|node| node.id == id);
+        if current.is_none() {
+            return;
+        }
+        self.selected = id;
+        self.inspector_details = true;
+        while let Some(parent) = current.and_then(|node| node.parent.as_deref()) {
+            self.collapsed.remove(parent);
+            current = self.snapshot.nodes.iter().find(|node| node.id == parent);
+        }
+    }
+
+    pub fn selection_path(&self) -> Vec<&Node> {
+        let mut path = Vec::new();
+        let mut current = self
+            .snapshot
+            .nodes
+            .iter()
+            .find(|node| node.id == self.selected);
+        while let Some(node) = current {
+            path.push(node);
+            current = node
+                .parent
+                .as_ref()
+                .and_then(|parent| self.snapshot.nodes.iter().find(|n| &n.id == parent));
+        }
+        path.reverse();
+        path
+    }
+
     pub fn target(&self) -> Option<&Target> {
         self.targets
             .iter()
@@ -308,6 +386,28 @@ impl Studio {
         let mut requests = Vec::new();
         match channel {
             "studio.init" => {
+                if let Ok(restored) = serde_json::from_value::<Self>(value["checkpoint"].clone()) {
+                    let targets = std::mem::take(&mut self.targets);
+                    *self = restored;
+                    self.targets = targets;
+                }
+                self.initialized = true;
+                if value.get("activeSession").is_some() {
+                    let active = value["activeSession"].as_u64().unwrap_or_default();
+                    let candidate = value["candidateSession"].as_u64().unwrap_or_default();
+                    self.session = if candidate > 0 { candidate } else { active };
+                    self.next_session = self.next_session.max(active).max(candidate);
+                    self.connected = active > 0;
+                    self.busy = candidate > 0;
+                    self.pending_start = false;
+                    self.menu.clear();
+                    if self.session == 0 {
+                        self.pid = 0;
+                        self.status = "Choose an application to start a preview".into();
+                    } else if !self.busy {
+                        self.status = "Preview reconnected · application state preserved".into();
+                    }
+                }
                 self.root = value["root"].as_str().unwrap_or_default().into();
                 self.cache = value["cache"].as_str().unwrap_or_default().into();
                 self.source = value["source"].as_str().unwrap_or_default().into();
@@ -363,6 +463,8 @@ impl Studio {
                     "connected" => {
                         self.snapshot = Snapshot::default();
                         self.selected.clear();
+                        self.collapsed.clear();
+                        self.inspector_details = false;
                         self.pid = 0;
                         self.generation = 0;
                         self.connected = true;
@@ -389,7 +491,7 @@ impl Studio {
                     "log" => self.log(value["line"].as_str().unwrap_or_default()),
                     "pointer" => {
                         if self.pick {
-                            self.selected = self
+                            let picked = self
                                 .snapshot
                                 .pick(
                                     value["x"].as_f64().unwrap_or_default() as f32,
@@ -397,6 +499,7 @@ impl Studio {
                                 )
                                 .map(|node| node.id.clone())
                                 .unwrap_or_default();
+                            self.select_node(picked);
                         }
                     }
                     "pan" => {
@@ -417,7 +520,13 @@ impl Studio {
                         "cranpose.inspector.v2.snapshot" => {
                             match Snapshot::parse(value["payload"].as_str().unwrap_or_default()) {
                                 Ok(snapshot) if snapshot.request_id >= self.snapshot.request_id => {
-                                    self.snapshot = snapshot
+                                    self.collapsed.retain(|id| {
+                                        snapshot.nodes.iter().any(|node| &node.id == id)
+                                    });
+                                    if !snapshot.nodes.iter().any(|node| node.id == self.selected) {
+                                        self.selected.clear();
+                                    }
+                                    self.snapshot = snapshot;
                                 }
                                 Err(error) => self.status = error,
                                 _ => {}
