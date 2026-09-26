@@ -151,12 +151,13 @@ impl Snapshot {
         collapsed: &std::collections::HashSet<String>,
     ) -> Vec<cranpose_plugin_ux::tree::TreeRow> {
         use cranpose_plugin_ux::tree::{TreeEntry, filter_tree};
+        let searching = !query.trim().is_empty();
         let entries: Vec<_> = self
             .nodes
             .iter()
             .map(|node| {
                 // Browsing the hierarchy needs no search strings or modifier formatting.
-                if query.trim().is_empty() {
+                if !searching {
                     return TreeEntry {
                         id: &node.id,
                         parent: node.parent.as_deref(),
