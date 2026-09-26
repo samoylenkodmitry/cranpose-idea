@@ -56,6 +56,9 @@ It copies the Cargo workspace to the IDE cache and adds Subsecond only to that
 private debug copy. Your sources, manifests, lockfile, profiles and release builds
 remain unchanged. Cranpose itself has no new hot-reload dependency or runtime code.
 The injected runtime refuses to compile without debug assertions.
+Generated helper crates are cached by their contents. Restarting with unchanged
+helpers reuses their Cargo artifacts, and running previews keep their original
+helper version when another plugin build generates newer code.
 
 Stopping or replacing a preview also stops its compiler and application. The shared
 Rust SDK owns their process group on Unix and their Job Object on Windows. Shutdown

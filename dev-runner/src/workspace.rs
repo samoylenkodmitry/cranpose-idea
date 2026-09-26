@@ -129,9 +129,11 @@ impl DevWorkspace {
             external_paths(document.as_table_mut(), base, &original);
             fs::write(destination, document.to_string())?;
         }
-        if hot_reload {
-            write_support(support)?;
-        }
+        let support = if hot_reload {
+            Some(write_support(support)?)
+        } else {
+            None
+        };
         let mut roots = BTreeMap::new();
         let mut packages = BTreeMap::new();
         for package in &metadata.packages {
@@ -179,7 +181,10 @@ impl DevWorkspace {
                     roots.insert(relative.to_owned(), alias.clone());
                 }
             }
-            instrument_manifest(&directory.join(manifest), support)?;
+            instrument_manifest(
+                &directory.join(manifest),
+                support.as_deref().context("hot-reload support")?,
+            )?;
         }
         let workspace = Self {
             original,
@@ -324,30 +329,22 @@ fn external_inline_paths(table: &mut InlineTable, base: &Path, original: &Path) 
     }
 }
 
-fn write_support(directory: &Path) -> Result<()> {
-    let runtime = directory
+fn write_support(directory: &Path) -> Result<PathBuf> {
+    let root = directory
         .parent()
         .context("support directory")?
-        .join("runtime");
-    fs::create_dir_all(runtime.join("src"))?;
-    fs::write(
-        runtime.join("Cargo.toml"),
-        "[package]\nname='cranpose-dev-runtime'\nversion='0.1.0'\nedition='2024'\n[workspace]\n[dependencies]\nsubsecond='=0.7.10'\ndioxus-devtools='=0.7.10'\n",
-    )?;
-    fs::write(
-        runtime.join("src/lib.rs"),
-        include_str!("../assets/shared_runtime.rs"),
-    )?;
-    fs::create_dir_all(directory.join("src"))?;
+        .join("bundles");
     let mut manifest = include_str!("../../dev-macros/Cargo.toml").parse::<DocumentMut>()?;
     manifest.remove("lints");
     manifest["workspace"] = Item::Table(toml_edit::Table::new());
-    fs::write(directory.join("Cargo.toml"), manifest.to_string())?;
-    fs::write(
-        directory.join("src/lib.rs"),
-        include_str!("../../dev-macros/src/lib.rs"),
-    )?;
-    Ok(())
+    let manifest = manifest.to_string();
+    let bundle = cranpose_plugin_cache::materialize(&root, &[
+        ("dev-macros/Cargo.toml", manifest.as_bytes()),
+        ("dev-macros/src/lib.rs", include_bytes!("../../dev-macros/src/lib.rs")),
+        ("runtime/Cargo.toml", b"[package]\nname='cranpose-dev-runtime'\nversion='0.1.0'\nedition='2024'\n[workspace]\n[dependencies]\nsubsecond='=0.7.10'\ndioxus-devtools='=0.7.10'\n"),
+        ("runtime/src/lib.rs", include_bytes!("../assets/shared_runtime.rs")),
+    ])?;
+    Ok(bundle.join("dev-macros"))
 }
 
 #[cfg(test)]

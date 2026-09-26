@@ -177,3 +177,37 @@ fn private_example_launcher_preserves_dev_dependencies_and_library_features() {
         manifest
     );
 }
+
+#[test]
+fn repeated_launches_reuse_support_without_touching_compiler_inputs() {
+    let temp = tempfile::tempdir().expect("cache");
+    let root = temp.path().join("support/dev-macros");
+    let first = write_support(&root).expect("support");
+    let source = first.join("src/lib.rs");
+    let stamp = std::time::SystemTime::UNIX_EPOCH + std::time::Duration::from_secs(123456);
+    fs::File::options()
+        .write(true)
+        .open(&source)
+        .expect("source")
+        .set_modified(stamp)
+        .expect("mtime");
+    let actual = fs::metadata(&source)
+        .expect("metadata")
+        .modified()
+        .expect("stamp");
+    assert_eq!(write_support(&root).expect("reused"), first);
+    assert_eq!(
+        fs::metadata(&source)
+            .expect("metadata")
+            .modified()
+            .expect("stamp"),
+        actual
+    );
+    assert!(
+        first
+            .parent()
+            .expect("bundle")
+            .join("runtime/src/lib.rs")
+            .is_file()
+    );
+}
