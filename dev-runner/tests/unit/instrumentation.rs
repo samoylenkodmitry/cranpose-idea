@@ -7,6 +7,14 @@ mod nested { /* λ */ #[cranpose::composable] fn Card() {} }
 "#;
     let result = instrument(source).expect("instrument unicode source");
     assert!(syn::parse_file(&result).is_ok(), "{result}");
+    assert!(
+        result.contains("/* é✓ */ #[cranpose_dev_macros::hot] #[composable]"),
+        "{result}"
+    );
+    assert!(
+        result.contains("/* λ */ #[cranpose_dev_macros::hot] #[cranpose::composable]"),
+        "{result}"
+    );
     assert_eq!(result.matches("#[cranpose_dev_macros::hot]").count(), 2);
     assert_eq!(source.lines().count(), result.lines().count());
 }

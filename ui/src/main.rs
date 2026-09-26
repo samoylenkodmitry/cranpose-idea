@@ -5,7 +5,12 @@ use cranpose_intellij_ui::ToolWindow;
 
 fn main() {
     let mut args = std::env::args().skip(1);
-    if args.next().as_deref() == Some("--dev-run") {
+    let mode = args.next();
+    if mode.as_deref() == Some("--stability") {
+        cranpose_intellij_ui::stability::stdio();
+        return;
+    }
+    if mode.as_deref() == Some("--dev-run") {
         let result = args
             .next()
             .ok_or_else(|| "missing development options".to_owned())

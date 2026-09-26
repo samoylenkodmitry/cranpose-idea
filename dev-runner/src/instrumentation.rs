@@ -6,13 +6,10 @@ pub fn instrument(source: &str) -> Result<String> {
     let file = syn::parse_file(source).context("parse Rust source for hot reload")?;
     let mut insertions = Vec::new();
     collect(&file.items, &mut insertions);
-    let lines: Vec<_> = std::iter::once(0)
-        .chain(source.match_indices('\n').map(|(offset, _)| offset + 1))
-        .collect();
     let mut output = source.to_owned();
     insertions.sort_unstable();
     for (line, column) in insertions.into_iter().rev() {
-        let offset = lines[line - 1] + column;
+        let offset = byte_offset(source, line, column);
         output.insert_str(offset, "#[cranpose_dev_macros::hot] ");
     }
     Ok(output)
@@ -46,3 +43,18 @@ fn collect(items: &[syn::Item], insertions: &mut Vec<(usize, usize)>) {
 #[cfg(test)]
 #[path = "../tests/unit/instrumentation.rs"]
 mod tests;
+
+pub(crate) fn byte_offset(source: &str, line: usize, column: usize) -> usize {
+    let base = source
+        .split_inclusive('\n')
+        .take(line.saturating_sub(1))
+        .map(str::len)
+        .sum::<usize>();
+    base + source
+        .get(base..)
+        .unwrap_or_default()
+        .chars()
+        .take(column)
+        .map(char::len_utf8)
+        .sum::<usize>()
+}

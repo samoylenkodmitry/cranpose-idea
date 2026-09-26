@@ -95,9 +95,18 @@ jobs:
           name: hot-reload-evidence
           path: '*-hot-reload.log'
 
+  stability:
+    name: Composable stability (sample)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: samoylenkodmitry/cranpose-stability@a7109ad90e90e725b57a99d8bdf39146e048eed7
+        with:
+          path: samples/counter
+
   plugin:
     name: Verified plugin (all platforms)
-    needs: [native, test, hot-reload]
+    needs: [native, test, hot-reload, stability]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7

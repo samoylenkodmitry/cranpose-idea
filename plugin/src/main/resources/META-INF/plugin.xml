@@ -11,15 +11,17 @@
             <li>Live layout trees, element picking, bounds, modifier properties and navigation to composable origins.</li>
             <li>Rust/Cranpose preview controls and inspector, with plugin-owned debug hot reload that preserves compatible live state.</li>
             <li>Persistent Cargo run configurations and source-linked compiler diagnostics.</li>
+            <li>Inline stability badges on Rust parameters, with explanations from the standalone Cranpose stability linter.</li>
             <li>Composable gutter markers, source navigation and component completions.</li>
             <li>Create a working Cranpose application in an empty project.</li>
         </ul>
         <p>Install JetBrains Rust support for full Rust language editing. Preview applications need
         Cranpose's preview feature. See the repository for setup and supported framework revisions.</p>
     ]]></description>
-    <change-notes><![CDATA[0.3: native Rust/Cranpose Studio controls and inspector; Subsecond hot reload in a private debug workspace; state-preserving compatible patches; compiler error recovery; explicit restart for structural edits. Application release builds remain unchanged.]]></change-notes>
+    <change-notes><![CDATA[0.4: inline parameter stability badges powered by the standalone Rust analyzer; unsaved-document analysis, explanations, shared CI configuration and suppressions. Retains native Cranpose Studio and isolated hot reload. Application release builds remain unchanged.]]></change-notes>
     <depends>com.intellij.modules.platform</depends>
     <extensions defaultExtensionNs="com.intellij">
+        <postStartupActivity implementation="dev.cranpose.intellij.StabilityStartup"/>
         <toolWindow id="Cranpose" anchor="right" icon="/icons/cranpose.svg"
                     factoryClass="dev.cranpose.intellij.CranposeToolWindowFactory"/>
         <notificationGroup id="Cranpose" displayType="BALLOON"/>
@@ -36,6 +38,8 @@
             <action id="Cranpose.Run" class="dev.cranpose.intellij.RunCranposeAction" text="Run Cranpose Target"/>
             <action id="Cranpose.Preview" class="dev.cranpose.intellij.PreviewCranposeAction" text="Preview Cranpose Target"/>
             <separator/>
+            <action id="Cranpose.StabilityBadges" class="dev.cranpose.intellij.ToggleStabilityBadgesAction" text="Show Stability Badges"/>
+            <action id="Cranpose.StableBadges" class="dev.cranpose.intellij.ToggleStableBadgesAction" text="Include Stable Parameters"/>
             <action id="Cranpose.Docs" class="dev.cranpose.intellij.CranposeDocsAction" text="Cranpose Documentation"/>
         </group>
     </actions>

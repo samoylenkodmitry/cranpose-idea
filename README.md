@@ -76,6 +76,33 @@ paths and are not watched for patches.
 Use **Fit** for the whole viewport, or a fixed zoom and **Alt+wheel** to pan
 vertically (**Alt+Shift+wheel** horizontally). The size menu also accepts custom dimensions.
 
+## Parameter stability
+
+The editor shows inline badges beside composable parameter types. Hover a badge for
+the comparison rule, its consequences, and suggested next steps. Analysis uses
+unsaved Rust text and runs in the bundled native process.
+
+- **stable:** a visible value-comparison contract.
+- **unstable:** callbacks Cranpose marks changed on each parent invocation.
+- **shared mutation:** retained parameters may alias newly mutated storage.
+- **incompatible:** the type lacks a required parameter comparison trait.
+- **unknown:** the contract needs compiler resolution or manual review.
+- **no skip:** the function does not generate parameter comparison.
+
+Use **Tools → Cranpose → Show Stability Badges** to toggle them, or **Include Stable
+Parameters** to reduce visual detail. The same `cranpose-stability.toml` configuration
+and reasoned suppressions work in the IDE and CI.
+
+The engine is the separate Rust project [Cranpose Stability](https://github.com/samoylenkodmitry/cranpose-stability).
+It supplies a standalone CLI, GitHub Action, JSON reports and SARIF output.
+The plugin bundles the engine; installing another tool is unnecessary.
+
+Cranpose uses `Clone + PartialEq` for ordinary parameters. The linter follows those
+rules, including callback handling and shared mutation, rather than Kotlin collection
+stability rules. This is source analysis, not measured recomposition cost. External,
+generated and ambiguous contracts remain unknown. Full scope and rule documentation
+are in the linter repository.
+
 ## Cargo workflow
 
 The Cranpose tool window discovers workspace binaries and examples with a direct
@@ -152,6 +179,7 @@ See [Publishing](docs/publishing.md) for signing and the separate Marketplace st
 - `CranposeProjectService.kt`: project-scoped Cargo processes and compiler diagnostics.
 - `ui/src/studio.rs` / `studio_model.rs`: native preview controls, session state, layout inspector, picking and diagnostics.
 - `dev-runner` / `dev-macros`: private debug workspace, compiler provisioning, compatible edit checks and hot-call instrumentation.
+- `ui/src/stability.rs`: standalone Rust linter integration and badge descriptions; `StabilityService.kt` supplies document snapshots and editor inlays.
 - `PreviewFileEditor.kt` / `PreviewWorkspace.kt`: IntelliJ editor services, native surface placement, process lifecycle and source navigation.
 - `CranposeRunConfiguration.kt`: persistent IDE run configurations.
 - `CranposeEditorSupport.kt`: completions and gutter markers.
@@ -164,6 +192,11 @@ See [Publishing](docs/publishing.md) for signing and the separate Marketplace st
 Apache-2.0. Built from the
 [Cranpose IntelliJ plugin template](https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template)
 and powered by [Cranpose](https://github.com/samoylenkodmitry/Cranpose).
+The stability badge presentation was inspired by
+[Compose Stability Analyzer](https://github.com/skydoves/compose-stability-analyzer).
+The analysis engine and badge descriptions are Rust; the JVM adapter uses IntelliJ's
+editor inlay API for placement, font scaling, theme colors and tooltips.
+
 Hot reload uses [Dioxus Subsecond and the Dioxus CLI](https://github.com/DioxusLabs/dioxus),
 dual-licensed under MIT and Apache-2.0.
 

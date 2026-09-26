@@ -30,7 +30,8 @@ fn development_copy_preserves_every_original_byte() {
     let root = temp.path().join("app");
     fs::create_dir_all(root.join("src")).expect("source directory");
     let manifest = "[package]\nname='app'\nversion='0.1.0'\n[dependencies]\ncranpose='0.1'\n[profile.release]\nlto=true\n";
-    let source = "#![forbid(unsafe_code)]\n#[cranpose::composable]\nfn App() {}\nfn main() {}\n";
+    let source =
+        "#![forbid(unsafe_code)]\n/* hé😀 */ #[cranpose::composable]\nfn App() {}\nfn main() {}\n";
     fs::write(root.join("Cargo.toml"), manifest).expect("manifest");
     fs::write(root.join("Cargo.lock"), "untouched lockfile").expect("lock");
     fs::write(root.join("src/main.rs"), source).expect("source");
@@ -56,6 +57,7 @@ fn development_copy_preserves_every_original_byte() {
         fs::read_to_string(workspace.directory.join("src/main.rs")).expect("private source");
     assert_eq!(copied.lines().count(), source.lines().count());
     assert!(copied.contains("#[cranpose_dev_macros::hot] #[cranpose::composable]"));
+    assert!(copied.contains("/* hé😀 */ extern crate"), "{copied}");
     assert!(copied.starts_with("#![forbid(unsafe_code)]\n"));
     assert!(syn::parse_file(&copied).is_ok());
     assert!(

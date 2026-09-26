@@ -187,35 +187,9 @@ pub fn FieldNotes() {
                     typography(palette.muted, 14.0, false),
                 );
             }
-            Row(
-                Modifier::empty().fill_max_width(),
-                RowSpec::default().horizontal_arrangement(LinearArrangement::SpaceBetween),
-                move || {
-                    Column(Modifier::empty(), ColumnSpec::default(), move || {
-                        Text(
-                            format!("{:02} observations", collected.get()),
-                            Modifier::empty(),
-                            typography(palette.text, 14.0, true),
-                        );
-                        Text(
-                            "A collection of small things",
-                            Modifier::empty(),
-                            typography(palette.muted, 11.0, false),
-                        );
-                    });
-                    Button(
-                        Modifier::empty()
-                            .background(palette.accent)
-                            .rounded_corners(20.0)
-                            .padding(12.0),
-                        ButtonSpec::default(),
-                        move || collected.set(collected.get() + 1),
-                        move || {
-                            Text("+", Modifier::empty(), typography(palette.page, 18.0, true));
-                        },
-                    );
-                },
-            );
+            ObservationCounter(collected.get(), "A collection of small things", move || {
+                collected.set(collected.get() + 1)
+            });
         },
     );
 }
@@ -245,6 +219,44 @@ pub fn StatusCard() {
                 "Your observations are right here.",
                 Modifier::empty(),
                 typography(palette.muted, 13.0, false),
+            );
+        },
+    );
+}
+
+#[composable]
+fn ObservationCounter(count: i32, description: &'static str, on_add: impl Fn() + 'static) {
+    let on_add = std::rc::Rc::new(on_add);
+    let palette = ink(isSystemInDarkTheme());
+    Row(
+        Modifier::empty().fill_max_width(),
+        RowSpec::default().horizontal_arrangement(LinearArrangement::SpaceBetween),
+        move || {
+            Column(Modifier::empty(), ColumnSpec::default(), move || {
+                Text(
+                    format!("{count:02} observations"),
+                    Modifier::empty(),
+                    typography(palette.text, 14.0, true),
+                );
+                Text(
+                    description,
+                    Modifier::empty(),
+                    typography(palette.muted, 11.0, false),
+                );
+            });
+            Button(
+                Modifier::empty()
+                    .background(palette.accent)
+                    .rounded_corners(20.0)
+                    .padding(12.0),
+                ButtonSpec::default(),
+                {
+                    let on_add = on_add.clone();
+                    move || on_add()
+                },
+                move || {
+                    Text("+", Modifier::empty(), typography(palette.page, 18.0, true));
+                },
             );
         },
     );
