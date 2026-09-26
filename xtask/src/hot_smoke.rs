@@ -250,7 +250,7 @@ pub fn run(options: Options) -> Result<()> {
     }
     let patched = cleanup
         .original
-        .replace("Increment", "Add two!!")
+        .replace("\"Increment\"", "\"Add two!!\"")
         .replace("count.get() + 1", "count.get() + 2");
     ensure!(patched != cleanup.original, "Fixture lacks patch point");
     fs::write(&cleanup.source, &patched)?;

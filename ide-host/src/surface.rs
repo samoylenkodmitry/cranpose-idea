@@ -128,6 +128,8 @@ impl Panel {
     pub fn message(&self, channel: &str, payload: &str) {
         self.send(Packet::message(channel, payload));
     }
+    #[cfg(feature = "ide-tests")]
+    pub fn connected(&self)->bool {self.state.lock().expect("panel").connected}
     pub fn set_theme(&self, dark: bool) {
         let changed = {
             let mut state = self.state.lock().expect("panel");
@@ -238,6 +240,13 @@ impl Panel {
                     }
                 }
                 SessionEvent::Log(line) => {
+                    let logger = j.static_obj(
+                        "com/intellij/openapi/diagnostic/Logger",
+                        "getInstance",
+                        "(Ljava/lang/String;)Lcom/intellij/openapi/diagnostic/Logger;",
+                        &[A::S("dev.cranpose.native")],
+                    )?;
+                    j.void(&logger, "info", "(Ljava/lang/String;)V", &[A::S(&line)])?;
                     let callback = self.on_message.lock().expect("callback").clone();
                     if let Some(callback) = callback {
                         callback(j, self, "host.log", &line)?;

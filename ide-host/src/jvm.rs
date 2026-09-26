@@ -250,10 +250,13 @@ pub fn register(
     id
 }
 pub fn unregister(id: i64) {
-    handlers()
+    // Dropping a callback can dispose its captured Scope and unregister other
+    // callbacks. Release the registry lock before running those destructors.
+    let removed = handlers()
         .lock()
         .expect("callback registry poisoned")
         .remove(&id);
+    drop(removed);
 }
 pub fn invoke(j: &mut J<'_>, id: i64, operation: &str, args: &[O]) -> Result<O> {
     let handler = handlers()
@@ -284,7 +287,8 @@ impl Scope {
         id
     }
     pub fn clear(&self) {
-        for id in self.ids.lock().expect("scope poisoned").drain(..) {
+        let ids = std::mem::take(&mut *self.ids.lock().expect("scope poisoned"));
+        for id in ids {
             unregister(id);
         }
     }
@@ -318,4 +322,26 @@ pub fn later(
         return Err(error);
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn callback_destructors_can_unregister_other_callbacks() {
+        struct Remove(i64);
+        impl Drop for Remove {
+            fn drop(&mut self) {
+                unregister(self.0);
+            }
+        }
+        let child = register(|j, _, _| j.null());
+        let remove = Remove(child);
+        let parent = register(move |j, _, _| {
+            let _keep = &remove;
+            j.null()
+        });
+        unregister(parent);
+        assert!(!handlers().lock().expect("registry").contains_key(&child));
+    }
 }

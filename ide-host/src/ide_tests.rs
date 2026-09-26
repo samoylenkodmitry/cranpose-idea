@@ -176,6 +176,17 @@ fn configuration(j: &mut J<'_>) -> Result<()> {
         no_default_features: true,
         ..Config::default()
     };
+    p.snapshot.lock().expect("snapshot").targets = vec![crate::model::Target {
+        package_name: config.package.clone(),
+        name: config.target.clone(),
+        kind: "bin".into(),
+        manifest: config.manifest.clone(),
+        source: "src/main.rs".into(),
+        features: vec![],
+        cranpose_dependency: Some("cranpose".into()),
+        id: "counter".into(),
+        label: "cranpose-counter".into(),
+    }];
     run_configuration::store(j, &original, &config)?;
     let xml = j.new(
         "org/jdom/Element",
@@ -251,7 +262,7 @@ fn configuration(j: &mut J<'_>) -> Result<()> {
     let deadline = Instant::now() + Duration::from_secs(20);
     while panel.primary.snapshot().is_none() && Instant::now() < deadline {
         panel.tick(j)?;
-        panel.send(Packet::new(1).int(0).int(660).int(520).float(1.).float(60.));
+        panel.send(Packet::new(1).int(0).int(660).int(520).float(2.).float(60.));
         panel.send(Packet::new(13).int(0).byte(1));
         std::thread::sleep(Duration::from_millis(20));
     }
@@ -259,6 +270,17 @@ fn configuration(j: &mut J<'_>) -> Result<()> {
         panel.primary.snapshot().is_some(),
         "Cranpose settings did not render"
     );
+    // The platform may reset an editor repeatedly while opening a modal dialog.
+    // Keep the native UI alive beyond its first frame and exercise those resets.
+    for _ in 0..3 {
+        j.void(&editor,"resetFrom","(Ljava/lang/Object;)V",&[A::O(&restored)])?;
+        let deadline=Instant::now()+Duration::from_millis(500);
+        while Instant::now()<deadline {
+            panel.tick(j)?;
+            std::thread::sleep(Duration::from_millis(10));
+        }
+        ensure!(panel.connected(),"Cranpose settings exited after resetting a populated form");
+    }
     j.void(
         &editor,
         "applyTo",

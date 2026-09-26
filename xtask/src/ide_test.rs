@@ -27,7 +27,7 @@ pub fn run(ide: &Path) -> Result<()> {
         .find(|v| {
             v["arch"]
                 .as_str()
-                .is_none_or(|s| s == std::env::consts::ARCH)
+                .is_none_or(|s| crate::package::arch_aliases(std::env::consts::ARCH).contains(&s))
         })
         .context("Host IDE architecture")?;
     let sandbox = crate::target_dir().join("ide-tests");
