@@ -469,25 +469,7 @@ fn tooltip(project: &Project, j: &mut J<'_>, event: &O, immediate: bool) -> Resu
     let Some((id, badge)) = badge else {
         return Ok(());
     };
-    let detail = escape(&badge.detail).replace('\n', "<br>");
-    let label = j.new(
-        "javax/swing/JLabel",
-        "(Ljava/lang/String;)V",
-        &[A::S(&format!(
-            "<html><body style='width: 360px'>{detail}</body></html>"
-        ))],
-    )?;
-    let component = j.obj(
-        &editor,
-        "getContentComponent",
-        "()Ljavax/swing/JComponent;",
-        &[],
-    )?;
-    let tooltip = j.new(
-        "com/intellij/ide/IdeTooltip",
-        "(Ljava/awt/Component;Ljava/awt/Point;Ljavax/swing/JComponent;[Ljava/lang/Object;)V",
-        &[A::O(&component), A::O(&point), A::O(&label), A::Null],
-    )?;
+    let tooltip = badge_tooltip(j, &editor, &point, &badge.detail)?;
     let manager = j.static_obj(
         "com/intellij/ide/IdeTooltipManager",
         "getInstance",
@@ -504,6 +486,29 @@ fn tooltip(project: &Project, j: &mut J<'_>, event: &O, immediate: bool) -> Resu
     state.tooltip = Some(tooltip);
     state.hovered = Some(id);
     Ok(())
+}
+fn badge_tooltip(j: &mut J<'_>, editor: &O, point: &O, detail: &str) -> Result<O> {
+    let detail = escape(detail).replace('\n', "<br>");
+    let label = j.new(
+        "javax/swing/JLabel",
+        "(Ljava/lang/String;)V",
+        &[A::S(&format!(
+            "<html><body style='width: 360px'>{detail}</body></html>"
+        ))],
+    )?;
+    let component = j.obj(
+        editor,
+        "getContentComponent",
+        "()Ljavax/swing/JComponent;",
+        &[],
+    )?;
+    // Java varargs must be an array even when there are no equality keys.
+    let keys = j.array("java/lang/Object", &[])?;
+    j.new(
+        "com/intellij/ide/IdeTooltip",
+        "(Ljava/awt/Component;Ljava/awt/Point;Ljavax/swing/JComponent;[Ljava/lang/Object;)V",
+        &[A::O(&component), A::O(point), A::O(&label), A::O(&keys)],
+    )
 }
 pub fn escape(text: &str) -> String {
     text.replace('&', "&amp;")
@@ -710,7 +715,15 @@ pub(crate) fn integration_test(
         )?,
         "Badge disposal"
     );
-    let _ = editor;
+    let point = j.new("java/awt/Point", "(II)V", &[A::I(10), A::I(10)])?;
+    let tip = badge_tooltip(
+        j,
+        editor,
+        &point,
+        "Callback <Fn()> & explanation\nSuppression reason",
+    )?;
+    ensure!(!tip.is_null(), "Stability explanation tooltip");
+    j.void(&tip, "hide", "()V", &[])?;
     project.stability.lock().expect("state").enabled = false;
     Ok(())
 }
