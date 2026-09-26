@@ -54,7 +54,12 @@ class PreviewWorkspace(private val project: Project, private val source: Virtual
     private val properties = JTable(propertyModel)
     private val problemsModel = DefaultListModel<CargoDiagnostic>()
     private val problems = JBList(problemsModel)
-    private val inspector = JSplitPane(JSplitPane.HORIZONTAL_SPLIT, JBScrollPane(tree), JBScrollPane(properties))
+    private val inspector = object : JSplitPane(HORIZONTAL_SPLIT, JBScrollPane(tree), JBScrollPane(properties)) {
+        override fun doLayout() {
+            if (dividerLocation <= 1 && width > 1) setDividerLocation(0.45)
+            super.doLayout()
+        }
+    }
     private val content = JSplitPane(JSplitPane.VERTICAL_SPLIT, viewport, inspector)
     private val problemPane = JBScrollPane(problems)
     private val body = JPanel(BorderLayout())

@@ -33,6 +33,7 @@ class ComponentPreviewIntegrationTest {
         messages.clear()
         val descriptor = requireNotNull(selected)
         CranposeSession.start(listOf(binary), null, listener, {}, environment = mapOf("CRANPOSE_PREVIEW" to descriptor.id)).use { session ->
+            session.host.theme(false)
             session.host.resize(0, descriptor.width, descriptor.height, 1f, 60f)
             session.host.visibility(0, true)
             val first = requireNotNull(frames.poll(20, TimeUnit.SECONDS))
@@ -55,6 +56,22 @@ class ComponentPreviewIntegrationTest {
             assertTrue(label.sources.any { it.name == "StatusCard" && it.file.endsWith("gallery.rs") && it.line > 0 })
             assertTrue(tree.nodes.any { it.modifiers.any { m -> m.name.contains("padding", true) } })
             assertNotNull(tree.pick(label.x + 1, label.y + 1))
+            session.host.theme(true)
+            val themed = requireNotNull(frames.poll(15, TimeUnit.SECONDS))
+            session.host.frameAck(themed.surface, themed.frameId)
+            session.host.message("cranpose.inspector.v2.request", "74")
+            val themeDeadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(15)
+            var afterTheme: InspectionSnapshot? = null
+            while (System.nanoTime() < themeDeadline && afterTheme == null) {
+                val message = messages.poll(200, TimeUnit.MILLISECONDS)
+                if (message?.channel == "cranpose.inspector.v2.snapshot") afterTheme = InspectionSnapshot.parse(message.payload)
+                while (true) { val frame = frames.poll() ?: break; session.host.frameAck(frame.surface, frame.frameId) }
+            }
+            val themedLabels = requireNotNull(afterTheme).nodes.filter { it.kind == "Text" }
+            assertEquals(3, themedLabels.size)
+            assertTrue(themedLabels.toString(), themedLabels.all { node ->
+                node.sources.any { it.name == "StatusCard" && it.file.endsWith("gallery.rs") }
+            })
             System.getProperty("cranpose.test.output")?.let { path ->
                 java.nio.file.Files.createDirectories(Path.of(path))
                 java.nio.file.Files.writeString(Path.of(path, "component-tree.json"), com.google.gson.Gson().toJson(tree))

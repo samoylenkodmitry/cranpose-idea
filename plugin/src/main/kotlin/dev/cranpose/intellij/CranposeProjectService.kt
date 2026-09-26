@@ -91,6 +91,10 @@ class CranposeProjectService(private val project: Project) : Disposable {
     }
 
     fun execute(task: CargoTask, targetId: String = snapshot.selected, receiver: ((CargoTarget, Path) -> Unit)? = null) {
+        later { executeOnEdt(task, targetId, receiver) }
+    }
+
+    private fun executeOnEdt(task: CargoTask, targetId: String, receiver: ((CargoTarget, Path) -> Unit)?) {
         if (!trusted()) return
         val target = snapshot.targets.firstOrNull { it.id == targetId } ?: return
         if (!busy.compareAndSet(false, true)) {
@@ -199,7 +203,8 @@ class CranposeProjectService(private val project: Project) : Disposable {
     }
 
     private fun later(block: () -> Unit) {
-        ApplicationManager.getApplication().invokeLater({ if (!disposed && !project.isDisposed) block() }, project.disposed)
+        ApplicationManager.getApplication().invokeLater({ if (!disposed && !project.isDisposed) block() },
+            com.intellij.openapi.application.ModalityState.nonModal(), project.disposed)
     }
 
     override fun dispose() {

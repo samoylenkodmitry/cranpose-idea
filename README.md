@@ -28,7 +28,7 @@ The [sample](samples/counter) pins the tested revision:
 
 ```toml
 [dependencies]
-cranpose = { git = "https://github.com/samoylenkodmitry/Cranpose", rev = "944f8377c67654092b7744dbdf82fee8b6871cc2", features = ["desktop", "preview"] }
+cranpose = { git = "https://github.com/samoylenkodmitry/Cranpose", rev = "e177b19985c303a13fcf40d61decc7253fdbe057", features = ["desktop", "preview"] }
 ```
 
 ```rust

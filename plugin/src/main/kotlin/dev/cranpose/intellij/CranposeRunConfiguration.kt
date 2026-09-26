@@ -123,11 +123,10 @@ class CranposeRunConfiguration(project: Project, factory: ConfigurationFactory, 
             val manager = RunManager.getInstance(project)
             val settings = manager.createConfiguration(target.name, type.configurationFactories.single())
             (settings.configuration as CranposeRunConfiguration).useTarget(target)
-            manager.addConfiguration(settings)
-            manager.selectedConfiguration = settings
-            com.intellij.execution.actions.EditRunConfigurationsAction().actionPerformed(
-                com.intellij.openapi.actionSystem.AnActionEvent.createFromDataContext("Cranpose", null,
-                    com.intellij.openapi.actionSystem.DataContext { key -> if (key == "project") project else null }))
+            if (com.intellij.execution.impl.RunDialog.editConfiguration(project, settings, "Save Cranpose Configuration")) {
+                manager.addConfiguration(settings)
+                manager.selectedConfiguration = settings
+            }
         }
     }
 }
