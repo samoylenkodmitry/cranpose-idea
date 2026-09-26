@@ -152,40 +152,47 @@ Marketplace publication is a separate step.
 
 ## Develop
 
+All authored implementation and tooling is Rust. Cranpose renders the Studio,
+tool window and Cargo settings form. Rust generates the small JVM class adapters
+required by IntelliJ extension points; there is no Kotlin/Java source or compiler
+in the build. IntelliJ's own JVM runtime remains a platform dependency.
+
 ```sh
 cargo fmt --all --check
 cargo test --locked --no-default-features --workspace
-cargo clippy --locked --no-default-features --workspace --all-targets -- -D warnings
-python3 -m unittest discover -s scripts/tests
-cd plugin
-./gradlew test buildPlugin
-./gradlew verifyPlugin
-./gradlew runIde -PrunIdeProject=/path/to/cargo/project
+cargo clippy --locked --no-default-features --workspace --all-targets --features cranpose-ide-host/ide-tests -- -D warnings
+cargo run -p xtask -- release audit-source
+cargo run -p xtask -- package
+cargo run -p xtask -- ide-test --ide /path/to/IntelliJ-IDEA
+
 ```
 
-Gradle downloads the configured IDEA and a Java 21 toolchain when needed.
-Use `-PplatformLocalPath=/path/to/RustRover.app` for an installed IDE.
-The native UI runs in a separate process. For UI hot reload, build it and pass
-`-PcranposeUiBinary=/absolute/path/to/target/debug/cranpose-intellij-ui` to `runIde`.
+Local packaging writes a ZIP for this machine under `target/plugin`.
+The native IDE suite starts a separate headless IDEA with isolated settings and
+runs Rust assertions through the real plugin class loader. It checks frame updates,
+native rendering, configuration persistence and stale-result handling for badges.
+Its logs, JSON results and rendered images are under `target/ide-tests`.
+Use IDEA for the headless suite; RustRover's standalone launcher requires a license
+in the isolated configuration. Both products are checked by Plugin Verifier.
 
-CI builds native binaries for macOS, Linux and Windows on aarch64 and x86_64,
-runs tests with software Vulkan, verifies IDEA/RustRover compatibility, and bundles
-one plugin ZIP. Local `buildPlugin` bundles the current machine's binary.
-See [Publishing](docs/publishing.md) for signing and the separate Marketplace step.
+On Linux, `cargo run -p xtask -- fetch-ide` downloads the pinned IDEA SDK and
+checks its official SHA-256. `bridge-test --ide /path/to/IDE` also verifies the
+generated adapters with full JVM verification and JNI checking.
+
+CI builds native hosts and UIs for macOS, Linux and Windows on aarch64 and x86_64.
+The live hot-reload harness is Rust as well. It tests binary and library applications,
+state retention, compiler errors, invalid syntax, incompatible state changes and recovery.
+One ZIP contains all six platforms. See [Publishing](docs/publishing.md).
 
 ## Architecture
 
-- `ui/src/dashboard.rs`: Cranpose-rendered workspace controls and source navigation.
-- `CranposeProjectService.kt`: project-scoped Cargo processes and compiler diagnostics.
-- `ui/src/studio.rs` / `studio_model.rs`: native preview controls, session state, layout inspector, picking and diagnostics.
-- `dev-runner` / `dev-macros`: private debug workspace, compiler provisioning, compatible edit checks and hot-call instrumentation.
-- `ui/src/stability.rs`: standalone Rust linter integration and badge descriptions; `StabilityService.kt` supplies document snapshots and editor inlays.
-- `PreviewFileEditor.kt` / `PreviewWorkspace.kt`: IntelliJ editor services, native surface placement, process lifecycle and source navigation.
-- `CranposeRunConfiguration.kt`: persistent IDE run configurations.
-- `CranposeEditorSupport.kt`: completions and gutter markers.
-- The template's session and surface code provides authenticated native transport,
-  scaling, input, lifecycle callbacks and pixel capture.
-- Cranpose supplies compiled fixture registration, layout metadata and source origins.
+- `ui`: Cranpose workspace controls, Studio, inspector, run settings and analyzer integration.
+- `ide-host`: Rust project services, editor integration, inline badges, persistent run configurations, input, native surfaces and authenticated transport.
+- `jvm-bridge`: a Rust class-file writer for thin IntelliJ extension adapters. All behavior is dispatched to the native Rust host.
+- `xtask`: Rust packaging, IDE tests, hot-reload tests, source-language checks, verification, signing and release tools.
+- `dev-runner` / `dev-macros`: private debug workspace, compiler provisioning, edit compatibility checks and hot-call instrumentation.
+- [Cranpose Stability](https://github.com/samoylenkodmitry/cranpose-stability): the separate Rust analyzer and CI action, pinned by commit.
+- Cranpose supplies component registration, layout metadata, source origins and rendering.
 
 ## Credits and license
 

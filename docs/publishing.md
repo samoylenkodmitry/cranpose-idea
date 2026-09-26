@@ -1,42 +1,56 @@
-# Publishing
+# Publishing Cranpose
 
-Marketplace publication is a separate, manual step. Ordinary pushes and tags
-build and verify artifacts; they never publish this plugin.
+Marketplace publication is a separate, manual step. Build and test the exact tagged
+commit before using this workflow.
 
-## Before the first upload
+## Prepare
 
-1. Use a green Build run for the exact commit to be published. Its `plugin`
-   artifact contains all six native binaries.
-2. Install that ZIP in IDEA and RustRover and exercise the sample counter:
-   discovery, check, run, preview, click, rebuild, theme switch and inspection.
-3. Review the plugin name, vendor, description, icon, screenshots, license and
-   privacy statement. No telemetry is sent; Cargo may access the registries and
-   Git repositories configured by the opened project.
-4. Set the desired version in `plugin/gradle.properties` and add its changelog entry.
-5. Configure these repository secrets, using the same names as Zeus Thunderbolt
-   and DiffTrack: `PUBLISH_TOKEN`, `CERTIFICATE_CHAIN`, `PRIVATE_KEY`,
-   `PRIVATE_KEY_PASSWORD`. No credentials are stored in this repository.
+1. Set the semantic version in `plugin/VERSION` and update the change notes in
+   `plugin/src/main/resources/META-INF/plugin.xml`.
+2. Merge the change and wait for the Build workflow. It runs Rust tests, the real IDEA
+   integration suite, hot-reload recovery checks, the stability action and Plugin
+   Verifier against IDEA and RustRover.
+3. Create a matching `vX.Y.Z` tag. The Publish workflow requires a successful Build
+   for that exact commit and signs its existing all-platform artifact.
 
-JetBrains' [first-upload guide](https://plugins.jetbrains.com/docs/marketplace/uploading-a-new-plugin.html)
-covers creating the Marketplace listing. Its
-[signing guide](https://plugins.jetbrains.com/docs/intellij/plugin-signing.html)
-describes certificates and token setup.
+The source audit rejects authored Kotlin, Java, Python and shell scripts. Workflow
+YAML invokes Rust tools and third-party setup actions.
 
-## Subsequent releases
+## First Marketplace upload
 
-Create a `vX.Y.Z` tag matching `pluginVersion` at a green source commit.
-Run the **Publish** workflow manually for that tag. It requires the repository's
-`marketplace` environment, downloads the native artifacts from the successful
-Build run for that exact commit, validates all platforms, verifies compatibility,
-signs and publishes the plugin. Configure required reviewers on that environment
-if release approval is desired.
+Create the Marketplace listing manually using the verified plugin ZIP. Set the
+repository URL, Apache-2.0 license, description, screenshots and credits. Record the
+numeric Marketplace plugin ID for later updates.
 
-The workflow is ready for a configured Marketplace listing; it has not been run
-as part of implementation.
+Credits follow [Zeus Thunderbolt](https://github.com/samoylenkodmitry/Zeus-Thunderbolt-Idea-Plugin)
+and [DiffTrack](https://github.com/samoylenkodmitry/difftrack). Retain the Cranpose,
+template, Subsecond and Compose Stability Analyzer credits in the README.
 
-## Local package
+## Signing and later updates
 
-`cd plugin && ./gradlew buildPlugin` creates a ZIP for the current OS/CPU.
-For a release, download the six `native-*` Build artifacts into `native/`, run
-`python3 scripts/release.py arrange-native native`, then build with
-`./gradlew buildPlugin -PcranposeNativeDir=/absolute/path/to/native`.
+Configure the `marketplace` GitHub environment with:
+
+- `CERTIFICATE_CHAIN`: PEM certificate chain.
+- `PRIVATE_KEY`: PEM private key.
+- `PRIVATE_KEY_PASSWORD`: optional key password.
+- `PUBLISH_TOKEN`: JetBrains permanent upload token.
+
+Run **Publish** manually with the matching tag and Marketplace numeric ID.
+Rust tooling validates the tag, locates the successful build, checks all six native
+UIs and hosts, signs with JetBrains ZIP Signer 0.1.43, and uploads the signed file.
+Keys are written only to temporary files and removed when the signer exits.
+
+Local commands, for an already verified all-platform archive:
+
+```sh
+cargo run -p xtask -- release validate-tag v0.5.0
+cargo run -p xtask -- release check-zip target/plugin/cranpose-idea-0.5.0.zip
+cargo run -p xtask -- release verify target/plugin/cranpose-idea-0.5.0.zip --ide /path/to/IDE
+cargo run -p xtask -- release sign target/plugin/cranpose-idea-0.5.0.zip signed-plugin.zip
+cargo run -p xtask -- release publish signed-plugin.zip --plugin-id YOUR_MARKETPLACE_ID
+
+```
+
+The last command publishes an update; run it only when ready to submit to Marketplace.
+The upload format follows [JetBrains' API](https://plugins.jetbrains.com/docs/marketplace/plugin-upload.html).
+Signing follows [JetBrains' signing documentation](https://plugins.jetbrains.com/docs/intellij/plugin-signing.html).

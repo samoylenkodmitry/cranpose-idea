@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin require-restart="true">
     <id>dev.cranpose.idea</id>
     <name>Cranpose</name>
     <vendor url="https://github.com/samoylenkodmitry">Dmitry Samoylenko</vendor>
@@ -18,29 +18,29 @@
         <p>Install JetBrains Rust support for full Rust language editing. Preview applications need
         Cranpose's preview feature. See the repository for setup and supported framework revisions.</p>
     ]]></description>
-    <change-notes><![CDATA[0.4: inline parameter stability badges powered by the standalone Rust analyzer; unsaved-document analysis, explanations, shared CI configuration and suppressions. Retains native Cranpose Studio and isolated hot reload. Application release builds remain unchanged.]]></change-notes>
+    <change-notes><![CDATA[0.5: native Rust IDE integration and Cranpose run settings. Rust generates the thin JVM extension adapters; the host, analyzer, tests, packaging and release tooling are written in Rust. Includes native previews, inspector, persistent Cargo configurations, inline stability badges and isolated development hot reload.]]></change-notes>
     <depends>com.intellij.modules.platform</depends>
     <extensions defaultExtensionNs="com.intellij">
-        <postStartupActivity implementation="dev.cranpose.intellij.StabilityStartup"/>
+        <postStartupActivity implementation="dev.cranpose.rust.Startup"/>
         <toolWindow id="Cranpose" anchor="right" icon="/icons/cranpose.svg"
-                    factoryClass="dev.cranpose.intellij.CranposeToolWindowFactory"/>
+                    factoryClass="dev.cranpose.rust.ToolWindow"/>
         <notificationGroup id="Cranpose" displayType="BALLOON"/>
-        <fileEditorProvider implementation="dev.cranpose.intellij.CranposePreviewEditorProvider"/>
-        <configurationType implementation="dev.cranpose.intellij.CranposeConfigurationType"/>
-        <codeInsight.lineMarkerProvider language="Rust" implementationClass="dev.cranpose.intellij.CranposeLineMarker"/>
-        <completion.contributor language="any" implementationClass="dev.cranpose.intellij.CranposeCompletion"/>
+        <fileEditorProvider implementation="dev.cranpose.rust.PreviewProvider"/>
+        <configurationType implementation="dev.cranpose.rust.ConfigurationType"/>
+        <codeInsight.lineMarkerProvider language="Rust" implementationClass="dev.cranpose.rust.LineMarker"/>
+        <completion.contributor language="any" implementationClass="dev.cranpose.rust.Completion"/>
     </extensions>
     <actions>
         <group id="Cranpose.Actions" text="Cranpose" popup="true">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
-            <action id="Cranpose.Refresh" class="dev.cranpose.intellij.RefreshCranposeAction" text="Refresh Cranpose Workspace"/>
-            <action id="Cranpose.Check" class="dev.cranpose.intellij.CheckCranposeAction" text="Check Cranpose Target"/>
-            <action id="Cranpose.Run" class="dev.cranpose.intellij.RunCranposeAction" text="Run Cranpose Target"/>
-            <action id="Cranpose.Preview" class="dev.cranpose.intellij.PreviewCranposeAction" text="Preview Cranpose Target"/>
+            <action id="Cranpose.Refresh" class="dev.cranpose.rust.RefreshAction" text="Refresh Cranpose Workspace"/>
+            <action id="Cranpose.Check" class="dev.cranpose.rust.CheckAction" text="Check Cranpose Target"/>
+            <action id="Cranpose.Run" class="dev.cranpose.rust.RunAction" text="Run Cranpose Target"/>
+            <action id="Cranpose.Preview" class="dev.cranpose.rust.PreviewAction" text="Preview Cranpose Target"/>
             <separator/>
-            <action id="Cranpose.StabilityBadges" class="dev.cranpose.intellij.ToggleStabilityBadgesAction" text="Show Stability Badges"/>
-            <action id="Cranpose.StableBadges" class="dev.cranpose.intellij.ToggleStableBadgesAction" text="Include Stable Parameters"/>
-            <action id="Cranpose.Docs" class="dev.cranpose.intellij.CranposeDocsAction" text="Cranpose Documentation"/>
+            <action id="Cranpose.StabilityBadges" class="dev.cranpose.rust.ToggleBadges" text="Show Stability Badges"/>
+            <action id="Cranpose.StableBadges" class="dev.cranpose.rust.ToggleStable" text="Include Stable Parameters"/>
+            <action id="Cranpose.Docs" class="dev.cranpose.rust.DocsAction" text="Cranpose Documentation"/>
         </group>
     </actions>
 </idea-plugin>

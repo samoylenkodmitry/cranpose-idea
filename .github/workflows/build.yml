@@ -5,27 +5,24 @@ on:
     tags: ["v*"]
   pull_request:
   workflow_dispatch:
-
 permissions:
   contents: read
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
-
 jobs:
   native:
-    name: UI binary (${{ matrix.platform }})
+    name: Rust host and Cranpose UI (${{ matrix.platform }})
     strategy:
       fail-fast: false
       matrix:
         include:
-          - { platform: macos-aarch64, os: macos-latest, target: aarch64-apple-darwin, exe: cranpose-intellij-ui }
-          - { platform: macos-x86_64, os: macos-latest, target: x86_64-apple-darwin, exe: cranpose-intellij-ui }
-          - { platform: linux-x86_64, os: ubuntu-latest, target: x86_64-unknown-linux-gnu, exe: cranpose-intellij-ui }
-          - { platform: linux-aarch64, os: ubuntu-24.04-arm, target: aarch64-unknown-linux-gnu, exe: cranpose-intellij-ui }
-          - { platform: windows-x86_64, os: windows-latest, target: x86_64-pc-windows-msvc, exe: cranpose-intellij-ui.exe }
-          - { platform: windows-aarch64, os: windows-latest, target: aarch64-pc-windows-msvc, exe: cranpose-intellij-ui.exe }
+          - { platform: macos-aarch64, os: macos-latest, target: aarch64-apple-darwin, exe: cranpose-intellij-ui, lib: libcranpose_ide_host.dylib }
+          - { platform: macos-x86_64, os: macos-latest, target: x86_64-apple-darwin, exe: cranpose-intellij-ui, lib: libcranpose_ide_host.dylib }
+          - { platform: linux-x86_64, os: ubuntu-latest, target: x86_64-unknown-linux-gnu, exe: cranpose-intellij-ui, lib: libcranpose_ide_host.so }
+          - { platform: linux-aarch64, os: ubuntu-24.04-arm, target: aarch64-unknown-linux-gnu, exe: cranpose-intellij-ui, lib: libcranpose_ide_host.so }
+          - { platform: windows-x86_64, os: windows-latest, target: x86_64-pc-windows-msvc, exe: cranpose-intellij-ui.exe, lib: cranpose_ide_host.dll }
+          - { platform: windows-aarch64, os: windows-latest, target: aarch64-pc-windows-msvc, exe: cranpose-intellij-ui.exe, lib: cranpose_ide_host.dll }
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
@@ -35,15 +32,16 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           key: ${{ matrix.target }}
-      - run: cargo build --release --locked --no-default-features -p cranpose-intellij-ui --target ${{ matrix.target }}
+      - run: cargo build --release --locked --no-default-features -p cranpose-intellij-ui -p cranpose-ide-host --target ${{ matrix.target }}
       - uses: actions/upload-artifact@v7
         with:
           name: native-${{ matrix.platform }}
-          path: target/${{ matrix.target }}/release/${{ matrix.exe }}
+          path: |
+            target/${{ matrix.target }}/release/${{ matrix.exe }}
+            target/${{ matrix.target }}/release/${{ matrix.lib }}
           if-no-files-found: error
-
   test:
-    name: Tests (IDEA 2026.1, software Vulkan)
+    name: Rust and native IDE integration
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -52,28 +50,23 @@ jobs:
         with:
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
-      - uses: actions/setup-java@v6
-        with:
-          distribution: temurin
-          java-version: 21
-      - uses: gradle/actions/setup-gradle@v6
       - run: cargo fmt --all --check
-      - run: cargo clippy --locked --no-default-features --workspace --all-targets -- -D warnings
+      - run: cargo clippy --locked --no-default-features --workspace --all-targets --features cranpose-ide-host/ide-tests -- -D warnings
       - run: cargo test --locked --no-default-features --workspace
-      - run: python3 -m unittest discover -s scripts/tests
-      - working-directory: plugin
-        run: ./gradlew test
+      - run: cargo run --locked -p xtask -- release audit-source
+      - run: cargo run --locked -p xtask -- fetch-ide
+      - run: cargo run --locked -p xtask -- ide-test --ide "$CRANPOSE_TEST_IDE"
       - uses: actions/upload-artifact@v7
         if: always()
         with:
-          name: test-evidence
+          name: ide-test-evidence
           path: |
-            plugin/build/test-frames
-            plugin/build/reports/tests
+            target/ide-tests/**/evidence
+            target/ide-tests/**/console.log
+            target/ide-tests/**/log
           if-no-files-found: ignore
-
   hot-reload:
-    name: Live code, state and recovery (macOS)
+    name: Live code, state and recovery (Rust harness)
     runs-on: macos-latest
     timeout-minutes: 25
     steps:
@@ -82,19 +75,14 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - run: cargo build --locked -p cranpose-dev-runner
       - name: Binary application
-        run: |
-          cp -R dev-runner/tests/fixtures/counter "$RUNNER_TEMP/counter"
-          python3 scripts/hot_reload_smoke.py --runner target/debug/cranpose-dev-runner --workspace "$RUNNER_TEMP/counter" --cache "$RUNNER_TEMP/hot-cache" --log counter-hot-reload.log
+        run: cargo run --locked -p xtask -- hot-smoke --runner target/debug/cranpose-dev-runner --fixture counter --cache target/hot-cache --log counter-hot-reload.log
       - name: Library and binary application
-        run: |
-          cp -R dev-runner/tests/fixtures/library "$RUNNER_TEMP/library"
-          python3 scripts/hot_reload_smoke.py --runner target/debug/cranpose-dev-runner --workspace "$RUNNER_TEMP/library" --source src/lib.rs --cache "$RUNNER_TEMP/hot-cache" --log library-hot-reload.log
+        run: cargo run --locked -p xtask -- hot-smoke --runner target/debug/cranpose-dev-runner --fixture library --source src/lib.rs --cache target/hot-cache --log library-hot-reload.log
       - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: hot-reload-evidence
           path: '*-hot-reload.log'
-
   stability:
     name: Composable stability (sample)
     runs-on: ubuntu-latest
@@ -103,34 +91,36 @@ jobs:
       - uses: samoylenkodmitry/cranpose-stability@a7109ad90e90e725b57a99d8bdf39146e048eed7
         with:
           path: samples/counter
-
   plugin:
     name: Verified plugin (all platforms)
     needs: [native, test, hot-reload, stability]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
       - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: 21
-      - uses: gradle/actions/setup-gradle@v6
       - uses: actions/download-artifact@v8
         with:
           pattern: native-*
           path: native
-      - run: python3 scripts/release.py arrange-native native
-      - working-directory: plugin
-        run: ./gradlew buildPlugin verifyPlugin -PcranposeNativeDir="$GITHUB_WORKSPACE/native"
-      - run: python3 scripts/release.py check-zip plugin/build/distributions/cranpose-idea-*.zip
+      - run: cargo run --locked -p xtask -- package --native-dir native
+      - run: cargo run --locked -p xtask -- release check-zip target/plugin/cranpose-idea-*.zip
+      - run: cargo run --locked -p xtask -- fetch-ide
+      - run: cargo run --locked -p xtask -- release verify target/plugin/cranpose-idea-*.zip --ide "$CRANPOSE_TEST_IDE"
+      - run: cargo run --locked -p xtask -- fetch-ide --product RustRover --version 2026.2.3
+      - run: cargo run --locked -p xtask -- release verify target/plugin/cranpose-idea-*.zip --ide "$CRANPOSE_TEST_IDE"
       - uses: actions/upload-artifact@v7
         with:
           name: plugin
-          path: plugin/build/distributions/*.zip
+          path: target/plugin/*.zip
           if-no-files-found: error
       - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: verification
-          path: plugin/build/reports/pluginVerifier
+          path: target/verification
           if-no-files-found: ignore
