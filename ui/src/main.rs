@@ -27,7 +27,9 @@ fn main() {
         }
         return;
     }
-    let content: fn() = if std::env::var_os("CRANPOSE_STUDIO").is_some() {
+    let content: fn() = if std::env::var_os("CRANPOSE_RUN_SETTINGS").is_some() {
+        cranpose_intellij_ui::run_settings::RunSettings
+    } else if std::env::var_os("CRANPOSE_STUDIO").is_some() {
         cranpose_intellij_ui::studio::PreviewStudio
     } else {
         ToolWindow

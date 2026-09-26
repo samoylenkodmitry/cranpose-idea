@@ -3,18 +3,19 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: Version tag matching pluginVersion (vX.Y.Z)
+        description: Version tag matching plugin/VERSION (vX.Y.Z)
         required: true
         type: string
-
+      plugin_id:
+        description: Marketplace numeric ID assigned after the first manual upload
+        required: true
+        type: string
 permissions:
   contents: write
   actions: read
-
 concurrency:
   group: marketplace-publish
   cancel-in-progress: false
-
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -23,49 +24,40 @@ jobs:
       - uses: actions/checkout@v7
         with:
           ref: ${{ inputs.tag }}
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
       - name: Validate version
         env:
           RELEASE_TAG: ${{ inputs.tag }}
-        run: python3 scripts/release.py validate-tag "$RELEASE_TAG"
-      - name: Find successful Build for this exact commit
+        run: cargo run --locked -p xtask -- release validate-tag "$RELEASE_TAG"
+      - name: Require successful Build for this exact commit
         id: build
         env:
           GH_TOKEN: ${{ github.token }}
-        run: |
-          commit="$(git rev-parse HEAD)"
-          run_id="$(gh run list --workflow build.yml --commit "$commit" --status success --json databaseId --jq '.[0].databaseId')"
-          test -n "$run_id" && test "$run_id" != "null"
-          echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+        run: cargo run --locked -p xtask -- release successful-build
       - uses: actions/download-artifact@v8
         with:
           github-token: ${{ github.token }}
           run-id: ${{ steps.build.outputs.run_id }}
-          pattern: native-*
-          path: native
-      - run: python3 scripts/release.py arrange-native native
+          name: plugin
+          path: verified-plugin
       - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: 21
-      - uses: gradle/actions/setup-gradle@v6
-      - name: Build, verify and sign
-        working-directory: plugin
+      - name: Sign the verified package
         env:
           CERTIFICATE_CHAIN: ${{ secrets.CERTIFICATE_CHAIN }}
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
           PRIVATE_KEY_PASSWORD: ${{ secrets.PRIVATE_KEY_PASSWORD }}
-        run: ./gradlew buildPlugin verifyPlugin signPlugin -PcranposeNativeDir="$GITHUB_WORKSPACE/native"
-      - name: Save signed package
-        uses: actions/upload-artifact@v7
+        run: cargo run --locked -p xtask -- release sign verified-plugin/cranpose-idea-*.zip signed-plugin.zip
+      - uses: actions/upload-artifact@v7
         with:
           name: signed-plugin
-          path: plugin/build/distributions/*.zip
+          path: signed-plugin.zip
           if-no-files-found: error
       - name: Publish to Marketplace
-        working-directory: plugin
         env:
           PUBLISH_TOKEN: ${{ secrets.PUBLISH_TOKEN }}
-          CERTIFICATE_CHAIN: ${{ secrets.CERTIFICATE_CHAIN }}
-          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
-          PRIVATE_KEY_PASSWORD: ${{ secrets.PRIVATE_KEY_PASSWORD }}
-        run: ./gradlew publishPlugin -PcranposeNativeDir="$GITHUB_WORKSPACE/native"
+          MARKETPLACE_PLUGIN_ID: ${{ inputs.plugin_id }}
+        run: cargo run --locked -p xtask -- release publish signed-plugin.zip --plugin-id "$MARKETPLACE_PLUGIN_ID"
