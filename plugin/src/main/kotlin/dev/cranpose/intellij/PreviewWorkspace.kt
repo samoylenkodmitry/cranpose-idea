@@ -287,7 +287,7 @@ class PreviewWorkspace(private val project: Project, private val source: Virtual
         object : AnAction(label, label, icon) {
             override fun getActionUpdateThread() = ActionUpdateThread.EDT
             override fun update(event: AnActionEvent) { event.presentation.isEnabled = enabled() }
-            override fun actionPerformed(event: AnActionEvent) = perform()
+            override fun actionPerformed(event: AnActionEvent) = later(perform)
         }
 
     private fun toggle(label: String, icon: Icon, button: AbstractButton) = object : ToggleAction(label, label, icon) {
@@ -534,7 +534,7 @@ class PreviewWorkspace(private val project: Project, private val source: Virtual
     }
 
     private fun later(action: () -> Unit) {
-        ApplicationManager.getApplication().invokeLater({ if (!closed && !project.isDisposed) action() }, project.disposed)
+        ApplicationManager.getApplication().invokeLater({ if (!closed && !project.isDisposed) action() }, com.intellij.openapi.application.ModalityState.nonModal(), project.disposed)
     }
 
     override fun dispose() {
