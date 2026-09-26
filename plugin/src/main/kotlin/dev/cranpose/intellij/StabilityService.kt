@@ -77,18 +77,14 @@ class StabilityService(private val project: Project) : Disposable {
             }
         }, this)
         factory.eventMulticaster.addEditorMouseMotionListener(object : EditorMouseMotionListener {
-            override fun mouseMoved(event: EditorMouseEvent) {
-                if (event.editor.project != project) return
-                val inlay = event.editor.inlayModel.getElementAt(event.mouseEvent.point, StabilityBadgeRenderer::class.java)
-                if (hovered === inlay) return
-                hideTooltip()
-                if (inlay == null) return
-                hovered = inlay
-                val detail = StringUtil.escapeXmlEntities(inlay.renderer.badge.detail).replace("\n", "<br>")
-                tooltip = IdeTooltip(event.editor.contentComponent, event.mouseEvent.point,
-                    JLabel("<html><body style='width: 360px'>${detail}</body></html>")).also {
-                    IdeTooltipManager.getInstance().show(it, false)
-                }
+            override fun mouseMoved(event: EditorMouseEvent) { showTooltip(event, false) }
+        }, this)
+        factory.eventMulticaster.addEditorMouseListener(object : EditorMouseListener {
+            override fun mouseClicked(event: EditorMouseEvent) {
+                if (event.mouseEvent.button == java.awt.event.MouseEvent.BUTTON1) showTooltip(event, true)
+            }
+            override fun mouseExited(event: EditorMouseEvent) {
+                if (event.editor.project == project) hideTooltip()
             }
         }, this)
         project.messageBus.connect(this).subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
@@ -168,6 +164,19 @@ class StabilityService(private val project: Project) : Disposable {
     }
 
     private fun stale(expected: Long) = disposed || project.isDisposed || revision.get() != expected
+    private fun showTooltip(event: EditorMouseEvent, immediate: Boolean) {
+        if (event.editor.project != project) return
+        val inlay = event.editor.inlayModel.getElementAt(event.mouseEvent.point, StabilityBadgeRenderer::class.java)
+        if (!immediate && hovered === inlay) return
+        hideTooltip()
+        if (inlay == null) return
+        hovered = inlay
+        val detail = StringUtil.escapeXmlEntities(inlay.renderer.badge.detail).replace("\n", "<br>")
+        tooltip = IdeTooltip(event.editor.contentComponent, event.mouseEvent.point,
+            JLabel("<html><body style='width: 360px'>${detail}</body></html>")).also {
+            IdeTooltipManager.getInstance().show(it, immediate)
+        }
+    }
     private fun hideTooltip() { tooltip?.hide(); tooltip = null; hovered = null }
     private fun clear() {
         hideTooltip()
