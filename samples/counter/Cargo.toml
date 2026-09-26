@@ -1,0 +1,10 @@
+[package]
+name = "cranpose-counter"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[workspace]
+
+[dependencies]
+cranpose = { git = "https://github.com/samoylenkodmitry/Cranpose", rev = "3c0f1045f68691c4b431fa75057d0e36ef7f4608", features = ["desktop", "embed"] }

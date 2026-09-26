@@ -15,8 +15,8 @@ import java.util.HexFormat
  */
 object UiBinary {
     const val NAME = "cranpose-intellij-ui"
-    const val OVERRIDE_PROPERTY = "cranpose.ui.binary"
-    const val OVERRIDE_VARIABLE = "CRANPOSE_UI_BINARY"
+    const val OVERRIDE_PROPERTY = "cranpose.idea.ui.binary"
+    const val OVERRIDE_VARIABLE = "CRANPOSE_IDEA_UI_BINARY"
 
     /** The developer's own build, when one is configured. */
     fun override(): Path? = (System.getProperty(OVERRIDE_PROPERTY) ?: System.getenv(OVERRIDE_VARIABLE))

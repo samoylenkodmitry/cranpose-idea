@@ -2,7 +2,7 @@ package dev.cranpose.intellij
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
-import org.junit.Assume.assumeTrue
+import org.junit.Assert.assertNotNull
 import org.junit.Test
 import java.io.IOException
 import java.nio.file.Files
@@ -35,7 +35,7 @@ class UiBinaryTest {
     @Test
     fun theOverridePropertyNamesTheDevelopersBuild() {
         val configured = System.getProperty(UiBinary.OVERRIDE_PROPERTY)
-        assumeTrue("the test task sets ${UiBinary.OVERRIDE_PROPERTY}", configured != null)
+        assertNotNull("the test task sets ${UiBinary.OVERRIDE_PROPERTY}", configured)
         assertEquals(Path.of(configured), UiBinary.override())
     }
 }

@@ -21,6 +21,9 @@ dependencies {
     intellijPlatform {
         val localIde = providers.gradleProperty("platformLocalPath").orNull
         if (localIde != null) local(localIde) else intellijIdea(providers.gradleProperty("platformVersion"))
+        pluginVerifier()
+        zipSigner()
+        testFramework(org.jetbrains.intellij.platform.gradle.TestFrameworkType.Platform)
     }
     testImplementation("junit:junit:4.13.2")
 }
@@ -40,6 +43,12 @@ intellijPlatform {
     }
     publishing {
         token = providers.environmentVariable("PUBLISH_TOKEN")
+    }
+    pluginVerification {
+        ides {
+            create(org.jetbrains.intellij.platform.gradle.IntelliJPlatformType.IntellijIdea, "2026.1")
+            create(org.jetbrains.intellij.platform.gradle.IntelliJPlatformType.RustRover, "2026.2.3")
+        }
     }
 }
 
@@ -92,15 +101,25 @@ tasks.processResources {
     dependsOn(bundleNative)
 }
 
+val sampleBinary = layout.projectDirectory.file("../samples/counter/target/debug/cranpose-counter${if (hostOs == "windows") ".exe" else ""}")
+val cargoBuildSample = tasks.register<Exec>("cargoBuildSample") {
+    description = "Builds the desktop sample used by preview and inspector integration tests."
+    group = "verification"
+    workingDir = layout.projectDirectory.dir("../samples/counter").asFile
+    commandLine("cargo", "build", "--locked")
+    outputs.upToDateWhen { false }
+}
+
 tasks.test {
-    dependsOn(cargoBuild)
+    dependsOn(cargoBuild, cargoBuildSample)
     systemProperty("java.awt.headless", "true")
-    systemProperty("cranpose.ui.binary", hostBinary.asFile.path)
+    systemProperty("cranpose.idea.ui.binary", hostBinary.asFile.path)
+    systemProperty("cranpose.test.sample", sampleBinary.asFile.path)
     systemProperty("cranpose.test.output", layout.buildDirectory.dir("test-frames").get().asFile.path)
 }
 
 tasks.runIde {
-    providers.gradleProperty("cranposeUiBinary").orNull?.let { environment("CRANPOSE_UI_BINARY", it) }
+    providers.gradleProperty("cranposeUiBinary").orNull?.let { environment("CRANPOSE_IDEA_UI_BINARY", it) }
     providers.gradleProperty("runIdeProject").orNull?.let { args(it) }
     jvmArgs("-Ddisable.android.first.run=true")
 }

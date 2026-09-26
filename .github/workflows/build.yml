@@ -1,11 +1,13 @@
 name: Build
-
 on:
   push:
     branches: [main]
     tags: ["v*"]
   pull_request:
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -33,8 +35,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           key: ${{ matrix.target }}
-      - name: Build the UI without the desktop window code
-        run: cargo build --release --locked --no-default-features -p cranpose-intellij-ui --target ${{ matrix.target }}
+      - run: cargo build --release --locked --no-default-features -p cranpose-intellij-ui --target ${{ matrix.target }}
       - uses: actions/upload-artifact@v7
         with:
           name: native-${{ matrix.platform }}
@@ -42,39 +43,39 @@ jobs:
           if-no-files-found: error
 
   test:
-    name: Tests (Linux, software Vulkan)
+    name: Tests (IDEA 2026.1, software Vulkan)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - name: Install a software Vulkan driver
-        run: sudo apt-get update && sudo apt-get install -y mesa-vulkan-drivers
+      - run: sudo apt-get update && sudo apt-get install -y mesa-vulkan-drivers libxkbcommon-dev libwayland-dev
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
       - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: 21
       - uses: gradle/actions/setup-gradle@v6
-      - name: Rust tests
-        run: cargo test --locked -p cranpose-intellij-ui
-      - name: Plugin tests, including the end-to-end test against the real UI
-        working-directory: plugin
+      - run: cargo fmt --all --check
+      - run: cargo clippy --locked --no-default-features -p cranpose-intellij-ui --all-targets -- -D warnings
+      - run: cargo test --locked --no-default-features -p cranpose-intellij-ui
+      - run: python3 -m unittest discover -s scripts/tests
+      - working-directory: plugin
         run: ./gradlew test
       - uses: actions/upload-artifact@v7
         if: always()
         with:
-          name: test-frames
-          path: plugin/build/test-frames
+          name: test-evidence
+          path: |
+            plugin/build/test-frames
+            plugin/build/reports/tests
           if-no-files-found: ignore
 
   plugin:
-    name: Plugin (all platforms)
+    name: Verified plugin (all platforms)
     needs: [native, test]
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    env:
-      PUBLISH_TOKEN: ${{ secrets.PUBLISH_TOKEN }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-java@v6
@@ -86,26 +87,18 @@ jobs:
         with:
           pattern: native-*
           path: native
-      - name: Lay the binaries out as native/<os>-<arch>/
-        run: for dir in native/native-*; do mv "$dir" "native/${dir#native/native-}"; done && find native -type f
-      - name: Build the plugin
-        working-directory: plugin
-        run: ./gradlew buildPlugin -PcranposeNativeDir="$GITHUB_WORKSPACE/native"
+      - run: python3 scripts/release.py arrange-native native
+      - working-directory: plugin
+        run: ./gradlew buildPlugin verifyPlugin -PcranposeNativeDir="$GITHUB_WORKSPACE/native"
+      - run: python3 scripts/release.py check-zip plugin/build/distributions/cranpose-idea-*.zip
       - uses: actions/upload-artifact@v7
         with:
           name: plugin
           path: plugin/build/distributions/*.zip
           if-no-files-found: error
-      - name: Attach the plugin to the GitHub release
-        if: startsWith(github.ref, 'refs/tags/v')
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" plugin/build/distributions/*.zip --generate-notes
-      - name: Publish to JetBrains Marketplace
-        if: startsWith(github.ref, 'refs/tags/v') && env.PUBLISH_TOKEN != ''
-        working-directory: plugin
-        env:
-          CERTIFICATE_CHAIN: ${{ secrets.CERTIFICATE_CHAIN }}
-          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
-          PRIVATE_KEY_PASSWORD: ${{ secrets.PRIVATE_KEY_PASSWORD }}
-        run: ./gradlew publishPlugin -PcranposeNativeDir="$GITHUB_WORKSPACE/native"
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: verification
+          path: plugin/build/reports/pluginVerifier
+          if-no-files-found: ignore

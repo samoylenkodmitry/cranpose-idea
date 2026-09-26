@@ -21,8 +21,8 @@ class CranposeToolWindowFactory : ToolWindowFactory, DumbAware {
         )
         val content = ContentFactory.getInstance().createContent(panel, "", false)
         toolWindow.contentManager.addContent(content)
-        IdeBridge(project, panel, content)
-        EditorOverlay(project, panel, content)
+        val controller = CranposeIdeController(project, panel, content)
+        IdeBridge(project, panel, content, controller::connected, controller::handle)
         Disposer.register(content) { panel.close() }
         override?.let { watch(it, panel, content) }
         panel.start()

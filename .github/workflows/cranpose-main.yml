@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Install a software Vulkan driver
-        run: sudo apt-get update && sudo apt-get install -y mesa-vulkan-drivers
+        run: sudo apt-get update && sudo apt-get install -y mesa-vulkan-drivers libxkbcommon-dev libwayland-dev
       - uses: dtolnay/rust-toolchain@stable
       - uses: actions/setup-java@v6
         with:
