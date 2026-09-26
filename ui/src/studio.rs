@@ -44,6 +44,12 @@ pub fn PreviewStudio() {
     let state = rememberMutableStateOf(Studio::default);
     // Keep the search field when inspection moves between the side and bottom panels.
     let query = remember(|| TextFieldState::new("")).with(|value| *value);
+    let last_layout = remember(|| {
+        std::rc::Rc::new(std::cell::RefCell::new(
+            cranpose_plugin_ux::delivery::LastValue::<(bool, Value)>::default(),
+        ))
+    })
+    .with(Clone::clone);
     let last_checkpoint =
         remember(|| std::rc::Rc::new(std::cell::RefCell::new(String::new()))).with(Clone::clone);
     for channel in [
@@ -133,12 +139,19 @@ pub fn PreviewStudio() {
             let selected = studio.snapshot.nodes.iter().find(|node| node.id == studio.selected).map(|node| json!({"x": node.x, "y": node.y, "width": node.width, "height": node.height}));
             let layout = json!({"action": "layout", "session": studio.session, "x": x, "y": y, "width": frame_width, "height": frame_height, "viewport": {"y": top, "width": stage_width, "height": stage_height}, "logicalWidth": studio.settings.width, "logicalHeight": studio.settings.height, "scale": scale, "dark": studio.settings.dark, "pick": studio.pick, "selected": selected});
             let initialized = studio.initialized;
+            let connected = studio.connected;
             let checkpoint = serde_json::to_value(&studio).unwrap_or(Value::Null);
             let checkpoint_text = checkpoint.to_string();
             let last_checkpoint = last_checkpoint.clone();
+            let last_layout = last_layout.clone();
             SideEffect(move || {
                 if initialized {
-                    send(layout.clone());
+                    if last_layout
+                        .borrow_mut()
+                        .update(&(connected, layout.clone()))
+                    {
+                        send(layout.clone());
+                    }
                     if *last_checkpoint.borrow() != checkpoint_text {
                         send(json!({"action": "checkpoint", "value": checkpoint}));
                         *last_checkpoint.borrow_mut() = checkpoint_text;

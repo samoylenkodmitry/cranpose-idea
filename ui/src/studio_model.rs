@@ -151,10 +151,19 @@ impl Snapshot {
         collapsed: &std::collections::HashSet<String>,
     ) -> Vec<cranpose_plugin_ux::tree::TreeRow> {
         use cranpose_plugin_ux::tree::{TreeEntry, filter_tree};
+        let searching = !query.trim().is_empty();
         let entries: Vec<_> = self
             .nodes
             .iter()
             .map(|node| {
+                // Browsing the hierarchy needs no search strings or modifier formatting.
+                if !searching {
+                    return TreeEntry {
+                        id: &node.id,
+                        parent: node.parent.as_deref(),
+                        search_text: "".into(),
+                    };
+                }
                 let mut text = format!(
                     "{} {} {}",
                     node.id,
@@ -230,7 +239,7 @@ pub struct Studio {
     pub targets: Vec<Target>,
     pub previews: Vec<Preview>,
     #[serde(skip)]
-    pub snapshot: Snapshot,
+    pub snapshot: std::rc::Rc<Snapshot>,
     #[serde(skip)]
     pub initialized: bool,
     pub selected: String,
@@ -265,7 +274,7 @@ impl Default for Studio {
             settings: Settings::default(),
             targets: vec![],
             previews: vec![],
-            snapshot: Snapshot::default(),
+            snapshot: Snapshot::default().into(),
             initialized: false,
             selected: String::new(),
             collapsed: Default::default(),
@@ -477,7 +486,7 @@ impl Studio {
                 }
                 match value["event"].as_str().unwrap_or_default() {
                     "connected" => {
-                        self.snapshot = Snapshot::default();
+                        self.snapshot = Snapshot::default().into();
                         self.selected.clear();
                         self.collapsed.clear();
                         self.inspector_details = false;
@@ -542,7 +551,7 @@ impl Studio {
                                     if !snapshot.nodes.iter().any(|node| node.id == self.selected) {
                                         self.selected.clear();
                                     }
-                                    self.snapshot = snapshot;
+                                    self.snapshot = snapshot.into();
                                 }
                                 Err(error) => self.status = error,
                                 _ => {}

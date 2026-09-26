@@ -4,6 +4,7 @@ use crate::{
     workspace::{DevWorkspace, Metadata},
 };
 use anyhow::{Context, Result, bail};
+use cranpose_plugin_watch::{BatchPolicy, ChangeQueue};
 use notify::Watcher;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -15,7 +16,6 @@ use std::{
     sync::{
         Arc,
         atomic::{AtomicBool, Ordering},
-        mpsc,
     },
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
@@ -162,13 +162,32 @@ pub fn run(options: RunOptions) -> Result<()> {
     ctrlc::set_handler(move || {
         signal.store(true, Ordering::Release);
     })?;
-    let (sender, receiver) = mpsc::channel();
-    let mut watcher = notify::recommended_watcher(move |event| {
-        let _ = sender.send(event);
-    })?;
+    let changes = ChangeQueue::new(BatchPolicy {
+        quiet: Duration::from_millis(60),
+        max_delay: Duration::from_millis(240),
+        capacity: 4096,
+    });
+    let pending = changes.clone();
+    let root = workspace.original.clone();
+    let target_directory = metadata.target_directory.clone();
+    let mut watcher =
+        notify::recommended_watcher(move |event: notify::Result<notify::Event>| match event {
+            Ok(event) if event.need_rescan() => pending.invalidate(),
+            Ok(event) if !matches!(event.kind, notify::EventKind::Access(_)) => {
+                for path in event.paths {
+                    if let Some(relative) = relevant_path(&root, &target_directory, path) {
+                        pending.push(relative);
+                    }
+                }
+            }
+            Ok(_) => {}
+            Err(_) => pending.invalidate(),
+        })?;
     if options.watch {
         watcher.watch(&workspace.original, notify::RecursiveMode::Recursive)?;
     }
+    let mut watcher_invalidated = false;
+    let mut dirty = BTreeSet::new();
     loop {
         if stop.load(Ordering::Acquire) {
             break;
@@ -180,64 +199,46 @@ pub fn run(options: RunOptions) -> Result<()> {
             }
             break;
         }
-        let Ok(event) = receiver.recv_timeout(Duration::from_millis(200)) else {
+        let Some(batch) = changes.take(Duration::from_millis(200)) else {
             continue;
         };
-        let Ok(event) = event else {
+        if batch.invalidated {
+            watcher_invalidated = true;
+            emit(
+                "restartRequired",
+                "File watcher lost changes; restart the preview",
+            );
             continue;
-        };
-        let mut changed = event.paths;
-        while let Ok(Ok(event)) = receiver.recv_timeout(Duration::from_millis(180)) {
-            changed.extend(event.paths);
         }
-        let relative: BTreeSet<_> = changed
-            .into_iter()
-            .map(|path| path.canonicalize().unwrap_or(path))
-            .filter_map(|path| {
-                path.strip_prefix(&workspace.original)
-                    .ok()
-                    .map(std::path::Path::to_owned)
-            })
-            .filter(|path| {
-                !path.components().any(|part| {
-                    matches!(part.as_os_str().to_str(), Some("target" | ".git" | ".idea"))
-                })
-            })
-            .collect();
+        if watcher_invalidated {
+            continue;
+        }
+        dirty.extend(batch.items);
+        if dirty.len() > 4096 {
+            dirty.clear();
+            watcher_invalidated = true;
+            emit(
+                "restartRequired",
+                "Too many pending changes; restart the preview",
+            );
+            continue;
+        }
         let mut patches = Vec::new();
         let mut reason = None;
-        for relative in relative {
-            if !relative.extension().is_some_and(|extension| {
-                matches!(
-                    extension.to_str(),
-                    Some(
-                        "rs" | "toml"
-                            | "wgsl"
-                            | "lock"
-                            | "json"
-                            | "ron"
-                            | "png"
-                            | "jpg"
-                            | "jpeg"
-                            | "svg"
-                            | "ttf"
-                            | "otf"
-                    )
-                )
-            }) {
-                continue;
-            }
-            let Some(previous) = workspace.sources.get(&relative) else {
+        for relative in &dirty {
+            let Some(previous) = workspace.sources.get(relative) else {
                 reason = Some("Project files changed".to_owned());
                 break;
             };
-            let Ok(next) = fs::read_to_string(workspace.original.join(&relative)) else {
+            let Ok(next) = fs::read_to_string(workspace.original.join(relative)) else {
                 reason = Some("Source file removed".to_owned());
                 break;
             };
             match classify(previous, &next) {
                 ReloadDecision::Unchanged => {}
-                ReloadDecision::Patch if options.hot_reload => patches.push((relative, next)),
+                ReloadDecision::Patch if options.hot_reload => {
+                    patches.push((relative.clone(), next))
+                }
                 ReloadDecision::Invalid(error) => {
                     emit("error", &error);
                     patches.clear();
@@ -258,6 +259,7 @@ pub fn run(options: RunOptions) -> Result<()> {
             emit("restartRequired", &reason);
             continue;
         }
+        dirty.clear();
         if !patches.is_empty() {
             emit(
                 "patching",
@@ -272,6 +274,45 @@ pub fn run(options: RunOptions) -> Result<()> {
     drop(guard);
     let _ = child.wait();
     Ok(())
+}
+
+/// Reject build/IDE noise before it can allocate queue entries or reset debounce.
+/// Keep lexical paths for removals and atomic renames; canonicalize only relevant files.
+fn relevant_path(
+    root: &std::path::Path,
+    target: &std::path::Path,
+    path: PathBuf,
+) -> Option<PathBuf> {
+    let relative = path.strip_prefix(root).ok()?;
+    if path.starts_with(target) || crate::workspace::ignored_path(relative) {
+        return None;
+    }
+    if !relative.extension().is_some_and(|extension| {
+        matches!(
+            extension.to_str(),
+            Some(
+                "rs" | "toml"
+                    | "wgsl"
+                    | "lock"
+                    | "json"
+                    | "ron"
+                    | "png"
+                    | "jpg"
+                    | "jpeg"
+                    | "svg"
+                    | "ttf"
+                    | "otf"
+            )
+        )
+    }) {
+        return None;
+    }
+    let path = path.canonicalize().unwrap_or(path);
+    let relative = path.strip_prefix(root).ok()?;
+    if path.starts_with(target) || crate::workspace::ignored_path(relative) {
+        return None;
+    }
+    Some(relative.to_owned())
 }
 
 fn pump(reader: impl std::io::Read + Send + 'static, maps: Vec<(PathBuf, PathBuf)>) {

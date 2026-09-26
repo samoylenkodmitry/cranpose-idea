@@ -57,6 +57,11 @@ private debug copy. Your sources, manifests, lockfile, profiles and release buil
 remain unchanged. Cranpose itself has no new hot-reload dependency or runtime code.
 The injected runtime refuses to compile without debug assertions.
 
+The source watcher filters build and IDE output before batching. Compatible edits
+settle for 60 ms, with a 240 ms maximum batch delay during continuous writes.
+Duplicate paths share one queue entry. Lost events or too many pending files require
+a restart; incompatible changes remain pending until corrected or rebuilt.
+
 The first hot preview downloads the official Dioxus CLI 0.7.10 for your platform
 and verifies its pinned SHA-256. It uses Subsecond 0.7.10 through the CLI's native
 desktop compiler. A normal Rust toolchain and platform linker are required.
@@ -169,6 +174,23 @@ cargo run -p xtask -- package
 cargo run -p xtask -- ide-test --ide /path/to/IntelliJ-IDEA
 
 ```
+
+### Measure reload and inspector costs
+
+```sh
+cargo build --locked -p cranpose-dev-runner
+cargo run --locked -p xtask -- hot-smoke --runner target/debug/cranpose-dev-runner --fixture counter --cache target/hot-cache --log reload.log --measure-rounds 6 --report reload.json
+cargo run --locked -p xtask -- hot-smoke --runner target/debug/cranpose-dev-runner --fixture counter --cache target/hot-cache --log reload-noise.log --measure-rounds 6 --background-noise-ms 3000 --report reload-noise.json
+cargo test --release --no-default-features -p cranpose-intellij-ui benchmark_inspector_model -- --ignored --nocapture
+```
+
+The Rust harness verifies each patch generation, PID and remembered counter state,
+then tests recovery from compiler, syntax and state-type errors. Timings include raw
+save-to-acknowledgement and save-to-snapshot samples. Snapshot polling adds up to
+about 200 ms of observation delay. Compare warm runs on the same machine with
+other builds stopped; startup and compilation caches can dominate early samples.
+The inspector benchmark measures model operations, not whole-IDE frame rates.
+CI stores the reload JSON alongside its logs without machine-dependent timing limits.
 
 Local packaging writes a ZIP for this machine under `target/plugin`. Rebuilding the
 plugin UI reconnects its controls to the running preview without starting another
