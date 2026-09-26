@@ -225,3 +225,26 @@ fn wide_inspection_preserves_preview_height_and_clips_before_the_sidebar() {
         240.0
     );
 }
+
+#[test]
+fn viewport_changes_are_live_and_not_restored_from_checkpoints() {
+    let mut studio = Studio::default();
+    studio.handle("studio.viewport", r#"{"width":1024,"height":620}"#);
+    assert_eq!(studio.viewport, Some((1024, 620)));
+    let checkpoint = serde_json::to_value(&studio).unwrap();
+    assert!(checkpoint.get("viewport").is_none());
+    studio.handle("studio.viewport", r#"{"width":480,"height":620}"#);
+    studio.handle(
+        "studio.init",
+        &serde_json::json!({"checkpoint":checkpoint}).to_string(),
+    );
+    assert_eq!(studio.viewport, Some((480, 620)));
+    for invalid in [
+        r#"{"width":0,"height":620}"#,
+        r#"{"width":100000,"height":620}"#,
+        r#"{"width":-1,"height":620}"#,
+    ] {
+        studio.handle("studio.viewport", invalid);
+        assert_eq!(studio.viewport, Some((480, 620)));
+    }
+}

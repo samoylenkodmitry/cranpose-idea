@@ -223,6 +223,8 @@ pub struct Diagnostic {
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(default)]
 pub struct Studio {
+    #[serde(skip)]
+    pub viewport: Option<(u32, u32)>,
     pub settings: Settings,
     #[serde(skip)]
     pub targets: Vec<Target>,
@@ -259,6 +261,7 @@ pub struct Studio {
 impl Default for Studio {
     fn default() -> Self {
         Self {
+            viewport: None,
             settings: Settings::default(),
             targets: vec![],
             previews: vec![],
@@ -385,11 +388,24 @@ impl Studio {
         };
         let mut requests = Vec::new();
         match channel {
+            "studio.viewport" => {
+                if let (Some(width), Some(height)) =
+                    (value["width"].as_u64(), value["height"].as_u64())
+                    && width > 0
+                    && height > 0
+                    && width <= 65536
+                    && height <= 65536
+                {
+                    self.viewport = Some((width as u32, height as u32));
+                }
+            }
             "studio.init" => {
                 if let Ok(restored) = serde_json::from_value::<Self>(value["checkpoint"].clone()) {
                     let targets = std::mem::take(&mut self.targets);
+                    let viewport = self.viewport;
                     *self = restored;
                     self.targets = targets;
+                    self.viewport = viewport;
                 }
                 self.initialized = true;
                 if value.get("activeSession").is_some() {

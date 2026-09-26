@@ -46,6 +46,7 @@ pub fn PreviewStudio() {
         remember(|| std::rc::Rc::new(std::cell::RefCell::new(String::new()))).with(Clone::clone);
     for channel in [
         "studio.init",
+        "studio.viewport",
         "cranpose.project",
         "studio.command",
         "studio.child",
@@ -79,9 +80,16 @@ pub fn PreviewStudio() {
             .background(palette.background),
         move |scope| {
             let size = scope.constraints();
-            let width = size.max_width.max(300.0);
-            let height = size.max_height.max(240.0);
             let studio = view.clone();
+            // The IDE owns the embedded viewport. Observe its live dimensions so
+            // split-editor changes invalidate this composition as well as measurement.
+            let (width, height) = studio
+                .viewport
+                .map_or((size.max_width, size.max_height), |(width, height)| {
+                    (width as f32, height as f32)
+                });
+            let width = width.max(300.0);
+            let height = height.max(240.0);
             let menu_height = menu_height(&studio);
             let problems_height = if studio.diagnostics.is_empty() {
                 0.0
