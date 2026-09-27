@@ -96,6 +96,7 @@ jobs:
             restart-hot-reload.restart-*.log
             *-hot-reload.json
             authoring-controls-*.png
+            lightning-*.png
   stability:
     name: Composable stability (sample)
     runs-on: ubuntu-latest

@@ -1,0 +1,103 @@
+{
+  "arrivalFrames": 35,
+  "controls": {
+    "pointerControls": [
+      {
+        "applyWithSelectionMenu": true,
+        "coldProcessToControlCompositionMs": 209.718084,
+        "colorDrag": true,
+        "colorPrecision": true,
+        "customRangeDrag": true,
+        "resetWithSelectionMenu": true,
+        "reusedSessionIsolation": true,
+        "scale": 1,
+        "settledColorFrames": 0,
+        "typedControls": [
+          {
+            "action": "+",
+            "kind": "int",
+            "reset": true
+          },
+          {
+            "action": "−",
+            "kind": "float",
+            "reset": true
+          },
+          {
+            "action": "Toggle",
+            "kind": "bool",
+            "reset": true
+          }
+        ],
+        "warmControlCompositionMs": [
+          36.867333,
+          40.218125,
+          44.647332999999996,
+          38.770959,
+          39.525875
+        ]
+      },
+      {
+        "applyWithSelectionMenu": true,
+        "coldProcessToControlCompositionMs": 51.95375,
+        "colorDrag": true,
+        "colorPrecision": true,
+        "customRangeDrag": true,
+        "resetWithSelectionMenu": true,
+        "reusedSessionIsolation": true,
+        "scale": 2,
+        "settledColorFrames": 0,
+        "typedControls": [
+          {
+            "action": "+",
+            "kind": "int",
+            "reset": true
+          },
+          {
+            "action": "−",
+            "kind": "float",
+            "reset": true
+          },
+          {
+            "action": "Toggle",
+            "kind": "bool",
+            "reset": true
+          }
+        ],
+        "warmControlCompositionMs": [
+          44.94225,
+          45.141958,
+          44.908125,
+          45.120416000000006,
+          39.512041999999994
+        ]
+      }
+    ]
+  },
+  "idleCpuSeconds": 0.0,
+  "idleFrames": 0,
+  "idleSeconds": 3.117898125,
+  "inlineColorAlpha": true,
+  "lightning": [
+    {
+      "cpuSeconds": 0.09999999999999999,
+      "finishedTransparent": true,
+      "frames": 39,
+      "impactPixels": 2004,
+      "observationSeconds": 1.575368541,
+      "paintedPixels": 7785,
+      "scale": 1
+    },
+    {
+      "cpuSeconds": 0.16,
+      "finishedTransparent": true,
+      "frames": 42,
+      "impactPixels": 8014,
+      "observationSeconds": 1.5921317080000001,
+      "paintedPixels": 31363,
+      "scale": 2
+    }
+  ],
+  "paintedPixels": 2864,
+  "result": "passed"
+}
