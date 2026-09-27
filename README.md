@@ -18,25 +18,29 @@ beside Rust source. The Studio controls, inspector and tool window are written i
 
 Choose **File → New Project → Cranpose** to start from
 [Cranpose Showcase](https://github.com/samoylenkodmitry/cranpose-showcase). The native
-Cranpose wizard uses a pinned starter with Cranpose 0.1.167. Choose an empty
+Cranpose wizard uses a pinned starter with Cranpose 0.1.169. Choose an empty
 location; the starter is bundled and project creation works offline without Git.
 Studio saves the desktop run configuration, opens source beside the preview,
 and starts the first build automatically. Rust and downloaded Cargo dependencies
 are needed to build and run. If Rust is missing, the preview offers setup and retry.
 
 Inside explicit composables, **◆** marks supported string, character, boolean,
-integer and float literals. Click a diamond for a Cranpose floating editor with
-Apply, Reset, numeric steps or a boolean toggle. Each change is undoable in the
-source editor. Valid unsaved edits also update an active hot preview.
+integer and float literals. Hover a diamond or color swatch for Cranpose controls;
+source text remains available for ordinary cursor placement. Numbers have seekbars
+with custom ranges and steps. Colors have hex, HSV and opacity controls. Supported
+immutable variable references open the initializer's controls. Each gesture is
+undoable in the source editor. Valid unsaved edits also update an active hot preview.
 
 Eligible literal changes bypass compilation through a private development value
-store. Const contexts, macro tokens, remembered-state initializers, key identities
+store. Text portions of `format!` are supported while its fields remain compiler-owned.
+Const contexts, other macro tokens, remembered-state initializers, key identities
 and structural/type changes retain the compiler/restart workflow. Callback values
 take effect when the callback runs. This does not make arbitrary Rust compilation
 instant. [Measurements and limits](docs/performance-0.7.0.md).
 
 The editor adds Cranpose shader accents to component calls and stability badges.
-The shaders are static: they redraw when content, theme or geometry changes.
+Badges redraw when content, theme or geometry changes. Finite shader animations
+mark source navigation and supported live updates without an idle animation loop.
 Document-based preview gutters appear alongside Rust's macro-expansion markers.
 
 ## Preview and inspect
@@ -69,7 +73,7 @@ The [sample](samples/counter) pins the tested revision:
 
 ```toml
 [dependencies]
-cranpose = { git = "https://github.com/samoylenkodmitry/Cranpose", rev = "e177b19985c303a13fcf40d61decc7253fdbe057", features = ["desktop", "preview"] }
+cranpose = { git = "https://github.com/samoylenkodmitry/Cranpose", rev = "0ccc2a2bc4f9ad9002dcdb80ff2e75aa707494bb", features = ["desktop", "preview"] }
 ```
 
 ```rust
@@ -197,7 +201,10 @@ run. In **Settings → Plugins → gear → Install Plugin from Disk**, select i
 4. Choose a registered component or the whole application in the preview selector.
 
 Commands are also available through **Tools → Cranpose** and **Find Action**.
-Marketplace publication is a separate step.
+Version tags run the complete CI suite, sign the verified archive and attach it
+to [GitHub Releases](https://github.com/samoylenkodmitry/cranpose-idea/releases).
+After the first manual Marketplace listing, tag builds submit updates automatically.
+See [Publishing](docs/publishing.md).
 
 ## Current boundaries
 
