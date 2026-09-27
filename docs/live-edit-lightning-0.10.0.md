@@ -47,6 +47,11 @@ encoding evidence PNGs inside the frame observation loop delayed processing the
 final transparent frame. The Rust harness now scans alpha directly and writes
 the brightest capture after the observation. Two local debug repeats passed the
 same 1.5-second deadline at both scales; the shader duration was unchanged.
+Linux template CI still exceeded that deadline while Studio CI passed it. The
+final collector therefore records first paint and final transparency separately,
+with ten seconds for cold delivery and three seconds to settle once visible.
+It continues to require a fully transparent finish and zero settled frames.
+These are test ceilings, not feature latency claims.
 
 For repeatable actual IDE observations, start a sandbox with
 `-Dcranpose.trace.edits=true`. Successful matches write `CRANPOSE_EDIT_PRESENTED`
