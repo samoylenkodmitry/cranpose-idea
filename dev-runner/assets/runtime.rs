@@ -2,7 +2,7 @@
 compile_error!("Cranpose hot reload is restricted to private debug builds");
 
 use cranpose_dev_runtime as shared;
-pub use shared::literal;
+pub use shared::{literal, values};
 static LIVE_RECEIVER: std::sync::OnceLock<crate::__cranpose_api::HostMessageObserver> = std::sync::OnceLock::new();
 
 pub fn call<A, R>(arguments: A, body: impl FnMut(A) -> R) -> R {
