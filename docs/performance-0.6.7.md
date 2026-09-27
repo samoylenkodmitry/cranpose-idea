@@ -7,7 +7,11 @@ while scrolled now clamps its stored offset, so expanding it again shows the
 first visible row instead of restoring a stale position.
 
 The reusable Rust `viewport::RowWindow` and measurement tools live in template
-commit `85ca6d831c6a5cb6fa6aece9eb3b8fae033d3bd1`. Studio pins that SDK revision.
+commit `85ca6d831c6a5cb6fa6aece9eb3b8fae033d3bd1`, used by the measurements below.
+Studio pins `af55167e66c55a6484a642d23bae32cf1f7579d0`, which additionally corrects
+the test tool's excessive wheel deltas and waits for stable click coordinates.
+That follow-up changes the measurement tool only; production UI code and the
+CPU measurement intervals are unchanged.
 No Cranpose framework or application source/build configuration changed.
 
 ## Measured update cost
