@@ -1,0 +1,83 @@
+{
+  "arrivalFrames": 36,
+  "controls": {
+    "pointerControls": [
+      {
+        "applyWithSelectionMenu": true,
+        "coldProcessToControlCompositionMs": 201.250584,
+        "colorDrag": true,
+        "colorPrecision": true,
+        "customRangeDrag": true,
+        "resetWithSelectionMenu": true,
+        "reusedSessionIsolation": true,
+        "scale": 1,
+        "settledColorFrames": 0,
+        "typedControls": [
+          {
+            "action": "+",
+            "kind": "int",
+            "reset": true
+          },
+          {
+            "action": "−",
+            "kind": "float",
+            "reset": true
+          },
+          {
+            "action": "Toggle",
+            "kind": "bool",
+            "reset": true
+          }
+        ],
+        "warmControlCompositionMs": [
+          41.355625,
+          44.357792,
+          41.307166,
+          40.475958,
+          41.773916
+        ]
+      },
+      {
+        "applyWithSelectionMenu": true,
+        "coldProcessToControlCompositionMs": 59.954166,
+        "colorDrag": true,
+        "colorPrecision": true,
+        "customRangeDrag": true,
+        "resetWithSelectionMenu": true,
+        "reusedSessionIsolation": true,
+        "scale": 2,
+        "settledColorFrames": 0,
+        "typedControls": [
+          {
+            "action": "+",
+            "kind": "int",
+            "reset": true
+          },
+          {
+            "action": "−",
+            "kind": "float",
+            "reset": true
+          },
+          {
+            "action": "Toggle",
+            "kind": "bool",
+            "reset": true
+          }
+        ],
+        "warmControlCompositionMs": [
+          73.204625,
+          45.152291,
+          45.100583,
+          43.651500000000006,
+          45.12025
+        ]
+      }
+    ]
+  },
+  "idleCpuSeconds": 0.0,
+  "idleFrames": 0,
+  "idleSeconds": 3.115435833,
+  "inlineColorAlpha": true,
+  "paintedPixels": 2864,
+  "result": "passed"
+}
