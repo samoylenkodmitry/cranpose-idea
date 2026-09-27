@@ -8,8 +8,10 @@ Four normalized float channels in `Color(...)` and `Color::rgba(...)` now have
 one swatch, including colors returned by ordinary palette functions. The
 Cranpose popup has hex input, hue/saturation/brightness/opacity sliders, a
 shader checkerboard and Reset. A color edit updates the four channels together
-while retaining source comments, suffixes and line breaks. Constants, named
-colors, computed channels and RGB/u8 constructors retain compiler behavior.
+while retaining source comments, suffixes and line breaks. Constants and named
+colors retain compiler behavior. Computed channels and RGB/u8 constructors are
+not grouped; eligible scalar arguments inside composables remain individually
+live-editable.
 
 Text inside `format!` is live when the fields remain unchanged. For example,
 `format!("{count:02} observations")` can become
@@ -29,7 +31,7 @@ not a full-IDE CPU measurement.
 ## Validation and timing limits
 
 The reusable implementation is template SDK
-`6abe2a686af53b51b662b9652b699eb883c6ea75`. Studio exports the shared format helper
+`bb51e47b67dcd154a5e86728d9b50a7141ee7a8b`. Studio exports the shared format helper
 through its private runtime, adopts the shared action controls, and expands
 the binary/library fixtures. No application release source or dependency changes
 are required.
