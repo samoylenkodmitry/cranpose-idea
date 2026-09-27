@@ -36,6 +36,8 @@ jobs:
       - if: matrix.platform == 'windows-x86_64'
         run: cargo build --locked -p xtask
       - if: matrix.platform == 'windows-x86_64'
+        run: target/debug/xtask.exe starter-smoke --output "${{ runner.temp }}/cranpose-starter" > starter-windows.json
+      - if: matrix.platform == 'windows-x86_64'
         run: target/debug/xtask.exe authoring-smoke --binary target/x86_64-pc-windows-msvc/release/cranpose-intellij-ui.exe --log authoring-windows.log --report authoring-windows.json
       - uses: actions/upload-artifact@v7
         if: always() && matrix.platform == 'windows-x86_64'
@@ -43,6 +45,7 @@ jobs:
           name: windows-test-tools
           path: |
             target/debug/xtask.exe
+            starter-windows.json
             authoring-windows.*
             authoring-controls-*.png
             lightning-*.png

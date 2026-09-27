@@ -15,7 +15,9 @@ beside Rust source. The Studio controls, inspector and tool window are written i
 Choose **File → New Project → Cranpose** to start from
 [Cranpose Showcase](https://github.com/samoylenkodmitry/cranpose-showcase). The native
 Cranpose wizard uses a pinned starter with Cranpose 0.1.167. Choose an empty
-location; Git and internet access are required. Cargo attaches automatically.
+location; the starter is bundled and project creation works offline without Git.
+Rust and downloaded Cargo dependencies are needed to build and run the app.
+Cargo attaches automatically when the Rust toolchain is available.
 
 Inside explicit composables, **◆** marks supported string, character, boolean,
 integer and float literals. Click a diamond for a Cranpose floating editor with
