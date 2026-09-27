@@ -248,6 +248,7 @@ pub struct Studio {
     pub collapsed: std::collections::HashSet<String>,
     pub inspector_details: bool,
     pub status: String,
+    pub setup: String,
     pub menu: String,
     pub pick: bool,
     pub live: bool,
@@ -283,6 +284,7 @@ impl Default for Studio {
             collapsed: Default::default(),
             inspector_details: false,
             status: "Choose an application to start a preview".into(),
+            setup: String::new(),
             menu: String::new(),
             pick: false,
             live: true,
@@ -391,6 +393,7 @@ impl Studio {
         self.busy = true;
         self.restart_required = false;
         self.status = "Preparing preview…".into();
+        self.setup.clear();
         self.diagnostics.clear();
         self.menu.clear();
         Some(
@@ -538,6 +541,10 @@ impl Studio {
                     "stopped" => {
                         self.connected = false;
                         self.busy = false;
+                        self.setup = value["setup"].as_str().unwrap_or_default().into();
+                        if !self.setup.is_empty() {
+                            self.session = 0;
+                        }
                         self.status = value["message"]
                             .as_str()
                             .unwrap_or("Preview stopped")

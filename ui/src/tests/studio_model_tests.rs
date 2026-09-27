@@ -22,6 +22,48 @@ fn native_controller_starts_only_a_debug_development_runner() {
 }
 
 #[test]
+fn wizard_target_starts_once_and_missing_rust_can_retry_without_discovery() {
+    let mut studio = studio();
+    let target = studio.targets[0].clone();
+    let request = studio.handle(
+        "studio.command",
+        &json!({"action":"showTarget","target":target}).to_string(),
+    );
+    assert_eq!(request.len(), 1);
+    assert_eq!(request[0]["options"]["target"], "desktop");
+    assert!(
+        studio
+            .handle("cranpose.project", &json!({"targets":[target]}).to_string())
+            .is_empty()
+    );
+    studio.handle(
+        "studio.child",
+        r#"{"session":1,"event":"stopped","setup":"rust","message":"Install Rust"}"#,
+    );
+    assert_eq!(studio.setup, "rust");
+    assert!(!studio.busy && !studio.connected);
+    assert_eq!(studio.session, 0);
+    assert!(
+        studio
+            .handle("cranpose.project", &json!({"targets":[target]}).to_string())
+            .is_empty(),
+        "No automatic retry loop"
+    );
+    let retry = studio.start().expect("retry target");
+    assert_eq!(retry["options"]["target"], "desktop");
+    assert_eq!(retry["session"], 2);
+    assert!(studio.setup.is_empty());
+    studio.handle(
+        "studio.child",
+        r#"{"session":1,"event":"stopped","setup":"rust"}"#,
+    );
+    assert!(
+        studio.setup.is_empty() && studio.busy,
+        "Ignore old setup result"
+    );
+}
+
+#[test]
 fn stale_session_events_cannot_replace_current_inspection() {
     let mut studio = studio();
     studio.start();

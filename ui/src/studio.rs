@@ -178,7 +178,9 @@ pub fn PreviewStudio() {
                                 move || {
                                     if !state.get().connected {
                                         Text(
-                                            if state.get().busy {
+                                            if state.get().setup == "rust" {
+                                                "Your project is ready"
+                                            } else if state.get().busy {
                                                 "Building your application…"
                                             } else {
                                                 "Your application, running here"
@@ -187,13 +189,34 @@ pub fn PreviewStudio() {
                                             style(palette.text, 15.0, true),
                                         );
                                         Text(
-                                            "Rust rendering · native input · live state",
+                                            if state.get().setup == "rust" {
+                                                "Install Rust to build and run the preview.\nOn Windows, include the C++ build tools when prompted."
+                                            } else if state.get().busy {
+                                                "The first build downloads and compiles dependencies.\nBuild progress appears below."
+                                            } else {
+                                                "Rust rendering · native input · live state"
+                                            },
                                             Modifier::empty().padding(8.0),
                                             style(palette.muted, 12.0, false),
                                         );
                                         if !state.get().busy {
+                                            if state.get().setup == "rust" {
+                                                Chip(
+                                                    "Set up Rust".into(),
+                                                    palette,
+                                                    true,
+                                                    move || {
+                                                        send(json!({"action":"setupRust"}));
+                                                    },
+                                                );
+                                            }
                                             Chip(
-                                                "Start preview".into(),
+                                                if state.get().setup == "rust" {
+                                                    "Retry preview"
+                                                } else {
+                                                    "Start preview"
+                                                }
+                                                .into(),
                                                 palette,
                                                 true,
                                                 move || start(state),
