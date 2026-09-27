@@ -13,5 +13,5 @@ crate-type = ["cdylib"]
 ide-tests = ["cranpose-host/ide-tests"]
 
 [dependencies]
-cranpose-host = { package = "cranpose-plugin-host", git = "https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template", rev = "137a0b32245e1aa95a4cd6f2664129cedb09ea96", features = ["host-library"] }
+cranpose-host = { package = "cranpose-plugin-host", git = "https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template", rev = "b4e601325a77f4da3afe461d3c9f896e695a6e8b", features = ["host-library"] }
 jni = "0.21"
