@@ -29,10 +29,15 @@ pub fn observe_patch() {
             }
         }
     }));
-    let composed = observed.get();
-    crate::__cranpose_api::LaunchedEffect(composed, move |_| {
+    let _ = observed.get();
+    // A host event can recompose before the fallback generation observer wakes.
+    // Confirm the store actually read by this composition, not the observer's
+    // older key (which could otherwise acknowledge after the only changed frame).
+    let composed = shared::generation();
+    crate::__cranpose_api::DisposableEffect(composed, move |_| {
         if shared::claim_composed(composed) {
             crate::__cranpose_api::send_to_host("cranpose.dev.composed", &format!("{{\"generation\":{composed}}}"));
         }
+        crate::__cranpose_api::DisposableEffectResult::default()
     });
 }
