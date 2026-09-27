@@ -982,7 +982,7 @@ dependencies = [
 [[package]]
 name = "cranpose-jvm-bridge"
 version = "0.1.0"
-source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=0ad88da1a6feaf8f3d92590724514746c8b90824#0ad88da1a6feaf8f3d92590724514746c8b90824"
+source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=f97619aff4a647c07e3295a88a5f79cd667ea7ff#f97619aff4a647c07e3295a88a5f79cd667ea7ff"
 
 [[package]]
 name = "cranpose-liquid"
@@ -1025,7 +1025,7 @@ dependencies = [
 [[package]]
 name = "cranpose-plugin-authoring"
 version = "0.1.0"
-source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=0ad88da1a6feaf8f3d92590724514746c8b90824#0ad88da1a6feaf8f3d92590724514746c8b90824"
+source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=f97619aff4a647c07e3295a88a5f79cd667ea7ff#f97619aff4a647c07e3295a88a5f79cd667ea7ff"
 dependencies = [
  "anyhow",
  "proc-macro2",
@@ -1040,7 +1040,7 @@ dependencies = [
 [[package]]
 name = "cranpose-plugin-authoring-ui"
 version = "0.1.0"
-source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=0ad88da1a6feaf8f3d92590724514746c8b90824#0ad88da1a6feaf8f3d92590724514746c8b90824"
+source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=f97619aff4a647c07e3295a88a5f79cd667ea7ff#f97619aff4a647c07e3295a88a5f79cd667ea7ff"
 dependencies = [
  "cranpose",
  "cranpose-animation",
@@ -1054,7 +1054,7 @@ dependencies = [
 [[package]]
 name = "cranpose-plugin-cache"
 version = "0.1.0"
-source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=0ad88da1a6feaf8f3d92590724514746c8b90824#0ad88da1a6feaf8f3d92590724514746c8b90824"
+source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=f97619aff4a647c07e3295a88a5f79cd667ea7ff#f97619aff4a647c07e3295a88a5f79cd667ea7ff"
 dependencies = [
  "anyhow",
  "sha2 0.10.9",
@@ -1064,7 +1064,7 @@ dependencies = [
 [[package]]
 name = "cranpose-plugin-host"
 version = "0.1.0"
-source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=0ad88da1a6feaf8f3d92590724514746c8b90824#0ad88da1a6feaf8f3d92590724514746c8b90824"
+source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=f97619aff4a647c07e3295a88a5f79cd667ea7ff#f97619aff4a647c07e3295a88a5f79cd667ea7ff"
 dependencies = [
  "anyhow",
  "cranpose-plugin-authoring",
@@ -1082,7 +1082,7 @@ dependencies = [
 [[package]]
 name = "cranpose-plugin-process"
 version = "0.1.0"
-source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=0ad88da1a6feaf8f3d92590724514746c8b90824#0ad88da1a6feaf8f3d92590724514746c8b90824"
+source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=f97619aff4a647c07e3295a88a5f79cd667ea7ff#f97619aff4a647c07e3295a88a5f79cd667ea7ff"
 dependencies = [
  "anyhow",
  "libproc",
@@ -1093,7 +1093,7 @@ dependencies = [
 [[package]]
 name = "cranpose-plugin-tools"
 version = "0.1.0"
-source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=0ad88da1a6feaf8f3d92590724514746c8b90824#0ad88da1a6feaf8f3d92590724514746c8b90824"
+source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=f97619aff4a647c07e3295a88a5f79cd667ea7ff#f97619aff4a647c07e3295a88a5f79cd667ea7ff"
 dependencies = [
  "anyhow",
  "clap",
@@ -1115,7 +1115,7 @@ dependencies = [
 [[package]]
 name = "cranpose-plugin-ux"
 version = "0.1.0"
-source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=0ad88da1a6feaf8f3d92590724514746c8b90824#0ad88da1a6feaf8f3d92590724514746c8b90824"
+source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=f97619aff4a647c07e3295a88a5f79cd667ea7ff#f97619aff4a647c07e3295a88a5f79cd667ea7ff"
 dependencies = [
  "serde",
  "serde_json",
@@ -1124,7 +1124,7 @@ dependencies = [
 [[package]]
 name = "cranpose-plugin-watch"
 version = "0.1.0"
-source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=0ad88da1a6feaf8f3d92590724514746c8b90824#0ad88da1a6feaf8f3d92590724514746c8b90824"
+source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=f97619aff4a647c07e3295a88a5f79cd667ea7ff#f97619aff4a647c07e3295a88a5f79cd667ea7ff"
 
 [[package]]
 name = "cranpose-render-common"
