@@ -3,9 +3,9 @@ use crate::{
     studio_model::Studio,
 };
 use cranpose::{
-    BasicTextField, BoxWithConstraints, BoxWithConstraintsScope, Button, ButtonSpec, Color, Column,
-    ColumnSpec, LinearArrangement, Modifier, MutableState, Row, RowSpec, ScrollState, SpanStyle,
-    Text, TextFieldState, TextOptions, TextStyle, TextWithOptions, composable, remember,
+    BasicTextField, BoxWithConstraints, BoxWithConstraintsScope, Color, Column, ColumnSpec,
+    LinearArrangement, Modifier, MutableState, Row, RowSpec, ScrollState, SpanStyle, Text,
+    TextFieldState, TextOptions, TextStyle, TextWithOptions, composable, remember,
     rememberHostMessages, rememberMutableStateOf, send_to_host,
     text::{FontWeight, TextOverflow, TextUnit},
 };
@@ -1166,34 +1166,10 @@ fn navigate_selected(studio: &Studio) {
 }
 
 #[expect(non_snake_case)]
-fn Chip(label: String, palette: Palette, selected: bool, action: impl Fn() + 'static) {
-    let color = if selected {
-        palette.selection()
-    } else {
-        Color::TRANSPARENT
-    };
-    let foreground = if selected {
-        palette.accent
-    } else {
-        palette.text
-    };
+fn Chip(label: String, _palette: Palette, selected: bool, action: impl Fn() + 'static) {
     let text = label.clone();
     cranpose::key(&label, move || {
-        Button(
-            Modifier::empty()
-                .height(30.0)
-                .rounded_corners(6.0)
-                .background(color),
-            ButtonSpec::default(),
-            action,
-            move || {
-                Text(
-                    text.clone(),
-                    Modifier::empty().padding(6.0),
-                    style(foreground, 11.0, selected),
-                );
-            },
-        );
+        cranpose_plugin_authoring_ui::ActionChip(text, selected, action);
     });
 }
 fn short_label(text: &str, limit: usize) -> String {

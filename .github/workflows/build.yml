@@ -86,7 +86,7 @@ jobs:
       - name: Cranpose editor decorations
         run: cargo run --locked -p xtask -- authoring-smoke --binary target/debug/cranpose-intellij-ui --log authoring-hot-reload.log --report authoring-hot-reload.json
       - name: Library and binary application
-        run: cargo run --locked -p xtask -- hot-smoke --runner target/debug/cranpose-dev-runner --fixture library --reuse-fixture --source src/lib.rs --cache "${{ runner.temp }}/cranpose-hot-cache" --log library-hot-reload.log --measure-rounds 2 --profile-startup --report library-hot-reload.json
+        run: cargo run --locked -p xtask -- hot-smoke --runner target/debug/cranpose-dev-runner --fixture library --reuse-fixture --source src/lib.rs --cache "${{ runner.temp }}/cranpose-hot-cache" --log library-hot-reload.log --measure-rounds 2 --live-values-rounds 4 --profile-startup --report library-hot-reload.json
       - uses: actions/upload-artifact@v7
         if: always()
         with:
@@ -95,6 +95,7 @@ jobs:
             *-hot-reload.log
             restart-hot-reload.restart-*.log
             *-hot-reload.json
+            authoring-controls-*.png
   stability:
     name: Composable stability (sample)
     runs-on: ubuntu-latest
