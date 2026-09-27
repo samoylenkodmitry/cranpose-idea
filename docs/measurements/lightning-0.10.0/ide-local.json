@@ -1,0 +1,15 @@
+{
+  "sdk":"82f3e4fd2aa6e9b4256037eb308d44f3fef2dfe4",
+  "applicationPid":5066,
+  "counterRetained":4,
+  "scope":"Six local IDE text edits and Undo operations; native harness/build work and ordinary IDE background work were also active. Not a controlled benchmark or display latency.",
+  "medianMs":239.708542,
+  "samples":[
+    {"editToMatchedFrameMs":167.588667,"file":"src/gallery.rs","lines":[76],"snapshotRequests":1},
+    {"editToMatchedFrameMs":218.279458,"file":"src/gallery.rs","lines":[76],"snapshotRequests":1},
+    {"editToMatchedFrameMs":248.91074999999998,"file":"src/gallery.rs","lines":[76],"snapshotRequests":1},
+    {"editToMatchedFrameMs":255.47175,"file":"src/gallery.rs","lines":[76],"snapshotRequests":1},
+    {"editToMatchedFrameMs":245.446417,"file":"src/gallery.rs","lines":[238],"snapshotRequests":1},
+    {"editToMatchedFrameMs":233.970667,"file":"src/gallery.rs","lines":[238],"snapshotRequests":1}
+  ]
+}

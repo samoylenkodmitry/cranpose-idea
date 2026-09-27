@@ -34,6 +34,20 @@ are transient feature costs from one local release run, not a before/after
 performance comparison. They exclude the IDE and measurement process, including
 PNG capture. Application updates and compilation were not timed by this harness.
 
+Six local IDE edits and Undo operations, including `format!`, reached a matching
+updated frame in median 239.7 ms (167.6–255.5 ms). Each needed one snapshot.
+The application PID stayed 5066 and the counter retained 4. This is an observation
+of the first candidate, not a controlled performance comparison: native tests,
+build work and ordinary IDE background work also ran during the session.
+It excludes final Swing/display presentation and does not establish the user's
+separate project's latency. Raw samples are in `measurements/lightning-0.10.0`.
+
+Initial Linux CI and a local debug run caught a measurement backlog: repeatedly
+encoding evidence PNGs inside the frame observation loop delayed processing the
+final transparent frame. The Rust harness now scans alpha directly and writes
+the brightest capture after the observation. Two local debug repeats passed the
+same 1.5-second deadline at both scales; the shader duration was unchanged.
+
 For repeatable actual IDE observations, start a sandbox with
 `-Dcranpose.trace.edits=true`. Successful matches write `CRANPOSE_EDIT_PRESENTED`
 to the IDE log, including `editToMatchedFrameMs` and request count. That interval
