@@ -30,7 +30,7 @@ pub fn observe_patch() {
         }
     }));
     let composed = observed.get();
-    crate::__cranpose_api::SideEffect(move || {
+    crate::__cranpose_api::LaunchedEffect(composed, move |_| {
         if shared::claim_composed(composed) {
             crate::__cranpose_api::send_to_host("cranpose.dev.composed", &format!("{{\"generation\":{composed}}}"));
         }
