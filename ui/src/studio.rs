@@ -5,8 +5,8 @@ use crate::{
 use cranpose::{
     BasicTextField, BoxWithConstraints, BoxWithConstraintsScope, Color, Column, ColumnSpec,
     LinearArrangement, Modifier, MutableState, Row, RowSpec, ScrollState, SpanStyle, Text,
-    TextFieldState, TextOptions, TextStyle, TextWithOptions, composable, remember,
-    rememberHostMessages, rememberMutableStateOf, send_to_host,
+    TextFieldState, TextOptions, TextStyle, TextWithOptions, VerticalAlignment, composable,
+    remember, rememberHostMessages, rememberMutableStateOf, send_to_host,
     text::{FontWeight, TextOverflow, TextUnit},
 };
 use cranpose_core::{CollectEvents, SideEffect};
@@ -166,7 +166,7 @@ pub fn PreviewStudio() {
                     Menu(state, palette, width, menu_height);
                     Row(
                         Modifier::empty().fill_max_width().height(stage_height),
-                        RowSpec::default(),
+                        RowSpec::default().vertical_alignment(VerticalAlignment::CenterVertically),
                         move || {
                             Column(
                                 Modifier::empty()
@@ -260,7 +260,9 @@ pub fn PreviewStudio() {
                     }
                     Row(
                         Modifier::empty().fill_max_width().height(28.0).padding(6.0),
-                        RowSpec::default().horizontal_arrangement(LinearArrangement::SpaceBetween),
+                        RowSpec::default()
+                            .horizontal_arrangement(LinearArrangement::SpaceBetween)
+                            .vertical_alignment(VerticalAlignment::CenterVertically),
                         move || {
                             let studio = state.get();
                             Text(
@@ -304,7 +306,9 @@ fn Toolbar(state: MutableState<Studio>, palette: Palette, width: f32) {
                     .fill_max_width()
                     .height(34.0)
                     .horizontal_scroll(first_scroll, false),
-                RowSpec::default().horizontal_arrangement(LinearArrangement::spaced_by(5.0)),
+                RowSpec::default()
+                    .horizontal_arrangement(LinearArrangement::spaced_by(5.0))
+                    .vertical_alignment(VerticalAlignment::CenterVertically),
                 move || TargetControls(state, palette, width),
             );
             Row(
@@ -312,7 +316,9 @@ fn Toolbar(state: MutableState<Studio>, palette: Palette, width: f32) {
                     .fill_max_width()
                     .height(34.0)
                     .horizontal_scroll(second_scroll, false),
-                RowSpec::default().horizontal_arrangement(LinearArrangement::spaced_by(5.0)),
+                RowSpec::default()
+                    .horizontal_arrangement(LinearArrangement::spaced_by(5.0))
+                    .vertical_alignment(VerticalAlignment::CenterVertically),
                 move || {
                     let studio = state.get();
                     let variant = studio
@@ -683,7 +689,9 @@ fn Inspector(
                     .height(38.0)
                     .horizontal_scroll(controls_scroll, false)
                     .padding(4.0),
-                RowSpec::default().horizontal_arrangement(LinearArrangement::spaced_by(6.0)),
+                RowSpec::default()
+                    .horizontal_arrangement(LinearArrangement::spaced_by(6.0))
+                    .vertical_alignment(VerticalAlignment::CenterVertically),
                 move || {
                     let studio = state.get();
                     if narrow {
@@ -737,7 +745,7 @@ fn Inspector(
             );
             Row(
                 Modifier::empty().fill_max_width().height(height - 38.0),
-                RowSpec::default(),
+                RowSpec::default().vertical_alignment(VerticalAlignment::CenterVertically),
                 move || {
                     if !narrow || !state.get().inspector_details {
                         LayoutTree(
@@ -799,7 +807,9 @@ fn LayoutTree(
             );
             Row(
                 Modifier::empty().fill_max_width().height(32.0),
-                RowSpec::default().horizontal_arrangement(LinearArrangement::spaced_by(4.0)),
+                RowSpec::default()
+                    .horizontal_arrangement(LinearArrangement::spaced_by(4.0))
+                    .vertical_alignment(VerticalAlignment::CenterVertically),
                 move || {
                     BasicTextField(
                         query,
@@ -894,7 +904,8 @@ fn LayoutTree(
                                         palette.surface
                                     })
                                     .rounded_corners(4.0),
-                                RowSpec::default(),
+                                RowSpec::default()
+                                    .vertical_alignment(VerticalAlignment::CenterVertically),
                                 move || {
                                     Text(
                                         "",
@@ -1116,7 +1127,9 @@ fn CustomSize(state: MutableState<Studio>, palette: Palette) {
         remember(move || TextFieldState::new(settings.height.to_string())).with(|value| *value);
     Row(
         Modifier::empty().fill_max_width().height(42.0),
-        RowSpec::default().horizontal_arrangement(LinearArrangement::spaced_by(6.0)),
+        RowSpec::default()
+            .horizontal_arrangement(LinearArrangement::spaced_by(6.0))
+            .vertical_alignment(VerticalAlignment::CenterVertically),
         move || {
             BasicTextField(
                 width,

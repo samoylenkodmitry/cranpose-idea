@@ -1,5 +1,5 @@
 use cranpose::{
-    Button, ButtonSpec, Color, Column, ColumnSpec, LinearArrangement, Modifier, Row, RowSpec,
+    Button, ButtonSpec, Color, Column, ColumnSpec, LinearArrangement, Modifier, Row, RowSpec, VerticalAlignment,
     SpanStyle, Text, TextStyle, composable, isSystemInDarkTheme, rememberMutableStateOf,
     text::{FontWeight, TextUnit},
 };
@@ -69,7 +69,7 @@ pub fn FieldNotes() {
         move || {
             Row(
                 Modifier::empty().fill_max_width(),
-                RowSpec::default().horizontal_arrangement(LinearArrangement::SpaceBetween),
+                RowSpec::default().horizontal_arrangement(LinearArrangement::SpaceBetween).vertical_alignment(VerticalAlignment::CenterVertically),
                 move || {
                     Text(
                         "FIELD NOTES",
@@ -101,7 +101,7 @@ pub fn FieldNotes() {
             );
             Row(
                 Modifier::empty(),
-                RowSpec::default().horizontal_arrangement(LinearArrangement::spaced_by(8.0)),
+                RowSpec::default().horizontal_arrangement(LinearArrangement::spaced_by(8.0)).vertical_alignment(VerticalAlignment::CenterVertically),
                 move || {
                     for (index, label) in ["All notes", "Saved"].into_iter().enumerate() {
                         let selected = filter.get() == index;
@@ -230,7 +230,7 @@ fn ObservationCounter(count: i32, description: &'static str, on_add: impl Fn() +
     let palette = ink(isSystemInDarkTheme());
     Row(
         Modifier::empty().fill_max_width(),
-        RowSpec::default().horizontal_arrangement(LinearArrangement::SpaceBetween),
+        RowSpec::default().horizontal_arrangement(LinearArrangement::SpaceBetween).vertical_alignment(VerticalAlignment::CenterVertically),
         move || {
             Column(Modifier::empty(), ColumnSpec::default(), move || {
                 Text(

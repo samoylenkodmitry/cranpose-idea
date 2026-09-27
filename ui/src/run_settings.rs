@@ -2,8 +2,9 @@
 use crate::ide::{Palette, rememberPalette};
 use cranpose::{
     BasicTextField, Button, ButtonSpec, Column, ColumnSpec, LinearArrangement, Modifier, Row,
-    RowSpec, ScrollState, SpanStyle, Text, TextFieldState, TextStyle, composable, remember,
-    rememberHostMessages, rememberMutableStateOf, send_to_host, text::TextUnit,
+    RowSpec, ScrollState, SpanStyle, Text, TextFieldState, TextStyle, VerticalAlignment,
+    composable, remember, rememberHostMessages, rememberMutableStateOf, send_to_host,
+    text::TextUnit,
 };
 use cranpose_core::{CollectEvents, SideEffect};
 use serde_json::{Value, json};
@@ -160,7 +161,9 @@ pub fn RunSettings() {
             }
             Row(
                 Modifier::empty().height(36.0),
-                RowSpec::default().horizontal_arrangement(LinearArrangement::spaced_by(8.0)),
+                RowSpec::default()
+                    .horizontal_arrangement(LinearArrangement::spaced_by(8.0))
+                    .vertical_alignment(VerticalAlignment::CenterVertically),
                 move || {
                     for option in ["run", "check", "test"] {
                         let selected = command.get() == option;
@@ -188,7 +191,9 @@ pub fn RunSettings() {
             );
             Row(
                 Modifier::empty().height(36.0),
-                RowSpec::default().horizontal_arrangement(LinearArrangement::spaced_by(8.0)),
+                RowSpec::default()
+                    .horizontal_arrangement(LinearArrangement::spaced_by(8.0))
+                    .vertical_alignment(VerticalAlignment::CenterVertically),
                 move || {
                     for option in ["bin", "example"] {
                         let selected = kind.get() == option;

@@ -1,8 +1,9 @@
 use crate::ide::{Palette, rememberPalette};
 use cranpose::{
     Box as UiBox, BoxSpec, Button, ButtonSpec, Color, Column, ColumnSpec, GraphicsLayer,
-    LinearArrangement, Modifier, Row, RowSpec, ScrollState, SpanStyle, Text, TextStyle, composable,
-    remember, rememberHostMessages, rememberMutableStateOf, send_to_host,
+    LinearArrangement, Modifier, Row, RowSpec, ScrollState, SpanStyle, Text, TextStyle,
+    VerticalAlignment, composable, remember, rememberHostMessages, rememberMutableStateOf,
+    send_to_host,
     text::{FontWeight, TextUnit},
 };
 use cranpose_core::CollectEvents;
@@ -129,7 +130,9 @@ pub fn Dashboard() {
             );
             Row(
                 Modifier::empty(),
-                RowSpec::default().horizontal_arrangement(LinearArrangement::spaced_by(6.0)),
+                RowSpec::default()
+                    .horizontal_arrangement(LinearArrangement::spaced_by(6.0))
+                    .vertical_alignment(VerticalAlignment::CenterVertically),
                 move || {
                     Action(palette, "Refresh", "refresh", "", !workspace.get().busy);
                     Action(palette, "Docs", "docs", "", true);
@@ -166,7 +169,8 @@ pub fn Dashboard() {
                             .padding(8.0)
                             .clickable(move |_| request("select", &id)),
                         RowSpec::default()
-                            .horizontal_arrangement(LinearArrangement::spaced_by(8.0)),
+                            .horizontal_arrangement(LinearArrangement::spaced_by(8.0))
+                            .vertical_alignment(VerticalAlignment::CenterVertically),
                         move || {
                             Text(
                                 if chosen { "●" } else { "○" },
@@ -193,7 +197,8 @@ pub fn Dashboard() {
                     Row(
                         Modifier::empty(),
                         RowSpec::default()
-                            .horizontal_arrangement(LinearArrangement::spaced_by(6.0)),
+                            .horizontal_arrangement(LinearArrangement::spaced_by(6.0))
+                            .vertical_alignment(VerticalAlignment::CenterVertically),
                         move || {
                             let enabled = !workspace.get().busy;
                             Action(palette, "Preview", "preview", "", enabled);
@@ -204,7 +209,8 @@ pub fn Dashboard() {
                     Row(
                         Modifier::empty(),
                         RowSpec::default()
-                            .horizontal_arrangement(LinearArrangement::spaced_by(6.0)),
+                            .horizontal_arrangement(LinearArrangement::spaced_by(6.0))
+                            .vertical_alignment(VerticalAlignment::CenterVertically),
                         move || {
                             Action(palette, "Test", "test", "", !workspace.get().busy);
                             Action(palette, "Run config", "configure", "", true);
@@ -229,7 +235,9 @@ pub fn Dashboard() {
                 for symbol in current.composables {
                     Row(
                         Modifier::empty().fill_max_width(),
-                        RowSpec::default().horizontal_arrangement(LinearArrangement::SpaceBetween),
+                        RowSpec::default()
+                            .horizontal_arrangement(LinearArrangement::SpaceBetween)
+                            .vertical_alignment(VerticalAlignment::CenterVertically),
                         move || {
                             let offset = symbol.offset.to_string();
                             Text(

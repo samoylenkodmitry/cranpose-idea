@@ -125,7 +125,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: samoylenkodmitry/cranpose-stability@a7109ad90e90e725b57a99d8bdf39146e048eed7
+      - uses: samoylenkodmitry/cranpose-stability@ccf36b1c993cdac5462ef7bf7113c56620656141
         with:
           path: samples/counter
   plugin:
