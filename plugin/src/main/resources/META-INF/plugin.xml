@@ -16,10 +16,11 @@
             <li>File → New Project → Cranpose, using the Cranpose Showcase starter.</li>
             <li>Live literal diamonds and Cranpose floating controls with editor Undo, plus shader editor accents.</li>
         </ul>
-        <p>Install JetBrains Rust support for full Rust language editing. Preview applications need
-        Cranpose's preview feature. See the repository for setup and supported framework revisions.</p>
+        <p>Install Rust and the platform build tools to compile applications. Project creation works
+        offline without Git. The plugin owns preview instrumentation and leaves application release
+        builds unchanged. JetBrains Rust support provides full Rust language editing.</p>
     ]]></description>
-    <change-notes><![CDATA[0.7.3: Keep live-value actions accessible while selecting text. Apply, Reset, numeric steps and Toggle now sit in a separate footer below the floating selection menu, with an accent for Apply. Native pointer regression checks cover 1× and 2× scale. Application release builds are unchanged.]]></change-notes>
+    <change-notes><![CDATA[<p>0.12.0 — First Marketplace release.</p><ul><li>Cranpose 0.1.169 with the latest pinned Showcase starter, bundled for offline project creation.</li><li>Automatic desktop configuration and first preview from New Project, with Rust setup and retry controls.</li><li>Live strings, format text, numbers, colors and resolvable variables; seekbars, inline swatches and editor Undo.</li><li>Layout inspection, source navigation, stability badges and animated shader feedback.</li><li>Verified native hosts and Cranpose UI for macOS, Linux and Windows on x86-64 and ARM64.</li></ul>]]></change-notes>
     <depends>com.intellij.modules.platform</depends>
     <extensions defaultExtensionNs="com.intellij">
         <postStartupActivity implementation="dev.cranpose.rust.Startup"/>

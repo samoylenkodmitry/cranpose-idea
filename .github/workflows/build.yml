@@ -161,3 +161,16 @@ jobs:
           name: verification
           path: target/verification
           if-no-files-found: ignore
+
+  publish:
+    name: Publish verified version tag
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [plugin]
+    permissions:
+      contents: write
+      actions: read
+    uses: ./.github/workflows/publish.yml
+    with:
+      tag: ${{ github.ref_name }}
+      plugin_id: ${{ vars.MARKETPLACE_PLUGIN_ID }}
+    secrets: inherit
