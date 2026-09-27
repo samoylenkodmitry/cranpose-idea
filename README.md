@@ -59,6 +59,10 @@ The injected runtime refuses to compile without debug assertions.
 Generated helper crates are cached by their contents. Restarting with unchanged
 helpers reuses their Cargo artifacts, and running previews keep their original
 helper version when another plugin build generates newer code.
+The resolved development lockfile is also reused in later private sessions. Edits
+to copied manifests, the original lockfile, toolchain or Cargo config invalidate
+that seed. Cargo still validates and updates it normally. Cache failures fall back
+to ordinary resolution; your application's lockfile remains the source input.
 
 Stopping or replacing a preview also stops its compiler and application. The shared
 Rust SDK owns their process group on Unix and their Job Object on Windows. Shutdown
@@ -184,12 +188,13 @@ cargo run -p xtask -- ide-test --ide /path/to/IntelliJ-IDEA
 
 ```
 
-### Measure reload and inspector costs
+### Measure startup, reload and inspector costs
 
 ```sh
 cargo build --locked -p cranpose-dev-runner
 cargo run --locked -p xtask -- hot-smoke --runner target/debug/cranpose-dev-runner --fixture counter --cache target/hot-cache --log reload.log --measure-rounds 6 --report reload.json
 cargo run --locked -p xtask -- hot-smoke --runner target/debug/cranpose-dev-runner --fixture counter --cache target/hot-cache --log reload-noise.log --measure-rounds 6 --background-noise-ms 3000 --report reload-noise.json
+cargo run --locked -p xtask -- hot-smoke --runner target/debug/cranpose-dev-runner --fixture counter --cache target/hot-cache --log restart.log --startup-only --profile-startup --require-cached-dependencies --build-diagnostics --require-cached-support --idle-seconds 20 --idle-settle-seconds 5 --report restart.json
 cargo test --release --no-default-features -p cranpose-intellij-ui benchmark_inspector_model -- --ignored --nocapture
 ```
 
@@ -200,6 +205,13 @@ about 200 ms of observation delay. Compare warm runs on the same machine with
 other builds stopped; startup and compilation caches can dominate early samples.
 The inspector benchmark measures model operations, not whole-IDE frame rates.
 CI stores the reload JSON alongside its logs without machine-dependent timing limits.
+The restart check requires a previous launch with the same fixture and cache.
+Startup profiling separates runner preparation from Dioxus timestamps and host
+connection/snapshot observation. Idle phases each settle for five seconds, then
+measure twenty seconds of process CPU with the preview visible, inspected every
+500 ms, and hidden. CPU percentages describe one core. Keep generated fixture
+caches outside Cargo's target directory when using `rust-cache` in CI.
+See [0.6.4 measurements](docs/performance-0.6.4.md) for conditions and raw summaries.
 
 Local packaging writes a ZIP for this machine under `target/plugin`. Rebuilding the
 plugin UI reconnects its controls to the running preview without starting another
