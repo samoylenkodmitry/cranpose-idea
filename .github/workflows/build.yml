@@ -66,11 +66,17 @@ jobs:
             target/ide-tests/**/log
           if-no-files-found: ignore
   hot-reload:
-    name: Live code, state and recovery (Rust harness)
-    runs-on: macos-latest
+    name: Live code, state and recovery (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v7
+      - if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y mesa-vulkan-drivers libxkbcommon-dev libwayland-dev
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - run: cargo build --locked -p cranpose-dev-runner
@@ -90,7 +96,7 @@ jobs:
       - uses: actions/upload-artifact@v7
         if: always()
         with:
-          name: hot-reload-evidence
+          name: hot-reload-evidence-${{ matrix.os }}
           path: |
             *-hot-reload.log
             restart-hot-reload.restart-*.log

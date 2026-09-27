@@ -49,19 +49,7 @@ pub fn ensure(cache: &Path) -> Result<PathBuf> {
             })
         })
         .context("compiler executable missing from release archive")?;
-    let temporary = directory.join(format!("{executable}.{}.part", std::process::id()));
-    let mut output = fs::File::create(&temporary)?;
-    std::io::copy(&mut archive.by_index(index)?, &mut output)?;
-    output.sync_all()?;
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt;
-        fs::set_permissions(&temporary, fs::Permissions::from_mode(0o755))?;
-    }
-    check_version(&temporary)?;
-    if !path.exists() {
-        fs::rename(&temporary, &path)?;
-    }
+    cranpose_plugin_cache::publish_executable(&path, archive.by_index(index)?, check_version)?;
     Ok(path)
 }
 
