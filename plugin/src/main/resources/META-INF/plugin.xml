@@ -19,7 +19,7 @@
         <p>Install JetBrains Rust support for full Rust language editing. Preview applications need
         Cranpose's preview feature. See the repository for setup and supported framework revisions.</p>
     ]]></description>
-    <change-notes><![CDATA[0.7.2: Fix a preview gutter repaint exception after edits or saving. Retired renderers retain safe icon and identity properties while their native project callbacks are released. Includes 0.7.1's faster large-file authoring catalogs and Unicode position regression coverage. Application release builds are unchanged.]]></change-notes>
+    <change-notes><![CDATA[0.7.3: Keep live-value actions accessible while selecting text. Apply, Reset, numeric steps and Toggle now sit in a separate footer below the floating selection menu, with an accent for Apply. Native pointer regression checks cover 1× and 2× scale. Application release builds are unchanged.]]></change-notes>
     <depends>com.intellij.modules.platform</depends>
     <extensions defaultExtensionNs="com.intellij">
         <postStartupActivity implementation="dev.cranpose.rust.Startup"/>
