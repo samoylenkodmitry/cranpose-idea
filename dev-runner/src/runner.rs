@@ -87,9 +87,39 @@ pub fn run(options: RunOptions) -> Result<()> {
         .collect();
     features.insert(format!("{alias}/preview"));
     let sequence = SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis();
-    let directory = options
-        .cache
-        .join(format!("session-{}-{sequence}", std::process::id()));
+    let lease = if options.hot_reload {
+        fs::create_dir_all(&options.cache)?;
+        let cache = options.cache.canonicalize()?;
+        let original = metadata.workspace_root.canonicalize()?;
+        if cache.starts_with(&original) {
+            bail!("development cache must be outside the application workspace");
+        }
+        let mut identity = b"cranpose-dev-workspace-v1\0".to_vec();
+        identity.extend_from_slice(original.as_os_str().as_encoded_bytes());
+        match cranpose_plugin_cache::WorkspaceLease::acquire(&cache.join("workspaces"), &identity) {
+            Ok(lease) => Some(lease),
+            Err(error) => {
+                eprintln!("Reusable development workspace unavailable: {error}");
+                None
+            }
+        }
+    } else {
+        None
+    };
+    if profile {
+        println!(
+            "{}",
+            serde_json::json!({"cranposeDev":"workspaceLease", "reused":lease.as_ref().is_some_and(|lease| lease.reused())})
+        );
+    }
+    let directory = lease
+        .as_ref()
+        .map(|lease| lease.path().to_owned())
+        .unwrap_or_else(|| {
+            options
+                .cache
+                .join(format!("session-{}-{sequence}", std::process::id()))
+        });
     let mut workspace = DevWorkspace::prepare_with_mode(
         &metadata,
         &directory,
@@ -318,6 +348,19 @@ pub fn run(options: RunOptions) -> Result<()> {
         && let Err(error) = cache.save()
     {
         eprintln!("Development dependency cache not saved: {error}");
+    }
+    if let Some(lease) = lease {
+        match child.wait_for_tree_exit(Duration::from_millis(200)) {
+            Ok(true) => {
+                if let Err(error) = lease.complete() {
+                    eprintln!("Development workspace not reusable: {error}");
+                }
+            }
+            Ok(false) => {
+                eprintln!("Development workspace abandoned: processes have not finished exiting")
+            }
+            Err(error) => eprintln!("Development workspace exit could not be confirmed: {error}"),
+        }
     }
     Ok(())
 }

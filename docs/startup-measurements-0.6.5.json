@@ -1,0 +1,1602 @@
+{
+  "conditions": {
+    "machine": "Apple M5",
+    "os": "macOS 27.0",
+    "rust": "1.98.1",
+    "dioxusCli": "0.7.10",
+    "baseline": "Cranpose Studio 0.6.4, 2433dd13e629655ab20a99cd9dc4c73ec01a32ab",
+    "candidateSdk": "0bd09743bf069af660893bca75dd1a0c831247b9",
+    "workspace": "same fixed counter fixture source directory",
+    "cache": "separate private Cargo/helper caches per variant, each warmed twice",
+    "order": [
+      "baseline/candidate",
+      "candidate/baseline",
+      "baseline/candidate",
+      "candidate/baseline",
+      "baseline/candidate"
+    ],
+    "preview": "old development preview stopped",
+    "background": "no local builds during measurements; desktop and network not isolated"
+  },
+  "samples": {
+    "baseline": [
+      {
+        "cargoReportedBuildMs": 1330.0,
+        "idle": [],
+        "mode": "startup",
+        "result": "passed",
+        "shutdownMs": 103.409875,
+        "snapshotPollMs": 200,
+        "startupMs": 3201.088375,
+        "startupPhases": {
+          "compilerBuildCompletedMs": 2250.0,
+          "compilerServingMs": 230.0,
+          "connectionPollMs": 100,
+          "connectionToSnapshotMs": 297.71875,
+          "dependencyCacheHit": true,
+          "runner": [
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 19.141167,
+              "elapsedMs": 19.141167,
+              "phase": "metadata"
+            },
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 2.4133750000000003,
+              "elapsedMs": 21.554542,
+              "phase": "workspace"
+            },
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 11.578542,
+              "elapsedMs": 33.133084,
+              "phase": "dependencyCache"
+            },
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 6.361958,
+              "elapsedMs": 39.495042,
+              "phase": "toolchain"
+            },
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 0.252792,
+              "elapsedMs": 39.747834000000005,
+              "phase": "compilerSpawn"
+            }
+          ],
+          "spawnToConnectionMs": 2903.369625,
+          "workspaceReused": null
+        },
+        "stoppedPids": [
+          10521,
+          10558,
+          10810
+        ],
+        "supportBuilds": [
+          {
+            "crate": "cranpose_dev_macros",
+            "fresh": true
+          },
+          {
+            "crate": "cranpose_dev_runtime",
+            "fresh": true
+          }
+        ]
+      },
+      {
+        "cargoReportedBuildMs": 1310.0,
+        "idle": [],
+        "mode": "startup",
+        "result": "passed",
+        "shutdownMs": 231.813459,
+        "snapshotPollMs": 200,
+        "startupMs": 3093.9769579999997,
+        "startupPhases": {
+          "compilerBuildCompletedMs": 2120.0,
+          "compilerServingMs": 230.0,
+          "connectionPollMs": 100,
+          "connectionToSnapshotMs": 279.33691699999963,
+          "dependencyCacheHit": true,
+          "runner": [
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 16.771584,
+              "elapsedMs": 16.771584,
+              "phase": "metadata"
+            },
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 2.097291,
+              "elapsedMs": 18.868875,
+              "phase": "workspace"
+            },
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 11.410334,
+              "elapsedMs": 30.279209,
+              "phase": "dependencyCache"
+            },
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 6.094208,
+              "elapsedMs": 36.373417,
+              "phase": "toolchain"
+            },
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 0.25133300000000003,
+              "elapsedMs": 36.62475,
+              "phase": "compilerSpawn"
+            }
+          ],
+          "spawnToConnectionMs": 2814.640041,
+          "workspaceReused": null
+        },
+        "stoppedPids": [
+          11376,
+          11418,
+          11658
+        ],
+        "supportBuilds": [
+          {
+            "crate": "cranpose_dev_macros",
+            "fresh": true
+          },
+          {
+            "crate": "cranpose_dev_runtime",
+            "fresh": true
+          }
+        ]
+      },
+      {
+        "cargoReportedBuildMs": 1360.0,
+        "idle": [],
+        "mode": "startup",
+        "result": "passed",
+        "shutdownMs": 136.061875,
+        "snapshotPollMs": 200,
+        "startupMs": 3189.735917,
+        "startupPhases": {
+          "compilerBuildCompletedMs": 2270.0,
+          "compilerServingMs": 260.0,
+          "connectionPollMs": 100,
+          "connectionToSnapshotMs": 291.34229200000027,
+          "dependencyCacheHit": true,
+          "runner": [
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 22.721875,
+              "elapsedMs": 22.721875,
+              "phase": "metadata"
+            },
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 2.382375,
+              "elapsedMs": 25.10425,
+              "phase": "workspace"
+            },
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 11.92175,
+              "elapsedMs": 37.026,
+              "phase": "dependencyCache"
+            },
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 7.072959,
+              "elapsedMs": 44.098959,
+              "phase": "toolchain"
+            },
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 0.251708,
+              "elapsedMs": 44.350667,
+              "phase": "compilerSpawn"
+            }
+          ],
+          "spawnToConnectionMs": 2898.3936249999997,
+          "workspaceReused": null
+        },
+        "stoppedPids": [
+          11673,
+          11710,
+          11982
+        ],
+        "supportBuilds": [
+          {
+            "crate": "cranpose_dev_macros",
+            "fresh": true
+          },
+          {
+            "crate": "cranpose_dev_runtime",
+            "fresh": true
+          }
+        ]
+      },
+      {
+        "cargoReportedBuildMs": 1450.0,
+        "idle": [],
+        "mode": "startup",
+        "result": "passed",
+        "shutdownMs": 23.985542,
+        "snapshotPollMs": 200,
+        "startupMs": 3286.3800410000003,
+        "startupPhases": {
+          "compilerBuildCompletedMs": 2340.0,
+          "compilerServingMs": 230.0,
+          "connectionPollMs": 100,
+          "connectionToSnapshotMs": 276.7671660000001,
+          "dependencyCacheHit": true,
+          "runner": [
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 19.529792,
+              "elapsedMs": 19.529792,
+              "phase": "metadata"
+            },
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 2.2070000000000003,
+              "elapsedMs": 21.736792,
+              "phase": "workspace"
+            },
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 12.183375,
+              "elapsedMs": 33.920167,
+              "phase": "dependencyCache"
+            },
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 7.046916,
+              "elapsedMs": 40.967083,
+              "phase": "toolchain"
+            },
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 0.384625,
+              "elapsedMs": 41.351708,
+              "phase": "compilerSpawn"
+            }
+          ],
+          "spawnToConnectionMs": 3009.6128750000003,
+          "workspaceReused": null
+        },
+        "stoppedPids": [
+          12574,
+          12612,
+          12883
+        ],
+        "supportBuilds": [
+          {
+            "crate": "cranpose_dev_macros",
+            "fresh": true
+          },
+          {
+            "crate": "cranpose_dev_runtime",
+            "fresh": true
+          }
+        ]
+      },
+      {
+        "cargoReportedBuildMs": 1320.0,
+        "idle": [],
+        "mode": "startup",
+        "result": "passed",
+        "shutdownMs": 25.051582999999997,
+        "snapshotPollMs": 200,
+        "startupMs": 3075.259,
+        "startupPhases": {
+          "compilerBuildCompletedMs": 2160.0,
+          "compilerServingMs": 240.0,
+          "connectionPollMs": 100,
+          "connectionToSnapshotMs": 278.719791,
+          "dependencyCacheHit": true,
+          "runner": [
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 15.191584,
+              "elapsedMs": 15.191584,
+              "phase": "metadata"
+            },
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 2.238708,
+              "elapsedMs": 17.430292,
+              "phase": "workspace"
+            },
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 11.143458,
+              "elapsedMs": 28.573749999999997,
+              "phase": "dependencyCache"
+            },
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 6.261792000000001,
+              "elapsedMs": 34.835542,
+              "phase": "toolchain"
+            },
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 0.33545800000000003,
+              "elapsedMs": 35.171,
+              "phase": "compilerSpawn"
+            }
+          ],
+          "spawnToConnectionMs": 2796.539209,
+          "workspaceReused": null
+        },
+        "stoppedPids": [
+          12893,
+          12932,
+          13161
+        ],
+        "supportBuilds": [
+          {
+            "crate": "cranpose_dev_macros",
+            "fresh": true
+          },
+          {
+            "crate": "cranpose_dev_runtime",
+            "fresh": true
+          }
+        ]
+      }
+    ],
+    "candidate": [
+      {
+        "cargoReportedBuildMs": 600.0,
+        "idle": [],
+        "mode": "startup",
+        "result": "passed",
+        "shutdownMs": 37.570709,
+        "snapshotPollMs": 200,
+        "startupMs": 2451.339458,
+        "startupPhases": {
+          "compilerBuildCompletedMs": 1460.0,
+          "compilerServingMs": 250.0,
+          "connectionPollMs": 100,
+          "connectionToSnapshotMs": 272.46024999999963,
+          "dependencyCacheHit": true,
+          "runner": [
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 15.719417,
+              "elapsedMs": 15.719417,
+              "phase": "metadata"
+            },
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 2.5400829999999996,
+              "elapsedMs": 18.259500000000003,
+              "phase": "workspace"
+            },
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 11.11,
+              "elapsedMs": 29.3695,
+              "phase": "dependencyCache"
+            },
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 6.4135420000000005,
+              "elapsedMs": 35.783042,
+              "phase": "toolchain"
+            },
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 0.272125,
+              "elapsedMs": 36.055167,
+              "phase": "compilerSpawn"
+            }
+          ],
+          "spawnToConnectionMs": 2178.8792080000003,
+          "workspaceReused": true
+        },
+        "stoppedPids": [
+          10828,
+          10867,
+          11084
+        ],
+        "supportBuilds": [
+          {
+            "crate": "cranpose_dev_macros",
+            "fresh": true
+          },
+          {
+            "crate": "cranpose_dev_runtime",
+            "fresh": true
+          }
+        ]
+      },
+      {
+        "cargoReportedBuildMs": 600.0,
+        "idle": [],
+        "mode": "startup",
+        "result": "passed",
+        "shutdownMs": 143.507125,
+        "snapshotPollMs": 200,
+        "startupMs": 2361.132,
+        "startupPhases": {
+          "compilerBuildCompletedMs": 1410.0,
+          "compilerServingMs": 230.0,
+          "connectionPollMs": 100,
+          "connectionToSnapshotMs": 282.5206659999999,
+          "dependencyCacheHit": true,
+          "runner": [
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 16.267167,
+              "elapsedMs": 16.267167,
+              "phase": "metadata"
+            },
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 2.463875,
+              "elapsedMs": 18.731042,
+              "phase": "workspace"
+            },
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 10.821667,
+              "elapsedMs": 29.552709,
+              "phase": "dependencyCache"
+            },
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 6.033250000000001,
+              "elapsedMs": 35.585959,
+              "phase": "toolchain"
+            },
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 0.249666,
+              "elapsedMs": 35.835625,
+              "phase": "compilerSpawn"
+            }
+          ],
+          "spawnToConnectionMs": 2078.611334,
+          "workspaceReused": true
+        },
+        "stoppedPids": [
+          11109,
+          11146,
+          11364
+        ],
+        "supportBuilds": [
+          {
+            "crate": "cranpose_dev_macros",
+            "fresh": true
+          },
+          {
+            "crate": "cranpose_dev_runtime",
+            "fresh": true
+          }
+        ]
+      },
+      {
+        "cargoReportedBuildMs": 600.0,
+        "idle": [],
+        "mode": "startup",
+        "result": "passed",
+        "shutdownMs": 149.119584,
+        "snapshotPollMs": 200,
+        "startupMs": 2365.137292,
+        "startupPhases": {
+          "compilerBuildCompletedMs": 1410.0,
+          "compilerServingMs": 230.0,
+          "connectionPollMs": 100,
+          "connectionToSnapshotMs": 280.89983299999994,
+          "dependencyCacheHit": true,
+          "runner": [
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 17.412917,
+              "elapsedMs": 17.412917,
+              "phase": "metadata"
+            },
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 2.9515,
+              "elapsedMs": 20.364417,
+              "phase": "workspace"
+            },
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 11.434041,
+              "elapsedMs": 31.798458,
+              "phase": "dependencyCache"
+            },
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 6.61375,
+              "elapsedMs": 38.41220800000001,
+              "phase": "toolchain"
+            },
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 0.24375,
+              "elapsedMs": 38.655958,
+              "phase": "compilerSpawn"
+            }
+          ],
+          "spawnToConnectionMs": 2084.237459,
+          "workspaceReused": true
+        },
+        "stoppedPids": [
+          12000,
+          12037,
+          12258
+        ],
+        "supportBuilds": [
+          {
+            "crate": "cranpose_dev_macros",
+            "fresh": true
+          },
+          {
+            "crate": "cranpose_dev_runtime",
+            "fresh": true
+          }
+        ]
+      },
+      {
+        "cargoReportedBuildMs": 620.0,
+        "idle": [],
+        "mode": "startup",
+        "result": "passed",
+        "shutdownMs": 150.189083,
+        "snapshotPollMs": 200,
+        "startupMs": 2567.68225,
+        "startupPhases": {
+          "compilerBuildCompletedMs": 1580.0,
+          "compilerServingMs": 350.0,
+          "connectionPollMs": 100,
+          "connectionToSnapshotMs": 284.91858399999956,
+          "dependencyCacheHit": true,
+          "runner": [
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 19.095833,
+              "elapsedMs": 19.095833,
+              "phase": "metadata"
+            },
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 3.2590000000000003,
+              "elapsedMs": 22.354833,
+              "phase": "workspace"
+            },
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 11.546208,
+              "elapsedMs": 33.901041,
+              "phase": "dependencyCache"
+            },
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 6.676792,
+              "elapsedMs": 40.577833,
+              "phase": "toolchain"
+            },
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 0.306458,
+              "elapsedMs": 40.884291000000005,
+              "phase": "compilerSpawn"
+            }
+          ],
+          "spawnToConnectionMs": 2282.7636660000003,
+          "workspaceReused": true
+        },
+        "stoppedPids": [
+          12270,
+          12312,
+          12564
+        ],
+        "supportBuilds": [
+          {
+            "crate": "cranpose_dev_macros",
+            "fresh": true
+          },
+          {
+            "crate": "cranpose_dev_runtime",
+            "fresh": true
+          }
+        ]
+      },
+      {
+        "cargoReportedBuildMs": 610.0,
+        "idle": [],
+        "mode": "startup",
+        "result": "passed",
+        "shutdownMs": 145.50475,
+        "snapshotPollMs": 200,
+        "startupMs": 2357.998708,
+        "startupPhases": {
+          "compilerBuildCompletedMs": 1430.0,
+          "compilerServingMs": 230.0,
+          "connectionPollMs": 100,
+          "connectionToSnapshotMs": 280.22133299999996,
+          "dependencyCacheHit": true,
+          "runner": [
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 15.884875,
+              "elapsedMs": 15.884875,
+              "phase": "metadata"
+            },
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 2.862417,
+              "elapsedMs": 18.747292,
+              "phase": "workspace"
+            },
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 10.804916,
+              "elapsedMs": 29.552208,
+              "phase": "dependencyCache"
+            },
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 6.05625,
+              "elapsedMs": 35.608458000000006,
+              "phase": "toolchain"
+            },
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 0.215834,
+              "elapsedMs": 35.824292,
+              "phase": "compilerSpawn"
+            }
+          ],
+          "spawnToConnectionMs": 2077.777375,
+          "workspaceReused": true
+        },
+        "stoppedPids": [
+          13174,
+          13211,
+          13428
+        ],
+        "supportBuilds": [
+          {
+            "crate": "cranpose_dev_macros",
+            "fresh": true
+          },
+          {
+            "crate": "cranpose_dev_runtime",
+            "fresh": true
+          }
+        ]
+      }
+    ]
+  },
+  "warmup": {
+    "baseline": [
+      {
+        "cargoReportedBuildMs": 4630.0,
+        "idle": [],
+        "mode": "startup",
+        "result": "passed",
+        "shutdownMs": 158.582167,
+        "snapshotPollMs": 200,
+        "startupMs": 11763.883417000001,
+        "startupPhases": {
+          "compilerBuildCompletedMs": 10210.0,
+          "compilerServingMs": 4540.0,
+          "connectionPollMs": 100,
+          "connectionToSnapshotMs": 473.8707090000007,
+          "dependencyCacheHit": false,
+          "runner": [
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 78.762917,
+              "elapsedMs": 78.762917,
+              "phase": "metadata"
+            },
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 10.199166,
+              "elapsedMs": 88.96208299999999,
+              "phase": "workspace"
+            },
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 0.9675,
+              "elapsedMs": 89.929583,
+              "phase": "dependencyCache"
+            },
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 19.49225,
+              "elapsedMs": 109.421833,
+              "phase": "toolchain"
+            },
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 0.6669170000000001,
+              "elapsedMs": 110.08875,
+              "phase": "compilerSpawn"
+            }
+          ],
+          "spawnToConnectionMs": 11290.012708,
+          "workspaceReused": null
+        },
+        "stoppedPids": [
+          9110,
+          9163,
+          9555
+        ],
+        "supportBuilds": [
+          {
+            "crate": "cranpose_dev_macros",
+            "fresh": false
+          },
+          {
+            "crate": "cranpose_dev_runtime",
+            "fresh": false
+          }
+        ]
+      },
+      {
+        "cargoReportedBuildMs": 1630.0,
+        "idle": [],
+        "mode": "startup",
+        "result": "passed",
+        "shutdownMs": 49.486375,
+        "snapshotPollMs": 200,
+        "startupMs": 3655.277,
+        "startupPhases": {
+          "compilerBuildCompletedMs": 2590.0,
+          "compilerServingMs": 230.0,
+          "connectionPollMs": 100,
+          "connectionToSnapshotMs": 339.3448330000001,
+          "dependencyCacheHit": true,
+          "runner": [
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 18.907084,
+              "elapsedMs": 18.907084,
+              "phase": "metadata"
+            },
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 2.7525000000000004,
+              "elapsedMs": 21.659584,
+              "phase": "workspace"
+            },
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 11.433375000000002,
+              "elapsedMs": 33.092959,
+              "phase": "dependencyCache"
+            },
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 6.470541,
+              "elapsedMs": 39.563500000000005,
+              "phase": "toolchain"
+            },
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 0.280917,
+              "elapsedMs": 39.844417,
+              "phase": "compilerSpawn"
+            }
+          ],
+          "spawnToConnectionMs": 3315.932167,
+          "workspaceReused": null
+        },
+        "stoppedPids": [
+          9941,
+          9979,
+          10210
+        ],
+        "supportBuilds": [
+          {
+            "crate": "cranpose_dev_macros",
+            "fresh": true
+          },
+          {
+            "crate": "cranpose_dev_runtime",
+            "fresh": true
+          }
+        ]
+      }
+    ],
+    "candidate": [
+      {
+        "cargoReportedBuildMs": 3060.0,
+        "idle": [],
+        "mode": "startup",
+        "result": "passed",
+        "shutdownMs": 187.730625,
+        "snapshotPollMs": 200,
+        "startupMs": 8618.820083999999,
+        "startupPhases": {
+          "compilerBuildCompletedMs": 6890.0,
+          "compilerServingMs": 2930.0,
+          "connectionPollMs": 100,
+          "connectionToSnapshotMs": 327.10912499999904,
+          "dependencyCacheHit": false,
+          "runner": [
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 29.409167,
+              "elapsedMs": 29.409167,
+              "phase": "metadata"
+            },
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 5.430625,
+              "elapsedMs": 34.839792,
+              "phase": "workspace"
+            },
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 0.218542,
+              "elapsedMs": 35.058333999999995,
+              "phase": "dependencyCache"
+            },
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 8.810916,
+              "elapsedMs": 43.86925,
+              "phase": "toolchain"
+            },
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 0.413417,
+              "elapsedMs": 44.282667,
+              "phase": "compilerSpawn"
+            }
+          ],
+          "spawnToConnectionMs": 8291.710959,
+          "workspaceReused": true
+        },
+        "stoppedPids": [
+          9575,
+          9612,
+          9926
+        ],
+        "supportBuilds": [
+          {
+            "crate": "cranpose_dev_macros",
+            "fresh": false
+          },
+          {
+            "crate": "cranpose_dev_runtime",
+            "fresh": false
+          }
+        ]
+      },
+      {
+        "cargoReportedBuildMs": 620.0,
+        "idle": [],
+        "mode": "startup",
+        "result": "passed",
+        "shutdownMs": 131.46925000000002,
+        "snapshotPollMs": 200,
+        "startupMs": 2374.771584,
+        "startupPhases": {
+          "compilerBuildCompletedMs": 1460.0,
+          "compilerServingMs": 230.0,
+          "connectionPollMs": 100,
+          "connectionToSnapshotMs": 300.1755840000001,
+          "dependencyCacheHit": true,
+          "runner": [
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 15.332875,
+              "elapsedMs": 15.332875,
+              "phase": "metadata"
+            },
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 2.551458,
+              "elapsedMs": 17.884332999999998,
+              "phase": "workspace"
+            },
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 10.860125,
+              "elapsedMs": 28.744458,
+              "phase": "dependencyCache"
+            },
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 6.212167,
+              "elapsedMs": 34.956624999999995,
+              "phase": "toolchain"
+            },
+            {
+              "cranposeDev": "startupPhase",
+              "durationMs": 0.2855,
+              "elapsedMs": 35.242125,
+              "phase": "compilerSpawn"
+            }
+          ],
+          "spawnToConnectionMs": 2074.596,
+          "workspaceReused": true
+        },
+        "stoppedPids": [
+          10234,
+          10279,
+          10497
+        ],
+        "supportBuilds": [
+          {
+            "crate": "cranpose_dev_macros",
+            "fresh": true
+          },
+          {
+            "crate": "cranpose_dev_runtime",
+            "fresh": true
+          }
+        ]
+      }
+    ]
+  },
+  "exploratorySharedCache": {
+    "limitation": "These earlier runs shared one Cargo output directory. Baseline runs replaced incremental artifacts needed by the stable-path candidate. Retained as exploratory evidence, excluded from final comparison. Candidate predates the final descendant-exit check.",
+    "samples": {
+      "before": [
+        {
+          "cargoReportedBuildMs": 1470.0,
+          "idle": [],
+          "mode": "startup",
+          "result": "passed",
+          "shutdownMs": 90.13766600000001,
+          "snapshotPollMs": 200,
+          "startupMs": 3287.4925839999996,
+          "startupPhases": {
+            "compilerBuildCompletedMs": 2310.0,
+            "compilerServingMs": 240.0,
+            "connectionPollMs": 100,
+            "connectionToSnapshotMs": 292.22724999999946,
+            "dependencyCacheHit": true,
+            "runner": [
+              {
+                "cranposeDev": "startupPhase",
+                "durationMs": 18.482291,
+                "elapsedMs": 18.482291,
+                "phase": "metadata"
+              },
+              {
+                "cranposeDev": "startupPhase",
+                "durationMs": 8.092459,
+                "elapsedMs": 26.57475,
+                "phase": "workspace"
+              },
+              {
+                "cranposeDev": "startupPhase",
+                "durationMs": 11.180833,
+                "elapsedMs": 37.755583,
+                "phase": "dependencyCache"
+              },
+              {
+                "cranposeDev": "startupPhase",
+                "durationMs": 6.676708,
+                "elapsedMs": 44.432291,
+                "phase": "toolchain"
+              },
+              {
+                "cranposeDev": "startupPhase",
+                "durationMs": 0.333959,
+                "elapsedMs": 44.76625,
+                "phase": "compilerSpawn"
+              }
+            ],
+            "spawnToConnectionMs": 2995.265334,
+            "workspaceReused": null
+          },
+          "stoppedPids": [
+            89462,
+            89499,
+            89727
+          ],
+          "supportBuilds": [
+            {
+              "crate": "cranpose_dev_macros",
+              "fresh": true
+            },
+            {
+              "crate": "cranpose_dev_runtime",
+              "fresh": true
+            }
+          ]
+        },
+        {
+          "cargoReportedBuildMs": 1290.0,
+          "idle": [],
+          "mode": "startup",
+          "result": "passed",
+          "shutdownMs": 111.77116600000001,
+          "snapshotPollMs": 200,
+          "startupMs": 3078.943417,
+          "startupPhases": {
+            "compilerBuildCompletedMs": 2110.0,
+            "compilerServingMs": 240.0,
+            "connectionPollMs": 100,
+            "connectionToSnapshotMs": 292.0223339999998,
+            "dependencyCacheHit": true,
+            "runner": [
+              {
+                "cranposeDev": "startupPhase",
+                "durationMs": 21.52,
+                "elapsedMs": 21.52,
+                "phase": "metadata"
+              },
+              {
+                "cranposeDev": "startupPhase",
+                "durationMs": 2.739459,
+                "elapsedMs": 24.259459,
+                "phase": "workspace"
+              },
+              {
+                "cranposeDev": "startupPhase",
+                "durationMs": 12.3675,
+                "elapsedMs": 36.626959,
+                "phase": "dependencyCache"
+              },
+              {
+                "cranposeDev": "startupPhase",
+                "durationMs": 7.5605,
+                "elapsedMs": 44.187459,
+                "phase": "toolchain"
+              },
+              {
+                "cranposeDev": "startupPhase",
+                "durationMs": 0.260291,
+                "elapsedMs": 44.44775,
+                "phase": "compilerSpawn"
+              }
+            ],
+            "spawnToConnectionMs": 2786.921083,
+            "workspaceReused": null
+          },
+          "stoppedPids": [
+            90349,
+            90386,
+            90602
+          ],
+          "supportBuilds": [
+            {
+              "crate": "cranpose_dev_macros",
+              "fresh": true
+            },
+            {
+              "crate": "cranpose_dev_runtime",
+              "fresh": true
+            }
+          ]
+        },
+        {
+          "cargoReportedBuildMs": 1370.0,
+          "idle": [],
+          "mode": "startup",
+          "result": "passed",
+          "shutdownMs": 204.940209,
+          "snapshotPollMs": 200,
+          "startupMs": 3174.430792,
+          "startupPhases": {
+            "compilerBuildCompletedMs": 2160.0,
+            "compilerServingMs": 230.0,
+            "connectionPollMs": 100,
+            "connectionToSnapshotMs": 291.629042,
+            "dependencyCacheHit": true,
+            "runner": [
+              {
+                "cranposeDev": "startupPhase",
+                "durationMs": 17.879792,
+                "elapsedMs": 17.879792,
+                "phase": "metadata"
+              },
+              {
+                "cranposeDev": "startupPhase",
+                "durationMs": 2.612958,
+                "elapsedMs": 20.49275,
+                "phase": "workspace"
+              },
+              {
+                "cranposeDev": "startupPhase",
+                "durationMs": 11.890042,
+                "elapsedMs": 32.382792,
+                "phase": "dependencyCache"
+              },
+              {
+                "cranposeDev": "startupPhase",
+                "durationMs": 6.225333,
+                "elapsedMs": 38.608125,
+                "phase": "toolchain"
+              },
+              {
+                "cranposeDev": "startupPhase",
+                "durationMs": 0.28904199999999997,
+                "elapsedMs": 38.897167,
+                "phase": "compilerSpawn"
+              }
+            ],
+            "spawnToConnectionMs": 2882.80175,
+            "workspaceReused": null
+          },
+          "stoppedPids": [
+            90615,
+            90652,
+            90939
+          ],
+          "supportBuilds": [
+            {
+              "crate": "cranpose_dev_macros",
+              "fresh": true
+            },
+            {
+              "crate": "cranpose_dev_runtime",
+              "fresh": true
+            }
+          ]
+        },
+        {
+          "cargoReportedBuildMs": 1290.0,
+          "idle": [],
+          "mode": "startup",
+          "result": "passed",
+          "shutdownMs": 70.043917,
+          "snapshotPollMs": 200,
+          "startupMs": 3093.8154170000003,
+          "startupPhases": {
+            "compilerBuildCompletedMs": 2100.0,
+            "compilerServingMs": 240.0,
+            "connectionPollMs": 100,
+            "connectionToSnapshotMs": 293.5505830000002,
+            "dependencyCacheHit": true,
+            "runner": [
+              {
+                "cranposeDev": "startupPhase",
+                "durationMs": 22.652167,
+                "elapsedMs": 22.652167,
+                "phase": "metadata"
+              },
+              {
+                "cranposeDev": "startupPhase",
+                "durationMs": 2.548542,
+                "elapsedMs": 25.200709000000003,
+                "phase": "workspace"
+              },
+              {
+                "cranposeDev": "startupPhase",
+                "durationMs": 12.666875,
+                "elapsedMs": 37.867584,
+                "phase": "dependencyCache"
+              },
+              {
+                "cranposeDev": "startupPhase",
+                "durationMs": 7.55675,
+                "elapsedMs": 45.424333999999995,
+                "phase": "toolchain"
+              },
+              {
+                "cranposeDev": "startupPhase",
+                "durationMs": 0.32925,
+                "elapsedMs": 45.753584,
+                "phase": "compilerSpawn"
+              }
+            ],
+            "spawnToConnectionMs": 2800.264834,
+            "workspaceReused": null
+          },
+          "stoppedPids": [
+            91503,
+            91540,
+            91757
+          ],
+          "supportBuilds": [
+            {
+              "crate": "cranpose_dev_macros",
+              "fresh": true
+            },
+            {
+              "crate": "cranpose_dev_runtime",
+              "fresh": true
+            }
+          ]
+        },
+        {
+          "cargoReportedBuildMs": 1800.0,
+          "idle": [],
+          "mode": "startup",
+          "result": "passed",
+          "shutdownMs": 100.90925,
+          "snapshotPollMs": 200,
+          "startupMs": 3706.375834,
+          "startupPhases": {
+            "compilerBuildCompletedMs": 2760.0,
+            "compilerServingMs": 230.0,
+            "connectionPollMs": 100,
+            "connectionToSnapshotMs": 282.8470419999999,
+            "dependencyCacheHit": true,
+            "runner": [
+              {
+                "cranposeDev": "startupPhase",
+                "durationMs": 17.192875,
+                "elapsedMs": 17.192875,
+                "phase": "metadata"
+              },
+              {
+                "cranposeDev": "startupPhase",
+                "durationMs": 1.981,
+                "elapsedMs": 19.173875,
+                "phase": "workspace"
+              },
+              {
+                "cranposeDev": "startupPhase",
+                "durationMs": 10.901375,
+                "elapsedMs": 30.07525,
+                "phase": "dependencyCache"
+              },
+              {
+                "cranposeDev": "startupPhase",
+                "durationMs": 6.563834,
+                "elapsedMs": 36.639084,
+                "phase": "toolchain"
+              },
+              {
+                "cranposeDev": "startupPhase",
+                "durationMs": 0.28170799999999996,
+                "elapsedMs": 36.920792,
+                "phase": "compilerSpawn"
+              }
+            ],
+            "spawnToConnectionMs": 3423.528792,
+            "workspaceReused": null
+          },
+          "stoppedPids": [
+            91802,
+            91839,
+            92073
+          ],
+          "supportBuilds": [
+            {
+              "crate": "cranpose_dev_macros",
+              "fresh": true
+            },
+            {
+              "crate": "cranpose_dev_runtime",
+              "fresh": true
+            }
+          ]
+        }
+      ],
+      "after": [
+        {
+          "cargoReportedBuildMs": 1680.0,
+          "idle": [],
+          "mode": "startup",
+          "result": "passed",
+          "shutdownMs": 88.51075,
+          "snapshotPollMs": 200,
+          "startupMs": 3488.456291,
+          "startupPhases": {
+            "compilerBuildCompletedMs": 2560.0,
+            "compilerServingMs": 240.0,
+            "connectionPollMs": 100,
+            "connectionToSnapshotMs": 300.94424999999956,
+            "dependencyCacheHit": true,
+            "runner": [
+              {
+                "cranposeDev": "startupPhase",
+                "durationMs": 18.071958,
+                "elapsedMs": 18.071958,
+                "phase": "metadata"
+              },
+              {
+                "cranposeDev": "startupPhase",
+                "durationMs": 2.766917,
+                "elapsedMs": 20.838875,
+                "phase": "workspace"
+              },
+              {
+                "cranposeDev": "startupPhase",
+                "durationMs": 11.138125,
+                "elapsedMs": 31.976999999999997,
+                "phase": "dependencyCache"
+              },
+              {
+                "cranposeDev": "startupPhase",
+                "durationMs": 7.169458,
+                "elapsedMs": 39.146458,
+                "phase": "toolchain"
+              },
+              {
+                "cranposeDev": "startupPhase",
+                "durationMs": 0.428167,
+                "elapsedMs": 39.574625000000005,
+                "phase": "compilerSpawn"
+              }
+            ],
+            "spawnToConnectionMs": 3187.5120410000004,
+            "workspaceReused": true
+          },
+          "stoppedPids": [
+            89737,
+            89774,
+            90044
+          ],
+          "supportBuilds": [
+            {
+              "crate": "cranpose_dev_macros",
+              "fresh": true
+            },
+            {
+              "crate": "cranpose_dev_runtime",
+              "fresh": true
+            }
+          ]
+        },
+        {
+          "cargoReportedBuildMs": 600.0,
+          "idle": [],
+          "mode": "startup",
+          "result": "passed",
+          "shutdownMs": 194.614959,
+          "snapshotPollMs": 200,
+          "startupMs": 2354.219709,
+          "startupPhases": {
+            "compilerBuildCompletedMs": 1420.0,
+            "compilerServingMs": 240.0,
+            "connectionPollMs": 100,
+            "connectionToSnapshotMs": 308.7275420000001,
+            "dependencyCacheHit": true,
+            "runner": [
+              {
+                "cranposeDev": "startupPhase",
+                "durationMs": 14.816083,
+                "elapsedMs": 14.816083,
+                "phase": "metadata"
+              },
+              {
+                "cranposeDev": "startupPhase",
+                "durationMs": 2.546333,
+                "elapsedMs": 17.362416,
+                "phase": "workspace"
+              },
+              {
+                "cranposeDev": "startupPhase",
+                "durationMs": 11.001459,
+                "elapsedMs": 28.363875,
+                "phase": "dependencyCache"
+              },
+              {
+                "cranposeDev": "startupPhase",
+                "durationMs": 6.3285,
+                "elapsedMs": 34.692375,
+                "phase": "toolchain"
+              },
+              {
+                "cranposeDev": "startupPhase",
+                "durationMs": 0.27566599999999997,
+                "elapsedMs": 34.968041,
+                "phase": "compilerSpawn"
+              }
+            ],
+            "spawnToConnectionMs": 2045.4921669999999,
+            "workspaceReused": true
+          },
+          "stoppedPids": [
+            90074,
+            90114,
+            90337
+          ],
+          "supportBuilds": [
+            {
+              "crate": "cranpose_dev_macros",
+              "fresh": true
+            },
+            {
+              "crate": "cranpose_dev_runtime",
+              "fresh": true
+            }
+          ]
+        },
+        {
+          "cargoReportedBuildMs": 1330.0,
+          "idle": [],
+          "mode": "startup",
+          "result": "passed",
+          "shutdownMs": 104.337834,
+          "snapshotPollMs": 200,
+          "startupMs": 3082.773833,
+          "startupPhases": {
+            "compilerBuildCompletedMs": 2130.0,
+            "compilerServingMs": 230.0,
+            "connectionPollMs": 100,
+            "connectionToSnapshotMs": 289.4711670000006,
+            "dependencyCacheHit": true,
+            "runner": [
+              {
+                "cranposeDev": "startupPhase",
+                "durationMs": 17.761625,
+                "elapsedMs": 17.761625,
+                "phase": "metadata"
+              },
+              {
+                "cranposeDev": "startupPhase",
+                "durationMs": 2.779833,
+                "elapsedMs": 20.541458,
+                "phase": "workspace"
+              },
+              {
+                "cranposeDev": "startupPhase",
+                "durationMs": 13.746875,
+                "elapsedMs": 34.288332999999994,
+                "phase": "dependencyCache"
+              },
+              {
+                "cranposeDev": "startupPhase",
+                "durationMs": 7.483125,
+                "elapsedMs": 41.771458,
+                "phase": "toolchain"
+              },
+              {
+                "cranposeDev": "startupPhase",
+                "durationMs": 0.31837499999999996,
+                "elapsedMs": 42.089833,
+                "phase": "compilerSpawn"
+              }
+            ],
+            "spawnToConnectionMs": 2793.3026659999996,
+            "workspaceReused": true
+          },
+          "stoppedPids": [
+            90954,
+            90993,
+            91214
+          ],
+          "supportBuilds": [
+            {
+              "crate": "cranpose_dev_macros",
+              "fresh": true
+            },
+            {
+              "crate": "cranpose_dev_runtime",
+              "fresh": true
+            }
+          ]
+        },
+        {
+          "cargoReportedBuildMs": 630.0,
+          "idle": [],
+          "mode": "startup",
+          "result": "passed",
+          "shutdownMs": 244.763041,
+          "snapshotPollMs": 200,
+          "startupMs": 2517.298791,
+          "startupPhases": {
+            "compilerBuildCompletedMs": 1540.0,
+            "compilerServingMs": 290.0,
+            "connectionPollMs": 100,
+            "connectionToSnapshotMs": 287.4467080000004,
+            "dependencyCacheHit": true,
+            "runner": [
+              {
+                "cranposeDev": "startupPhase",
+                "durationMs": 18.730417,
+                "elapsedMs": 18.730417,
+                "phase": "metadata"
+              },
+              {
+                "cranposeDev": "startupPhase",
+                "durationMs": 2.950958,
+                "elapsedMs": 21.681375,
+                "phase": "workspace"
+              },
+              {
+                "cranposeDev": "startupPhase",
+                "durationMs": 11.655292,
+                "elapsedMs": 33.336667,
+                "phase": "dependencyCache"
+              },
+              {
+                "cranposeDev": "startupPhase",
+                "durationMs": 7.1254170000000006,
+                "elapsedMs": 40.462084,
+                "phase": "toolchain"
+              },
+              {
+                "cranposeDev": "startupPhase",
+                "durationMs": 0.300375,
+                "elapsedMs": 40.762459,
+                "phase": "compilerSpawn"
+              }
+            ],
+            "spawnToConnectionMs": 2229.8520829999998,
+            "workspaceReused": true
+          },
+          "stoppedPids": [
+            91225,
+            91262,
+            91488
+          ],
+          "supportBuilds": [
+            {
+              "crate": "cranpose_dev_macros",
+              "fresh": true
+            },
+            {
+              "crate": "cranpose_dev_runtime",
+              "fresh": true
+            }
+          ]
+        },
+        {
+          "cargoReportedBuildMs": 1300.0,
+          "idle": [],
+          "mode": "startup",
+          "result": "passed",
+          "shutdownMs": 73.65058400000001,
+          "snapshotPollMs": 200,
+          "startupMs": 3105.760917,
+          "startupPhases": {
+            "compilerBuildCompletedMs": 2110.0,
+            "compilerServingMs": 230.0,
+            "connectionPollMs": 100,
+            "connectionToSnapshotMs": 291.42545800000016,
+            "dependencyCacheHit": true,
+            "runner": [
+              {
+                "cranposeDev": "startupPhase",
+                "durationMs": 18.2785,
+                "elapsedMs": 18.2785,
+                "phase": "metadata"
+              },
+              {
+                "cranposeDev": "startupPhase",
+                "durationMs": 2.945292,
+                "elapsedMs": 21.223792,
+                "phase": "workspace"
+              },
+              {
+                "cranposeDev": "startupPhase",
+                "durationMs": 11.600541000000002,
+                "elapsedMs": 32.824332999999996,
+                "phase": "dependencyCache"
+              },
+              {
+                "cranposeDev": "startupPhase",
+                "durationMs": 6.599291999999999,
+                "elapsedMs": 39.423624999999994,
+                "phase": "toolchain"
+              },
+              {
+                "cranposeDev": "startupPhase",
+                "durationMs": 0.246375,
+                "elapsedMs": 39.669999999999995,
+                "phase": "compilerSpawn"
+              }
+            ],
+            "spawnToConnectionMs": 2814.335459,
+            "workspaceReused": true
+          },
+          "stoppedPids": [
+            92080,
+            92117,
+            92340
+          ],
+          "supportBuilds": [
+            {
+              "crate": "cranpose_dev_macros",
+              "fresh": true
+            },
+            {
+              "crate": "cranpose_dev_runtime",
+              "fresh": true
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

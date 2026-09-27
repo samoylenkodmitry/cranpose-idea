@@ -63,6 +63,12 @@ The resolved development lockfile is also reused in later private sessions. Edit
 to copied manifests, the original lockfile, toolchain or Cargo config invalidate
 that seed. Cargo still validates and updates it normally. Cache failures fall back
 to ordinary resolution; your application's lockfile remains the source input.
+After a clean shutdown, the next hot preview can reuse its private source path.
+Its contents are rebuilt from the current project; a stable path lets rustc reuse
+incremental compilation work. Simultaneous previews receive separate directories.
+Interrupted sessions are abandoned until cache cleanup, and ordinary previews
+continue using fresh directories. Dioxus still performs the link required to start
+a hot-reload session.
 
 Stopping or replacing a preview also stops its compiler and application. The shared
 Rust SDK owns their process group on Unix and their Job Object on Windows. Shutdown
@@ -211,7 +217,7 @@ connection/snapshot observation. Idle phases each settle for five seconds, then
 measure twenty seconds of process CPU with the preview visible, inspected every
 500 ms, and hidden. CPU percentages describe one core. Keep generated fixture
 caches outside Cargo's target directory when using `rust-cache` in CI.
-See [0.6.4 measurements](docs/performance-0.6.4.md) for conditions and raw summaries.
+See [0.6.4 measurements](docs/performance-0.6.4.md) and [0.6.5 warm restart measurements](docs/performance-0.6.5.md) for conditions and raw summaries.
 
 Local packaging writes a ZIP for this machine under `target/plugin`. Rebuilding the
 plugin UI reconnects its controls to the running preview without starting another
