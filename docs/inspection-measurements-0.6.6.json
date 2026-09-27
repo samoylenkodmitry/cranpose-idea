@@ -1,0 +1,188 @@
+{
+  "conditions": {
+    "cpu": "Apple M5",
+    "os": "macOS 27.0",
+    "rust": "1.98.1",
+    "nodes": 1000,
+    "viewport": [
+      1000,
+      800
+    ],
+    "intervalMs": 500,
+    "secondsPerPhase": 20,
+    "settleSeconds": 5,
+    "order": "baseline, candidate, repeated for three pairs",
+    "baselineCommit": "721a5dc08a0363549a25759c8937ded06966c777",
+    "templateCommit": "5df0b1b980030caed2fa1707a035c8b964233691",
+    "baselineBinarySha256": "e13ddc638aaa94be660e45b280a2c689d4662bd13e76507c33b5eeb8178e221d",
+    "candidateBinarySha256": "8467ec026131391b3cad2a8f9a25604288b788152485c59cbf90fb196a970c0d",
+    "limits": "Isolated Studio UI process, synthetic snapshots. Excludes application capture, IDE/JNI host and probe CPU. Desktop and active gallery preview remained open. No local builds during measured phases. Final candidate includes the decimal request-ID correction and resolves the shared SDK from the pinned Git commit."
+  },
+  "pairs": [
+    {
+      "pair": 1,
+      "baseline": {
+        "changedLayoutRendered": true,
+        "cpuClockResolutionSeconds": 0.01,
+        "nodes": 1000,
+        "phases": [
+          {
+            "cpuPercentOfOneCore": 6.549745651434708,
+            "cpuSeconds": 1.31,
+            "elapsedSeconds": 20.000776667,
+            "frames": 0,
+            "snapshots": 40,
+            "visible": true
+          },
+          {
+            "cpuPercentOfOneCore": 0.0499672008023706,
+            "cpuSeconds": 0.010000000000000009,
+            "elapsedSeconds": 20.013128291,
+            "frames": 0,
+            "snapshots": 40,
+            "visible": false
+          }
+        ],
+        "result": "passed",
+        "settleSeconds": 5,
+        "snapshotIntervalMs": 500
+      },
+      "candidate": {
+        "changedLayoutRendered": true,
+        "cpuClockResolutionSeconds": 0.01,
+        "nodes": 1000,
+        "phases": [
+          {
+            "cpuPercentOfOneCore": 0.6497029192795162,
+            "cpuSeconds": 0.13,
+            "elapsedSeconds": 20.009145125,
+            "frames": 0,
+            "snapshots": 40,
+            "visible": true
+          },
+          {
+            "cpuPercentOfOneCore": 0.04999379608236744,
+            "cpuSeconds": 0.010000000000000009,
+            "elapsedSeconds": 20.002481875,
+            "frames": 0,
+            "snapshots": 40,
+            "visible": false
+          }
+        ],
+        "result": "passed",
+        "settleSeconds": 5,
+        "snapshotIntervalMs": 500
+      }
+    },
+    {
+      "pair": 2,
+      "baseline": {
+        "changedLayoutRendered": true,
+        "cpuClockResolutionSeconds": 0.01,
+        "nodes": 1000,
+        "phases": [
+          {
+            "cpuPercentOfOneCore": 6.146118495690528,
+            "cpuSeconds": 1.23,
+            "elapsedSeconds": 20.01263075,
+            "frames": 0,
+            "snapshots": 40,
+            "visible": true
+          },
+          {
+            "cpuPercentOfOneCore": 0.049999499900002096,
+            "cpuSeconds": 0.010000000000000009,
+            "elapsedSeconds": 20.000200042,
+            "frames": 0,
+            "snapshots": 40,
+            "visible": false
+          }
+        ],
+        "result": "passed",
+        "settleSeconds": 5,
+        "snapshotIntervalMs": 500
+      },
+      "candidate": {
+        "changedLayoutRendered": true,
+        "cpuClockResolutionSeconds": 0.01,
+        "nodes": 1000,
+        "phases": [
+          {
+            "cpuPercentOfOneCore": 0.5997953460791968,
+            "cpuSeconds": 0.12,
+            "elapsedSeconds": 20.006824125,
+            "frames": 0,
+            "snapshots": 40,
+            "visible": true
+          },
+          {
+            "cpuPercentOfOneCore": 0.04998048761763412,
+            "cpuSeconds": 0.010000000000000009,
+            "elapsedSeconds": 20.007808,
+            "frames": 0,
+            "snapshots": 40,
+            "visible": false
+          }
+        ],
+        "result": "passed",
+        "settleSeconds": 5,
+        "snapshotIntervalMs": 500
+      }
+    },
+    {
+      "pair": 3,
+      "baseline": {
+        "changedLayoutRendered": true,
+        "cpuClockResolutionSeconds": 0.01,
+        "nodes": 1000,
+        "phases": [
+          {
+            "cpuPercentOfOneCore": 5.497969176089847,
+            "cpuSeconds": 1.1,
+            "elapsedSeconds": 20.007387542,
+            "frames": 0,
+            "snapshots": 40,
+            "visible": true
+          },
+          {
+            "cpuPercentOfOneCore": 0.0,
+            "cpuSeconds": 0.0,
+            "elapsedSeconds": 20.013461,
+            "frames": 0,
+            "snapshots": 40,
+            "visible": false
+          }
+        ],
+        "result": "passed",
+        "settleSeconds": 5,
+        "snapshotIntervalMs": 500
+      },
+      "candidate": {
+        "changedLayoutRendered": true,
+        "cpuClockResolutionSeconds": 0.01,
+        "nodes": 1000,
+        "phases": [
+          {
+            "cpuPercentOfOneCore": 0.44985430813692967,
+            "cpuSeconds": 0.09,
+            "elapsedSeconds": 20.006477291,
+            "frames": 0,
+            "snapshots": 40,
+            "visible": true
+          },
+          {
+            "cpuPercentOfOneCore": 0.0,
+            "cpuSeconds": 0.0,
+            "elapsedSeconds": 20.004197166,
+            "frames": 0,
+            "snapshots": 40,
+            "visible": false
+          }
+        ],
+        "result": "passed",
+        "settleSeconds": 5,
+        "snapshotIntervalMs": 500
+      }
+    }
+  ]
+}

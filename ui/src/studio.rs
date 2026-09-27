@@ -1077,10 +1077,8 @@ fn CustomSize(state: MutableState<Studio>, palette: Palette) {
 }
 
 fn request_snapshot(studio: &Studio) {
-    if studio.connected {
-        send(
-            json!({"action": "message", "session": studio.session, "channel": "cranpose.inspector.v2.request", "payload": json!({"requestId": studio.snapshot.request_id + 1}).to_string()}),
-        );
+    if let Some(request) = studio.inspection_request() {
+        send(request);
     }
 }
 fn navigate_selected(studio: &Studio) {

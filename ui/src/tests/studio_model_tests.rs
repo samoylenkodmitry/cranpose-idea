@@ -304,3 +304,77 @@ fn model_clones_share_immutable_inspection_and_old_views_survive_new_snapshots()
     model.handle("studio.child", &message(1, "stale"));
     assert_eq!(model.snapshot.nodes[0].text.as_deref(), Some("after"));
 }
+
+#[test]
+fn unchanged_inspection_preserves_model_and_rejects_delayed_layouts() {
+    let mut model = studio();
+    model.start();
+    let message = |request, text, partial| {
+        json!({"session":1,"event":"message",
+        "channel":"cranpose.inspector.v2.snapshot","payload":json!({"schema":2,
+        "requestId":request,"captureMicros":request,"truncated":partial,
+        "nodes":[{"id":"root","text":text},{"id":"child","parent":"root"}]}).to_string()})
+        .to_string()
+    };
+    model.handle("studio.child", &message(1, "same", false));
+    model.selected = "child".into();
+    model.collapsed.insert("root".into());
+    let old = model.clone();
+    model.handle("studio.child", &message(3, "same", false));
+    assert_eq!(model, old);
+    assert!(std::rc::Rc::ptr_eq(&old.snapshot, &model.snapshot));
+    // Emulate a state container discarding the equal replacement.
+    model = old;
+    model.handle("studio.child", &message(2, "stale", false));
+    assert_eq!(model.snapshot.nodes[0].text.as_deref(), Some("same"));
+    model.handle("studio.child", &message(4, "same", true));
+    assert!(model.snapshot.truncated);
+    assert_eq!(model.selected, "child");
+    assert!(model.collapsed.contains("root"));
+    model.handle("studio.child", r#"{"session":1,"event":"connected"}"#);
+    model.handle("studio.child", &message(0, "new session", false));
+    assert_eq!(model.snapshot.nodes[0].text.as_deref(), Some("new session"));
+}
+
+#[test]
+fn layout_changes_prune_removed_selection_and_collapsed_nodes() {
+    let mut model = studio();
+    model.start();
+    let message = |nodes: Value| {
+        json!({"session":1,"event":"message",
+        "channel":"cranpose.inspector.v2.snapshot","payload":json!({"schema":2,"nodes":nodes}).to_string()}).to_string()
+    };
+    model.handle(
+        "studio.child",
+        &message(json!([{"id":"root"},{"id":"child","parent":"root"}])),
+    );
+    model.selected = "child".into();
+    model.collapsed.insert("root".into());
+    model.handle("studio.child", &message(json!([{"id":"replacement"}])));
+    assert!(model.selected.is_empty());
+    assert!(model.collapsed.is_empty());
+}
+
+#[test]
+fn inspector_requests_use_decimal_ids_and_advance_when_the_layout_does_not() {
+    let mut model = studio();
+    assert!(model.inspection_request().is_none());
+    model.start();
+    model.handle("studio.child", r#"{"session":1,"event":"connected"}"#);
+    for id in 1..=3 {
+        let request = model.inspection_request().expect("connected");
+        assert_eq!(
+            request["payload"]
+                .as_str()
+                .expect("wire payload")
+                .parse::<u64>()
+                .expect("decimal request ID"),
+            id
+        );
+    }
+    model.handle("studio.child", r#"{"session":1,"event":"connected"}"#);
+    assert_eq!(
+        model.inspection_request().expect("new connection")["payload"],
+        "1"
+    );
+}
