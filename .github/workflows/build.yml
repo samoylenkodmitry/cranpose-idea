@@ -82,7 +82,7 @@ jobs:
       - name: Inspector unchanged and changed layouts
         run: |
           cargo build --locked --no-default-features -p cranpose-intellij-ui
-          cargo run --locked -p xtask -- inspection-profile --binary target/debug/cranpose-intellij-ui --nodes 1000 --seconds 5 --settle-seconds 3 --require-quiet --log inspector-hot-reload.log --report inspector-hot-reload.json
+          cargo run --locked -p xtask -- inspection-profile --binary target/debug/cranpose-intellij-ui --nodes 1000 --seconds 5 --settle-seconds 3 --require-quiet --change-rounds 3 --change-seconds 5 --exercise-tree --max-ui-nodes 200 --log inspector-hot-reload.log --report inspector-hot-reload.json
       - name: Library and binary application
         run: cargo run --locked -p xtask -- hot-smoke --runner target/debug/cranpose-dev-runner --fixture library --reuse-fixture --source src/lib.rs --cache "${{ runner.temp }}/cranpose-hot-cache" --log library-hot-reload.log --measure-rounds 2 --profile-startup --report library-hot-reload.json
       - uses: actions/upload-artifact@v7
