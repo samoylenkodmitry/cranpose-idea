@@ -1,0 +1,558 @@
+{
+  "cargoReportedBuildMs": 1270.0,
+  "idle": [],
+  "mode": "startup",
+  "restarts": [
+    {
+      "cargoReportedBuildMs": 1530.0,
+      "log": "/Users/s/Documents/Codex/2026-09-26/create-a-separate-gh-repo-from-2/work/restart-verified.restart-1.log",
+      "previousResponseMs": 0.630792,
+      "previousShutdownMs": 204.226041,
+      "replacementPids": [
+        19546,
+        19583,
+        19848
+      ],
+      "round": 1,
+      "startupMs": 3390.511541,
+      "startupPhases": {
+        "compilerBuildCompletedMs": 2370.0,
+        "compilerServingMs": 230.0,
+        "connectionPollMs": 100,
+        "connectionToSnapshotMs": 286.2804579999997,
+        "dependencyCacheHit": true,
+        "privateWorkspace": "/Users/s/Documents/Codex/2026-09-26/create-a-separate-gh-repo-from-2/work/lease-candidate-cache/workspaces/d93b0430a35825ef4b29c6c086632eadf1bc605cbd39fe02af2487c787e26bc5/slot-7H3PFk/workspace",
+        "runner": [
+          {
+            "cranposeDev": "startupPhase",
+            "durationMs": 16.562292,
+            "elapsedMs": 16.562292,
+            "phase": "metadata"
+          },
+          {
+            "cranposeDev": "startupPhase",
+            "durationMs": 3.487333,
+            "elapsedMs": 20.049625,
+            "phase": "workspace"
+          },
+          {
+            "cranposeDev": "startupPhase",
+            "durationMs": 10.953917,
+            "elapsedMs": 31.003542,
+            "phase": "dependencyCache"
+          },
+          {
+            "cranposeDev": "startupPhase",
+            "durationMs": 5.895166000000001,
+            "elapsedMs": 36.898708,
+            "phase": "toolchain"
+          },
+          {
+            "cranposeDev": "startupPhase",
+            "durationMs": 0.186917,
+            "elapsedMs": 37.085625,
+            "phase": "compilerSpawn"
+          }
+        ],
+        "spawnToConnectionMs": 3104.231083,
+        "workspaceReused": true
+      },
+      "stoppedPids": [
+        19227,
+        19264,
+        19537
+      ],
+      "supportBuilds": [
+        {
+          "crate": "cranpose_dev_macros",
+          "fresh": true
+        },
+        {
+          "crate": "cranpose_dev_runtime",
+          "fresh": true
+        }
+      ]
+    },
+    {
+      "cargoReportedBuildMs": 1770.0,
+      "log": "/Users/s/Documents/Codex/2026-09-26/create-a-separate-gh-repo-from-2/work/restart-verified.restart-2.log",
+      "previousResponseMs": 0.523334,
+      "previousShutdownMs": 221.668334,
+      "replacementPids": [
+        19864,
+        19902,
+        20273
+      ],
+      "round": 2,
+      "startupMs": 3874.878208,
+      "startupPhases": {
+        "compilerBuildCompletedMs": 2790.0,
+        "compilerServingMs": 250.0,
+        "connectionPollMs": 100,
+        "connectionToSnapshotMs": 284.7716250000003,
+        "dependencyCacheHit": true,
+        "privateWorkspace": "/Users/s/Documents/Codex/2026-09-26/create-a-separate-gh-repo-from-2/work/lease-candidate-cache/workspaces/d93b0430a35825ef4b29c6c086632eadf1bc605cbd39fe02af2487c787e26bc5/slot-Epiz51/workspace",
+        "runner": [
+          {
+            "cranposeDev": "startupPhase",
+            "durationMs": 27.239125,
+            "elapsedMs": 27.239125,
+            "phase": "metadata"
+          },
+          {
+            "cranposeDev": "startupPhase",
+            "durationMs": 3.059542,
+            "elapsedMs": 30.298667,
+            "phase": "workspace"
+          },
+          {
+            "cranposeDev": "startupPhase",
+            "durationMs": 12.3105,
+            "elapsedMs": 42.60916700000001,
+            "phase": "dependencyCache"
+          },
+          {
+            "cranposeDev": "startupPhase",
+            "durationMs": 7.365292,
+            "elapsedMs": 49.974459,
+            "phase": "toolchain"
+          },
+          {
+            "cranposeDev": "startupPhase",
+            "durationMs": 0.32370800000000005,
+            "elapsedMs": 50.298167,
+            "phase": "compilerSpawn"
+          }
+        ],
+        "spawnToConnectionMs": 3590.106583,
+        "workspaceReused": true
+      },
+      "stoppedPids": [
+        19546,
+        19583,
+        19848
+      ],
+      "supportBuilds": [
+        {
+          "crate": "cranpose_dev_macros",
+          "fresh": true
+        },
+        {
+          "crate": "cranpose_dev_runtime",
+          "fresh": true
+        }
+      ]
+    },
+    {
+      "cargoReportedBuildMs": 1320.0,
+      "log": "/Users/s/Documents/Codex/2026-09-26/create-a-separate-gh-repo-from-2/work/restart-verified.restart-3.log",
+      "previousResponseMs": 0.513792,
+      "previousShutdownMs": 55.82575,
+      "replacementPids": [
+        20309,
+        20346,
+        20570
+      ],
+      "round": 3,
+      "startupMs": 3155.8837080000003,
+      "startupPhases": {
+        "compilerBuildCompletedMs": 2160.0,
+        "compilerServingMs": 230.0,
+        "connectionPollMs": 100,
+        "connectionToSnapshotMs": 267.7102080000004,
+        "dependencyCacheHit": true,
+        "privateWorkspace": "/Users/s/Documents/Codex/2026-09-26/create-a-separate-gh-repo-from-2/work/lease-candidate-cache/workspaces/d93b0430a35825ef4b29c6c086632eadf1bc605cbd39fe02af2487c787e26bc5/slot-7H3PFk/workspace",
+        "runner": [
+          {
+            "cranposeDev": "startupPhase",
+            "durationMs": 18.805458,
+            "elapsedMs": 18.805458,
+            "phase": "metadata"
+          },
+          {
+            "cranposeDev": "startupPhase",
+            "durationMs": 2.813209,
+            "elapsedMs": 21.618667,
+            "phase": "workspace"
+          },
+          {
+            "cranposeDev": "startupPhase",
+            "durationMs": 11.732,
+            "elapsedMs": 33.350667,
+            "phase": "dependencyCache"
+          },
+          {
+            "cranposeDev": "startupPhase",
+            "durationMs": 7.544875,
+            "elapsedMs": 40.895542,
+            "phase": "toolchain"
+          },
+          {
+            "cranposeDev": "startupPhase",
+            "durationMs": 0.267375,
+            "elapsedMs": 41.162917,
+            "phase": "compilerSpawn"
+          }
+        ],
+        "spawnToConnectionMs": 2888.1735,
+        "workspaceReused": true
+      },
+      "stoppedPids": [
+        19864,
+        19902,
+        20273
+      ],
+      "supportBuilds": [
+        {
+          "crate": "cranpose_dev_macros",
+          "fresh": true
+        },
+        {
+          "crate": "cranpose_dev_runtime",
+          "fresh": true
+        }
+      ]
+    },
+    {
+      "cargoReportedBuildMs": 1330.0,
+      "log": "/Users/s/Documents/Codex/2026-09-26/create-a-separate-gh-repo-from-2/work/restart-verified.restart-4.log",
+      "previousResponseMs": 0.473792,
+      "previousShutdownMs": 97.254084,
+      "replacementPids": [
+        20590,
+        20627,
+        20855
+      ],
+      "round": 4,
+      "startupMs": 3170.051208,
+      "startupPhases": {
+        "compilerBuildCompletedMs": 2170.0,
+        "compilerServingMs": 240.0,
+        "connectionPollMs": 100,
+        "connectionToSnapshotMs": 281.711417,
+        "dependencyCacheHit": true,
+        "privateWorkspace": "/Users/s/Documents/Codex/2026-09-26/create-a-separate-gh-repo-from-2/work/lease-candidate-cache/workspaces/d93b0430a35825ef4b29c6c086632eadf1bc605cbd39fe02af2487c787e26bc5/slot-Epiz51/workspace",
+        "runner": [
+          {
+            "cranposeDev": "startupPhase",
+            "durationMs": 17.358375,
+            "elapsedMs": 17.358375,
+            "phase": "metadata"
+          },
+          {
+            "cranposeDev": "startupPhase",
+            "durationMs": 2.643542,
+            "elapsedMs": 20.001917,
+            "phase": "workspace"
+          },
+          {
+            "cranposeDev": "startupPhase",
+            "durationMs": 10.766541,
+            "elapsedMs": 30.768458,
+            "phase": "dependencyCache"
+          },
+          {
+            "cranposeDev": "startupPhase",
+            "durationMs": 6.175042,
+            "elapsedMs": 36.9435,
+            "phase": "toolchain"
+          },
+          {
+            "cranposeDev": "startupPhase",
+            "durationMs": 0.201,
+            "elapsedMs": 37.144499999999994,
+            "phase": "compilerSpawn"
+          }
+        ],
+        "spawnToConnectionMs": 2888.339791,
+        "workspaceReused": true
+      },
+      "stoppedPids": [
+        20309,
+        20346,
+        20570
+      ],
+      "supportBuilds": [
+        {
+          "crate": "cranpose_dev_macros",
+          "fresh": true
+        },
+        {
+          "crate": "cranpose_dev_runtime",
+          "fresh": true
+        }
+      ]
+    },
+    {
+      "cargoReportedBuildMs": 1330.0,
+      "log": "/Users/s/Documents/Codex/2026-09-26/create-a-separate-gh-repo-from-2/work/restart-verified.restart-5.log",
+      "previousResponseMs": 0.482958,
+      "previousShutdownMs": 226.710083,
+      "replacementPids": [
+        20871,
+        20908,
+        21136
+      ],
+      "round": 5,
+      "startupMs": 3194.1951670000003,
+      "startupPhases": {
+        "compilerBuildCompletedMs": 2150.0,
+        "compilerServingMs": 230.0,
+        "connectionPollMs": 100,
+        "connectionToSnapshotMs": 295.4623330000004,
+        "dependencyCacheHit": true,
+        "privateWorkspace": "/Users/s/Documents/Codex/2026-09-26/create-a-separate-gh-repo-from-2/work/lease-candidate-cache/workspaces/d93b0430a35825ef4b29c6c086632eadf1bc605cbd39fe02af2487c787e26bc5/slot-7H3PFk/workspace",
+        "runner": [
+          {
+            "cranposeDev": "startupPhase",
+            "durationMs": 17.309375,
+            "elapsedMs": 17.309375,
+            "phase": "metadata"
+          },
+          {
+            "cranposeDev": "startupPhase",
+            "durationMs": 2.845833,
+            "elapsedMs": 20.155208,
+            "phase": "workspace"
+          },
+          {
+            "cranposeDev": "startupPhase",
+            "durationMs": 11.4445,
+            "elapsedMs": 31.599707999999996,
+            "phase": "dependencyCache"
+          },
+          {
+            "cranposeDev": "startupPhase",
+            "durationMs": 6.0765,
+            "elapsedMs": 37.676208,
+            "phase": "toolchain"
+          },
+          {
+            "cranposeDev": "startupPhase",
+            "durationMs": 0.193167,
+            "elapsedMs": 37.869375,
+            "phase": "compilerSpawn"
+          }
+        ],
+        "spawnToConnectionMs": 2898.732834,
+        "workspaceReused": true
+      },
+      "stoppedPids": [
+        20590,
+        20627,
+        20855
+      ],
+      "supportBuilds": [
+        {
+          "crate": "cranpose_dev_macros",
+          "fresh": true
+        },
+        {
+          "crate": "cranpose_dev_runtime",
+          "fresh": true
+        }
+      ]
+    },
+    {
+      "cargoReportedBuildMs": 1640.0,
+      "log": "/Users/s/Documents/Codex/2026-09-26/create-a-separate-gh-repo-from-2/work/restart-verified.restart-6.log",
+      "previousResponseMs": 0.834458,
+      "previousShutdownMs": 151.05712499999998,
+      "replacementPids": [
+        21168,
+        21205,
+        21446
+      ],
+      "round": 6,
+      "startupMs": 3904.518917,
+      "startupPhases": {
+        "compilerBuildCompletedMs": 2810.0,
+        "compilerServingMs": 280.0,
+        "connectionPollMs": 100,
+        "connectionToSnapshotMs": 285.4070420000003,
+        "dependencyCacheHit": true,
+        "privateWorkspace": "/Users/s/Documents/Codex/2026-09-26/create-a-separate-gh-repo-from-2/work/lease-candidate-cache/workspaces/d93b0430a35825ef4b29c6c086632eadf1bc605cbd39fe02af2487c787e26bc5/slot-Epiz51/workspace",
+        "runner": [
+          {
+            "cranposeDev": "startupPhase",
+            "durationMs": 26.061125,
+            "elapsedMs": 26.061125,
+            "phase": "metadata"
+          },
+          {
+            "cranposeDev": "startupPhase",
+            "durationMs": 4.140375,
+            "elapsedMs": 30.2015,
+            "phase": "workspace"
+          },
+          {
+            "cranposeDev": "startupPhase",
+            "durationMs": 12.423958,
+            "elapsedMs": 42.625457999999995,
+            "phase": "dependencyCache"
+          },
+          {
+            "cranposeDev": "startupPhase",
+            "durationMs": 7.806292,
+            "elapsedMs": 50.431749999999994,
+            "phase": "toolchain"
+          },
+          {
+            "cranposeDev": "startupPhase",
+            "durationMs": 0.253417,
+            "elapsedMs": 50.685167,
+            "phase": "compilerSpawn"
+          }
+        ],
+        "spawnToConnectionMs": 3619.1118749999996,
+        "workspaceReused": true
+      },
+      "stoppedPids": [
+        20871,
+        20908,
+        21136
+      ],
+      "supportBuilds": [
+        {
+          "crate": "cranpose_dev_macros",
+          "fresh": true
+        },
+        {
+          "crate": "cranpose_dev_runtime",
+          "fresh": true
+        }
+      ]
+    },
+    {
+      "cargoReportedBuildMs": 4490.0,
+      "log": "/Users/s/Documents/Codex/2026-09-26/create-a-separate-gh-repo-from-2/work/restart-verified.restart-7.log",
+      "previousResponseMs": 1.0803749999999999,
+      "previousShutdownMs": 49.574374999999996,
+      "replacementPids": [
+        21450,
+        21487,
+        21840
+      ],
+      "round": 7,
+      "startupMs": 7510.826,
+      "startupPhases": {
+        "compilerBuildCompletedMs": 6430.0,
+        "compilerServingMs": 500.0,
+        "connectionPollMs": 100,
+        "connectionToSnapshotMs": 317.01304100000016,
+        "dependencyCacheHit": true,
+        "privateWorkspace": "/Users/s/Documents/Codex/2026-09-26/create-a-separate-gh-repo-from-2/work/lease-candidate-cache/workspaces/d93b0430a35825ef4b29c6c086632eadf1bc605cbd39fe02af2487c787e26bc5/slot-7H3PFk/workspace",
+        "runner": [
+          {
+            "cranposeDev": "startupPhase",
+            "durationMs": 28.302833,
+            "elapsedMs": 28.302833,
+            "phase": "metadata"
+          },
+          {
+            "cranposeDev": "startupPhase",
+            "durationMs": 10.743083,
+            "elapsedMs": 39.045916,
+            "phase": "workspace"
+          },
+          {
+            "cranposeDev": "startupPhase",
+            "durationMs": 18.198584,
+            "elapsedMs": 57.244499999999995,
+            "phase": "dependencyCache"
+          },
+          {
+            "cranposeDev": "startupPhase",
+            "durationMs": 12.550875,
+            "elapsedMs": 69.795375,
+            "phase": "toolchain"
+          },
+          {
+            "cranposeDev": "startupPhase",
+            "durationMs": 0.376625,
+            "elapsedMs": 70.172,
+            "phase": "compilerSpawn"
+          }
+        ],
+        "spawnToConnectionMs": 7193.812959,
+        "workspaceReused": true
+      },
+      "stoppedPids": [
+        21168,
+        21205,
+        21446
+      ],
+      "supportBuilds": [
+        {
+          "crate": "cranpose_dev_macros",
+          "fresh": true
+        },
+        {
+          "crate": "cranpose_dev_runtime",
+          "fresh": true
+        }
+      ]
+    }
+  ],
+  "result": "passed",
+  "shutdownMs": 160.542708,
+  "snapshotPollMs": 200,
+  "startupMs": 3837.09075,
+  "startupPhases": {
+    "compilerBuildCompletedMs": 2760.0,
+    "compilerServingMs": 540.0,
+    "connectionPollMs": 100,
+    "connectionToSnapshotMs": 290.59254199999987,
+    "dependencyCacheHit": true,
+    "privateWorkspace": "/Users/s/Documents/Codex/2026-09-26/create-a-separate-gh-repo-from-2/work/lease-candidate-cache/workspaces/d93b0430a35825ef4b29c6c086632eadf1bc605cbd39fe02af2487c787e26bc5/slot-Epiz51/workspace",
+    "runner": [
+      {
+        "cranposeDev": "startupPhase",
+        "durationMs": 70.426959,
+        "elapsedMs": 70.426959,
+        "phase": "metadata"
+      },
+      {
+        "cranposeDev": "startupPhase",
+        "durationMs": 17.217916,
+        "elapsedMs": 87.644875,
+        "phase": "workspace"
+      },
+      {
+        "cranposeDev": "startupPhase",
+        "durationMs": 11.522125,
+        "elapsedMs": 99.167,
+        "phase": "dependencyCache"
+      },
+      {
+        "cranposeDev": "startupPhase",
+        "durationMs": 19.36575,
+        "elapsedMs": 118.53275,
+        "phase": "toolchain"
+      },
+      {
+        "cranposeDev": "startupPhase",
+        "durationMs": 0.34883400000000003,
+        "elapsedMs": 118.881584,
+        "phase": "compilerSpawn"
+      }
+    ],
+    "spawnToConnectionMs": 3546.498208,
+    "workspaceReused": true
+  },
+  "stoppedPids": [
+    21450,
+    21487,
+    21840
+  ],
+  "supportBuilds": [
+    {
+      "crate": "cranpose_dev_macros",
+      "fresh": true
+    },
+    {
+      "crate": "cranpose_dev_runtime",
+      "fresh": true
+    }
+  ]
+}

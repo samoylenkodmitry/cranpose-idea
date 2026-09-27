@@ -78,7 +78,11 @@ jobs:
       - name: Binary application
         run: cargo run --locked -p xtask -- hot-smoke --runner target/debug/cranpose-dev-runner --fixture counter --reuse-fixture --cache "${{ runner.temp }}/cranpose-hot-cache" --log counter-hot-reload.log --measure-rounds 2 --background-noise-ms 1000 --idle-seconds 20 --idle-settle-seconds 5 --profile-startup --build-diagnostics --report counter-hot-reload.json
       - name: Cached support and dependencies on preview restart
-        run: cargo run --locked -p xtask -- hot-smoke --runner target/debug/cranpose-dev-runner --fixture counter --reuse-fixture --cache "${{ runner.temp }}/cranpose-hot-cache" --log restart-hot-reload.log --startup-only --profile-startup --require-cached-dependencies --require-cached-workspace --build-diagnostics --require-cached-support --report restart-hot-reload.json
+        run: cargo run --locked -p xtask -- hot-smoke --runner target/debug/cranpose-dev-runner --fixture counter --reuse-fixture --cache "${{ runner.temp }}/cranpose-hot-cache" --log restart-hot-reload.log --startup-only --restart-rounds 2 --profile-startup --require-cached-dependencies --require-cached-workspace --build-diagnostics --require-cached-support --report restart-hot-reload.json
+      - name: Inspector unchanged and changed layouts
+        run: |
+          cargo build --locked --no-default-features -p cranpose-intellij-ui
+          cargo run --locked -p xtask -- inspection-profile --binary target/debug/cranpose-intellij-ui --nodes 1000 --seconds 5 --settle-seconds 3 --require-quiet --log inspector-hot-reload.log --report inspector-hot-reload.json
       - name: Library and binary application
         run: cargo run --locked -p xtask -- hot-smoke --runner target/debug/cranpose-dev-runner --fixture library --reuse-fixture --source src/lib.rs --cache "${{ runner.temp }}/cranpose-hot-cache" --log library-hot-reload.log --measure-rounds 2 --profile-startup --report library-hot-reload.json
       - uses: actions/upload-artifact@v7
@@ -87,6 +91,7 @@ jobs:
           name: hot-reload-evidence
           path: |
             *-hot-reload.log
+            restart-hot-reload.restart-*.log
             *-hot-reload.json
   stability:
     name: Composable stability (sample)

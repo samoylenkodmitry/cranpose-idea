@@ -21,7 +21,7 @@ default = ["desktop"]
 desktop = ["cranpose/desktop"]
 
 [dependencies]
-cranpose-plugin-ux = { git = "https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template", rev = "86828a7b09a1d30006c07433a441526b8838d8e4" }
+cranpose-plugin-ux = { git = "https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template", rev = "5df0b1b980030caed2fa1707a035c8b964233691" }
 cranpose = { version = "0.1.164", features = ["embed"], git = "https://github.com/samoylenkodmitry/Cranpose", rev = "e177b19985c303a13fcf40d61decc7253fdbe057" }
 cranpose-core = { git = "https://github.com/samoylenkodmitry/Cranpose", rev = "e177b19985c303a13fcf40d61decc7253fdbe057", version = "0.1.164" }
 cranpose-dev-runner = { version = "0.1.0", path = "../dev-runner" }

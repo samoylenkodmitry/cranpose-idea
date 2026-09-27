@@ -241,6 +241,8 @@ pub struct Studio {
     #[serde(skip)]
     pub snapshot: std::rc::Rc<Snapshot>,
     #[serde(skip)]
+    inspection_sequence: cranpose_plugin_ux::delivery::SequenceGate,
+    #[serde(skip)]
     pub initialized: bool,
     pub selected: String,
     pub collapsed: std::collections::HashSet<String>,
@@ -275,6 +277,7 @@ impl Default for Studio {
             targets: vec![],
             previews: vec![],
             snapshot: Snapshot::default().into(),
+            inspection_sequence: Default::default(),
             initialized: false,
             selected: String::new(),
             collapsed: Default::default(),
@@ -305,6 +308,15 @@ impl Default for Studio {
 }
 
 impl Studio {
+    pub fn inspection_request(&self) -> Option<Value> {
+        self.connected.then(|| {
+            json!({"action":"message", "session":self.session,
+            "channel":"cranpose.inspector.v2.request",
+            // Cranpose's v2 request is a decimal u64, not a JSON object.
+            "payload":self.inspection_sequence.next_request().to_string()})
+        })
+    }
+
     /// Picking or navigating a node reveals its ancestors without losing other folds.
     pub fn select_node(&mut self, id: String) {
         let mut current = self.snapshot.nodes.iter().find(|node| node.id == id);
@@ -487,6 +499,7 @@ impl Studio {
                 match value["event"].as_str().unwrap_or_default() {
                     "connected" => {
                         self.snapshot = Snapshot::default().into();
+                        self.inspection_sequence = Default::default();
                         self.selected.clear();
                         self.collapsed.clear();
                         self.inspector_details = false;
@@ -544,14 +557,26 @@ impl Studio {
                         }
                         "cranpose.inspector.v2.snapshot" => {
                             match Snapshot::parse(value["payload"].as_str().unwrap_or_default()) {
-                                Ok(snapshot) if snapshot.request_id >= self.snapshot.request_id => {
-                                    self.collapsed.retain(|id| {
-                                        snapshot.nodes.iter().any(|node| &node.id == id)
-                                    });
-                                    if !snapshot.nodes.iter().any(|node| node.id == self.selected) {
-                                        self.selected.clear();
+                                Ok(snapshot)
+                                    if self.inspection_sequence.accept(snapshot.request_id) =>
+                                {
+                                    // Request IDs and capture duration change on every poll.
+                                    // Retain the shared view when the actual layout is unchanged.
+                                    if snapshot.schema != self.snapshot.schema
+                                        || snapshot.truncated != self.snapshot.truncated
+                                        || snapshot.nodes != self.snapshot.nodes
+                                    {
+                                        let ids: std::collections::HashSet<_> = snapshot
+                                            .nodes
+                                            .iter()
+                                            .map(|node| node.id.as_str())
+                                            .collect();
+                                        self.collapsed.retain(|id| ids.contains(id.as_str()));
+                                        if !ids.contains(self.selected.as_str()) {
+                                            self.selected.clear();
+                                        }
+                                        self.snapshot = snapshot.into();
                                     }
-                                    self.snapshot = snapshot.into();
                                 }
                                 Err(error) => self.status = error,
                                 _ => {}
