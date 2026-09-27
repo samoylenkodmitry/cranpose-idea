@@ -5,9 +5,9 @@ use crate::{
 use cranpose::{
     BasicTextField, BoxWithConstraints, BoxWithConstraintsScope, Button, ButtonSpec, Color, Column,
     ColumnSpec, LinearArrangement, Modifier, MutableState, Row, RowSpec, ScrollState, SpanStyle,
-    Text, TextFieldState, TextStyle, composable, remember, rememberHostMessages,
-    rememberMutableStateOf, send_to_host,
-    text::{FontWeight, TextUnit},
+    Text, TextFieldState, TextOptions, TextStyle, TextWithOptions, composable, remember,
+    rememberHostMessages, rememberMutableStateOf, send_to_host,
+    text::{FontWeight, TextOverflow, TextUnit},
 };
 use cranpose_core::{CollectEvents, SideEffect};
 use serde_json::{Value, json};
@@ -826,7 +826,26 @@ fn LayoutTree(
                             style(palette.muted, 12.0, false),
                         );
                     }
-                    for row in rows.iter().cloned() {
+                    let window = cranpose_plugin_ux::viewport::RowWindow::new(
+                        rows.len(),
+                        28.0,
+                        (height - 94.0).max(25.0),
+                        scroll.value(),
+                        2,
+                    );
+                    // ScrollState retains its requested offset when content shrinks.
+                    // Commit the new limit so expanding again starts at the visible row.
+                    let limit = (rows.len() as f32 * 28.0 - (height - 94.0).max(25.0)).max(0.0);
+                    SideEffect(move || {
+                        if scroll.value_non_reactive() > limit {
+                            scroll.scroll_to(limit);
+                        }
+                    });
+                    cranpose::Spacer(cranpose::Size {
+                        width: 0.0,
+                        height: window.before,
+                    });
+                    for row in rows[window.rows.clone()].iter().cloned() {
                         let node = studio.snapshot.nodes[row.index].clone();
                         let id = node.id.clone();
                         let selected = id == studio.selected;
@@ -835,6 +854,7 @@ fn LayoutTree(
                             Row(
                                 Modifier::empty()
                                     .fill_max_width()
+                                    .height(28.0)
                                     .background(if selected {
                                         palette.accent
                                     } else {
@@ -877,10 +897,11 @@ fn LayoutTree(
                                             true,
                                         ),
                                     );
-                                    Text(
+                                    TextWithOptions(
                                         node.label(),
                                         Modifier::empty()
                                             .width((width - indent - 40.0).max(70.0))
+                                            .height(28.0)
                                             .padding(6.0)
                                             .clickable(move |_| {
                                                 edit(state, |s| s.select_node(select.clone()))
@@ -894,11 +915,21 @@ fn LayoutTree(
                                             11.0,
                                             selected || row.matches,
                                         ),
+                                        TextOptions {
+                                            max_lines: Some(1),
+                                            soft_wrap: false,
+                                            overflow: TextOverflow::Ellipsis,
+                                            ..Default::default()
+                                        },
                                     );
                                 },
                             );
                         });
                     }
+                    cranpose::Spacer(cranpose::Size {
+                        width: 0.0,
+                        height: window.after,
+                    });
                 },
             );
         },

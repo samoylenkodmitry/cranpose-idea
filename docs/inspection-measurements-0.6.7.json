@@ -1,0 +1,1350 @@
+{
+  "baselineCommit": "06b6da3fd0438bc540163c66383af39b24c629fc",
+  "templateCommit": "85ca6d831c6a5cb6fa6aece9eb3b8fae033d3bd1",
+  "machine": "Apple M5; macOS 27.0 (26A428); Rust 1.98.1",
+  "profile": "release, --no-default-features; unchanged framework revision and optimization settings",
+  "orderPerNodeCount": [
+    "before-1",
+    "after-1",
+    "after-2",
+    "before-2",
+    "before-3",
+    "after-3"
+  ],
+  "baselineSha256": "8467ec026131391b3cad2a8f9a25604288b788152485c59cbf90fb196a970c0d",
+  "candidateSha256": "15f35bc4e471350e978c82e8f2aeb51f50d98c7afa0d7d185837f63520480e8d",
+  "summary": [
+    {
+      "nodes": 1000,
+      "before": {
+        "cpuPercentOfOneCore": 7.598803315377845,
+        "initialAcknowledgementMs": 113.21962500000001,
+        "changedAcknowledgementMs": 80.0052705
+      },
+      "after": {
+        "cpuPercentOfOneCore": 1.2982569818570504,
+        "initialAcknowledgementMs": 67.724625,
+        "changedAcknowledgementMs": 69.93297949999999
+      },
+      "cpuReductionPercent": 82.91498110985788
+    },
+    {
+      "nodes": 5000,
+      "before": {
+        "cpuPercentOfOneCore": 27.171678731016556,
+        "initialAcknowledgementMs": 489.209375,
+        "changedAcknowledgementMs": 311.1789375
+      },
+      "after": {
+        "cpuPercentOfOneCore": 1.799305288228215,
+        "initialAcknowledgementMs": 147.0855,
+        "changedAcknowledgementMs": 131.8147705
+      },
+      "cpuReductionPercent": 93.37801206160184
+    }
+  ],
+  "samples": [
+    {
+      "nodes": 1000,
+      "variant": "before",
+      "pair": 1,
+      "measurement": {
+        "changedLayoutRendered": true,
+        "changedLayouts": [
+          {
+            "cpuSeconds": 0.03999999999999998,
+            "latencyMs": 79.985541,
+            "round": 0,
+            "uiNodes": 4059,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.020000000000000018,
+            "latencyMs": 71.412584,
+            "round": 1,
+            "uiNodes": 4059,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.03999999999999998,
+            "latencyMs": 99.86108300000001,
+            "round": 2,
+            "uiNodes": 4059,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.030000000000000027,
+            "latencyMs": 70.996959,
+            "round": 3,
+            "uiNodes": 4059,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.02999999999999997,
+            "latencyMs": 97.453,
+            "round": 4,
+            "uiNodes": 4059,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.020000000000000018,
+            "latencyMs": 71.148833,
+            "round": 5,
+            "uiNodes": 4059,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.03999999999999998,
+            "latencyMs": 80.025,
+            "round": 6,
+            "uiNodes": 4059,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.030000000000000027,
+            "latencyMs": 81.66275,
+            "round": 7,
+            "uiNodes": 4059,
+            "uiSnapshotTruncated": false
+          }
+        ],
+        "changedWorkload": {
+          "cpuPercentOfOneCore": 7.795261131356915,
+          "cpuSeconds": 0.78,
+          "elapsedSeconds": 10.006079166,
+          "frames": 20,
+          "lastUpdateVerified": true,
+          "updates": 20
+        },
+        "cpuClockResolutionSeconds": 0.01,
+        "initialLayout": {
+          "cpuSeconds": 0.13,
+          "latencyMs": 113.21962500000001,
+          "uiNodes": 4059,
+          "uiSnapshotTruncated": false
+        },
+        "nodes": 1000,
+        "phases": [
+          {
+            "cpuPercentOfOneCore": 0.6633906501472994,
+            "cpuSeconds": 0.01999999999999999,
+            "elapsedSeconds": 3.014814875,
+            "frames": 0,
+            "snapshots": 6,
+            "visible": true
+          },
+          {
+            "cpuPercentOfOneCore": 0.0,
+            "cpuSeconds": 0.0,
+            "elapsedSeconds": 3.012910084,
+            "frames": 0,
+            "snapshots": 6,
+            "visible": false
+          }
+        ],
+        "result": "passed",
+        "settleSeconds": 2,
+        "snapshotIntervalMs": 500,
+        "treeChecks": null
+      }
+    },
+    {
+      "nodes": 1000,
+      "variant": "before",
+      "pair": 2,
+      "measurement": {
+        "changedLayoutRendered": true,
+        "changedLayouts": [
+          {
+            "cpuSeconds": 0.02999999999999997,
+            "latencyMs": 82.80620800000001,
+            "round": 0,
+            "uiNodes": 4059,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.030000000000000027,
+            "latencyMs": 77.330334,
+            "round": 1,
+            "uiNodes": 4059,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.02999999999999997,
+            "latencyMs": 71.5835,
+            "round": 2,
+            "uiNodes": 4059,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.030000000000000027,
+            "latencyMs": 70.23945900000001,
+            "round": 3,
+            "uiNodes": 4059,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.02999999999999997,
+            "latencyMs": 82.043334,
+            "round": 4,
+            "uiNodes": 4059,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.030000000000000027,
+            "latencyMs": 81.641667,
+            "round": 5,
+            "uiNodes": 4059,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.02999999999999997,
+            "latencyMs": 81.690916,
+            "round": 6,
+            "uiNodes": 4059,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.030000000000000027,
+            "latencyMs": 70.029917,
+            "round": 7,
+            "uiNodes": 4059,
+            "uiSnapshotTruncated": false
+          }
+        ],
+        "changedWorkload": {
+          "cpuPercentOfOneCore": 6.99759533444336,
+          "cpuSeconds": 0.7,
+          "elapsedSeconds": 10.003436417,
+          "frames": 20,
+          "lastUpdateVerified": true,
+          "updates": 20
+        },
+        "cpuClockResolutionSeconds": 0.01,
+        "initialLayout": {
+          "cpuSeconds": 0.12000000000000001,
+          "latencyMs": 126.995625,
+          "uiNodes": 4059,
+          "uiSnapshotTruncated": false
+        },
+        "nodes": 1000,
+        "phases": [
+          {
+            "cpuPercentOfOneCore": 0.6644579347367715,
+            "cpuSeconds": 0.020000000000000018,
+            "elapsedSeconds": 3.009972333,
+            "frames": 0,
+            "snapshots": 6,
+            "visible": true
+          },
+          {
+            "cpuPercentOfOneCore": 0.0,
+            "cpuSeconds": 0.0,
+            "elapsedSeconds": 3.012458583,
+            "frames": 0,
+            "snapshots": 6,
+            "visible": false
+          }
+        ],
+        "result": "passed",
+        "settleSeconds": 2,
+        "snapshotIntervalMs": 500,
+        "treeChecks": null
+      }
+    },
+    {
+      "nodes": 1000,
+      "variant": "before",
+      "pair": 3,
+      "measurement": {
+        "changedLayoutRendered": true,
+        "changedLayouts": [
+          {
+            "cpuSeconds": 0.030000000000000027,
+            "latencyMs": 95.02941700000001,
+            "round": 0,
+            "uiNodes": 4059,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.02999999999999997,
+            "latencyMs": 81.6225,
+            "round": 1,
+            "uiNodes": 4059,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.030000000000000027,
+            "latencyMs": 82.04570799999999,
+            "round": 2,
+            "uiNodes": 4059,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.02999999999999997,
+            "latencyMs": 80.72525,
+            "round": 3,
+            "uiNodes": 4059,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.040000000000000036,
+            "latencyMs": 98.055458,
+            "round": 4,
+            "uiNodes": 4059,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.02999999999999997,
+            "latencyMs": 86.61304200000001,
+            "round": 5,
+            "uiNodes": 4059,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.030000000000000027,
+            "latencyMs": 81.622125,
+            "round": 6,
+            "uiNodes": 4059,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.02999999999999997,
+            "latencyMs": 70.137084,
+            "round": 7,
+            "uiNodes": 4059,
+            "uiSnapshotTruncated": false
+          }
+        ],
+        "changedWorkload": {
+          "cpuPercentOfOneCore": 7.598803315377845,
+          "cpuSeconds": 0.76,
+          "elapsedSeconds": 10.001574833,
+          "frames": 20,
+          "lastUpdateVerified": true,
+          "updates": 20
+        },
+        "cpuClockResolutionSeconds": 0.01,
+        "initialLayout": {
+          "cpuSeconds": 0.09,
+          "latencyMs": 105.933417,
+          "uiNodes": 4059,
+          "uiSnapshotTruncated": false
+        },
+        "nodes": 1000,
+        "phases": [
+          {
+            "cpuPercentOfOneCore": 0.664764433932268,
+            "cpuSeconds": 0.020000000000000018,
+            "elapsedSeconds": 3.008584542,
+            "frames": 0,
+            "snapshots": 6,
+            "visible": true
+          },
+          {
+            "cpuPercentOfOneCore": 0.33212782005580344,
+            "cpuSeconds": 0.009999999999999981,
+            "elapsedSeconds": 3.010889,
+            "frames": 0,
+            "snapshots": 6,
+            "visible": false
+          }
+        ],
+        "result": "passed",
+        "settleSeconds": 2,
+        "snapshotIntervalMs": 500,
+        "treeChecks": null
+      }
+    },
+    {
+      "nodes": 1000,
+      "variant": "after",
+      "pair": 1,
+      "measurement": {
+        "changedLayoutRendered": true,
+        "changedLayouts": [
+          {
+            "cpuSeconds": 0.010000000000000009,
+            "latencyMs": 71.77562499999999,
+            "round": 0,
+            "uiNodes": 149,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.0,
+            "latencyMs": 75.897541,
+            "round": 1,
+            "uiNodes": 149,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.009999999999999981,
+            "latencyMs": 67.728208,
+            "round": 2,
+            "uiNodes": 149,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.0,
+            "latencyMs": 63.773834,
+            "round": 3,
+            "uiNodes": 149,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.010000000000000009,
+            "latencyMs": 69.22129100000001,
+            "round": 4,
+            "uiNodes": 149,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.0,
+            "latencyMs": 43.873292,
+            "round": 5,
+            "uiNodes": 149,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.010000000000000009,
+            "latencyMs": 43.534042,
+            "round": 6,
+            "uiNodes": 149,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.0,
+            "latencyMs": 42.192375,
+            "round": 7,
+            "uiNodes": 149,
+            "uiSnapshotTruncated": false
+          }
+        ],
+        "changedWorkload": {
+          "cpuPercentOfOneCore": 1.2992885960973977,
+          "cpuSeconds": 0.13,
+          "elapsedSeconds": 10.005475334,
+          "frames": 20,
+          "lastUpdateVerified": true,
+          "updates": 20
+        },
+        "cpuClockResolutionSeconds": 0.01,
+        "initialLayout": {
+          "cpuSeconds": 0.06999999999999999,
+          "latencyMs": 70.526417,
+          "uiNodes": 149,
+          "uiSnapshotTruncated": false
+        },
+        "nodes": 1000,
+        "phases": [
+          {
+            "cpuPercentOfOneCore": 0.332813127887847,
+            "cpuSeconds": 0.009999999999999995,
+            "elapsedSeconds": 3.004689167,
+            "frames": 0,
+            "snapshots": 6,
+            "visible": true
+          },
+          {
+            "cpuPercentOfOneCore": 0.0,
+            "cpuSeconds": 0.0,
+            "elapsedSeconds": 3.005024209,
+            "frames": 0,
+            "snapshots": 6,
+            "visible": false
+          }
+        ],
+        "result": "passed",
+        "settleSeconds": 2,
+        "snapshotIntervalMs": 500,
+        "treeChecks": {
+          "clearFilter": true,
+          "collapseAtBottom": true,
+          "expandedLastRowReached": true,
+          "expandedUiNodes": 149,
+          "filterLastRow": true,
+          "lastRowReached": true,
+          "returnedToFirstRow": true,
+          "selectedDetailsAndSource": true
+        }
+      }
+    },
+    {
+      "nodes": 1000,
+      "variant": "after",
+      "pair": 2,
+      "measurement": {
+        "changedLayoutRendered": true,
+        "changedLayouts": [
+          {
+            "cpuSeconds": 0.009999999999999981,
+            "latencyMs": 75.34408400000001,
+            "round": 0,
+            "uiNodes": 149,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.0,
+            "latencyMs": 76.50491600000001,
+            "round": 1,
+            "uiNodes": 149,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.010000000000000009,
+            "latencyMs": 75.36870800000001,
+            "round": 2,
+            "uiNodes": 149,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.0,
+            "latencyMs": 46.916042,
+            "round": 3,
+            "uiNodes": 149,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.010000000000000009,
+            "latencyMs": 74.929042,
+            "round": 4,
+            "uiNodes": 149,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.0,
+            "latencyMs": 64.936917,
+            "round": 5,
+            "uiNodes": 149,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.009999999999999981,
+            "latencyMs": 43.146584000000004,
+            "round": 6,
+            "uiNodes": 149,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.0,
+            "latencyMs": 43.544334,
+            "round": 7,
+            "uiNodes": 149,
+            "uiSnapshotTruncated": false
+          }
+        ],
+        "changedWorkload": {
+          "cpuPercentOfOneCore": 1.2982569818570504,
+          "cpuSeconds": 0.13,
+          "elapsedSeconds": 10.013425833,
+          "frames": 20,
+          "lastUpdateVerified": true,
+          "updates": 20
+        },
+        "cpuClockResolutionSeconds": 0.01,
+        "initialLayout": {
+          "cpuSeconds": 0.05,
+          "latencyMs": 67.724625,
+          "uiNodes": 149,
+          "uiSnapshotTruncated": false
+        },
+        "nodes": 1000,
+        "phases": [
+          {
+            "cpuPercentOfOneCore": 0.3323186031311327,
+            "cpuSeconds": 0.009999999999999995,
+            "elapsedSeconds": 3.009160458,
+            "frames": 0,
+            "snapshots": 6,
+            "visible": true
+          },
+          {
+            "cpuPercentOfOneCore": 0.3325597392972686,
+            "cpuSeconds": 0.010000000000000009,
+            "elapsedSeconds": 3.006978542,
+            "frames": 0,
+            "snapshots": 6,
+            "visible": false
+          }
+        ],
+        "result": "passed",
+        "settleSeconds": 2,
+        "snapshotIntervalMs": 500,
+        "treeChecks": {
+          "clearFilter": true,
+          "collapseAtBottom": true,
+          "expandedLastRowReached": true,
+          "expandedUiNodes": 149,
+          "filterLastRow": true,
+          "lastRowReached": true,
+          "returnedToFirstRow": true,
+          "selectedDetailsAndSource": true
+        }
+      }
+    },
+    {
+      "nodes": 1000,
+      "variant": "after",
+      "pair": 3,
+      "measurement": {
+        "changedLayoutRendered": true,
+        "changedLayouts": [
+          {
+            "cpuSeconds": 0.010000000000000009,
+            "latencyMs": 77.61325,
+            "round": 0,
+            "uiNodes": 149,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.0,
+            "latencyMs": 40.120833000000005,
+            "round": 1,
+            "uiNodes": 149,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.009999999999999981,
+            "latencyMs": 75.033459,
+            "round": 2,
+            "uiNodes": 149,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.0,
+            "latencyMs": 74.67375,
+            "round": 3,
+            "uiNodes": 149,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.010000000000000009,
+            "latencyMs": 77.101666,
+            "round": 4,
+            "uiNodes": 149,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.0,
+            "latencyMs": 79.04558300000001,
+            "round": 5,
+            "uiNodes": 149,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.010000000000000009,
+            "latencyMs": 65.36687500000001,
+            "round": 6,
+            "uiNodes": 149,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.009999999999999981,
+            "latencyMs": 66.824833,
+            "round": 7,
+            "uiNodes": 149,
+            "uiSnapshotTruncated": false
+          }
+        ],
+        "changedWorkload": {
+          "cpuPercentOfOneCore": 1.1997670402739764,
+          "cpuSeconds": 0.12,
+          "elapsedSeconds": 10.001941708,
+          "frames": 20,
+          "lastUpdateVerified": true,
+          "updates": 20
+        },
+        "cpuClockResolutionSeconds": 0.01,
+        "initialLayout": {
+          "cpuSeconds": 0.060000000000000005,
+          "latencyMs": 66.18520799999999,
+          "uiNodes": 149,
+          "uiSnapshotTruncated": false
+        },
+        "nodes": 1000,
+        "phases": [
+          {
+            "cpuPercentOfOneCore": 0.3326010290176935,
+            "cpuSeconds": 0.009999999999999995,
+            "elapsedSeconds": 3.00660525,
+            "frames": 0,
+            "snapshots": 6,
+            "visible": true
+          },
+          {
+            "cpuPercentOfOneCore": 0.0,
+            "cpuSeconds": 0.0,
+            "elapsedSeconds": 3.013268541,
+            "frames": 0,
+            "snapshots": 6,
+            "visible": false
+          }
+        ],
+        "result": "passed",
+        "settleSeconds": 2,
+        "snapshotIntervalMs": 500,
+        "treeChecks": {
+          "clearFilter": true,
+          "collapseAtBottom": true,
+          "expandedLastRowReached": true,
+          "expandedUiNodes": 149,
+          "filterLastRow": true,
+          "lastRowReached": true,
+          "returnedToFirstRow": true,
+          "selectedDetailsAndSource": true
+        }
+      }
+    },
+    {
+      "nodes": 5000,
+      "variant": "before",
+      "pair": 1,
+      "measurement": {
+        "changedLayoutRendered": true,
+        "changedLayouts": [
+          {
+            "cpuSeconds": 0.17000000000000004,
+            "latencyMs": 308.35008400000004,
+            "round": 0,
+            "uiNodes": 10000,
+            "uiSnapshotTruncated": true
+          },
+          {
+            "cpuSeconds": 0.15999999999999992,
+            "latencyMs": 320.993875,
+            "round": 1,
+            "uiNodes": 10000,
+            "uiSnapshotTruncated": true
+          },
+          {
+            "cpuSeconds": 0.17000000000000015,
+            "latencyMs": 309.93870899999996,
+            "round": 2,
+            "uiNodes": 10000,
+            "uiSnapshotTruncated": true
+          },
+          {
+            "cpuSeconds": 0.16999999999999993,
+            "latencyMs": 329.202417,
+            "round": 3,
+            "uiNodes": 10000,
+            "uiSnapshotTruncated": true
+          },
+          {
+            "cpuSeconds": 0.15999999999999992,
+            "latencyMs": 314.705542,
+            "round": 4,
+            "uiNodes": 10000,
+            "uiSnapshotTruncated": true
+          },
+          {
+            "cpuSeconds": 0.16000000000000014,
+            "latencyMs": 312.145167,
+            "round": 5,
+            "uiNodes": 10000,
+            "uiSnapshotTruncated": true
+          },
+          {
+            "cpuSeconds": 0.15999999999999992,
+            "latencyMs": 310.212708,
+            "round": 6,
+            "uiNodes": 10000,
+            "uiSnapshotTruncated": true
+          },
+          {
+            "cpuSeconds": 0.16000000000000014,
+            "latencyMs": 300.69033299999995,
+            "round": 7,
+            "uiNodes": 10000,
+            "uiSnapshotTruncated": true
+          }
+        ],
+        "changedWorkload": {
+          "cpuPercentOfOneCore": 26.677494198956403,
+          "cpuSeconds": 2.67,
+          "elapsedSeconds": 10.00843625,
+          "frames": 20,
+          "lastUpdateVerified": true,
+          "updates": 20
+        },
+        "cpuClockResolutionSeconds": 0.01,
+        "initialLayout": {
+          "cpuSeconds": 0.38999999999999996,
+          "latencyMs": 489.209375,
+          "uiNodes": 10000,
+          "uiSnapshotTruncated": true
+        },
+        "nodes": 5000,
+        "phases": [
+          {
+            "cpuPercentOfOneCore": 2.332193117898813,
+            "cpuSeconds": 0.07000000000000006,
+            "elapsedSeconds": 3.001466708,
+            "frames": 0,
+            "snapshots": 6,
+            "visible": true
+          },
+          {
+            "cpuPercentOfOneCore": 0.3324448652333562,
+            "cpuSeconds": 0.010000000000000009,
+            "elapsedSeconds": 3.008017583,
+            "frames": 0,
+            "snapshots": 6,
+            "visible": false
+          }
+        ],
+        "result": "passed",
+        "settleSeconds": 2,
+        "snapshotIntervalMs": 500,
+        "treeChecks": null
+      }
+    },
+    {
+      "nodes": 5000,
+      "variant": "before",
+      "pair": 2,
+      "measurement": {
+        "changedLayoutRendered": true,
+        "changedLayouts": [
+          {
+            "cpuSeconds": 0.16999999999999993,
+            "latencyMs": 318.016125,
+            "round": 0,
+            "uiNodes": 10000,
+            "uiSnapshotTruncated": true
+          },
+          {
+            "cpuSeconds": 0.16999999999999993,
+            "latencyMs": 334.370209,
+            "round": 1,
+            "uiNodes": 10000,
+            "uiSnapshotTruncated": true
+          },
+          {
+            "cpuSeconds": 0.17000000000000015,
+            "latencyMs": 326.400375,
+            "round": 2,
+            "uiNodes": 10000,
+            "uiSnapshotTruncated": true
+          },
+          {
+            "cpuSeconds": 0.15999999999999992,
+            "latencyMs": 299.943417,
+            "round": 3,
+            "uiNodes": 10000,
+            "uiSnapshotTruncated": true
+          },
+          {
+            "cpuSeconds": 0.15999999999999992,
+            "latencyMs": 304.827667,
+            "round": 4,
+            "uiNodes": 10000,
+            "uiSnapshotTruncated": true
+          },
+          {
+            "cpuSeconds": 0.16000000000000014,
+            "latencyMs": 306.819,
+            "round": 5,
+            "uiNodes": 10000,
+            "uiSnapshotTruncated": true
+          },
+          {
+            "cpuSeconds": 0.15999999999999992,
+            "latencyMs": 299.989083,
+            "round": 6,
+            "uiNodes": 10000,
+            "uiSnapshotTruncated": true
+          },
+          {
+            "cpuSeconds": 0.15999999999999992,
+            "latencyMs": 310.53625,
+            "round": 7,
+            "uiNodes": 10000,
+            "uiSnapshotTruncated": true
+          }
+        ],
+        "changedWorkload": {
+          "cpuPercentOfOneCore": 27.171678731016556,
+          "cpuSeconds": 2.7199999999999998,
+          "elapsedSeconds": 10.010423084,
+          "frames": 20,
+          "lastUpdateVerified": true,
+          "updates": 20
+        },
+        "cpuClockResolutionSeconds": 0.01,
+        "initialLayout": {
+          "cpuSeconds": 0.38999999999999996,
+          "latencyMs": 492.336708,
+          "uiNodes": 10000,
+          "uiSnapshotTruncated": true
+        },
+        "nodes": 5000,
+        "phases": [
+          {
+            "cpuPercentOfOneCore": 1.6665874809846257,
+            "cpuSeconds": 0.050000000000000044,
+            "elapsedSeconds": 3.000142541,
+            "frames": 0,
+            "snapshots": 6,
+            "visible": true
+          },
+          {
+            "cpuPercentOfOneCore": 0.0,
+            "cpuSeconds": 0.0,
+            "elapsedSeconds": 3.000746083,
+            "frames": 0,
+            "snapshots": 6,
+            "visible": false
+          }
+        ],
+        "result": "passed",
+        "settleSeconds": 2,
+        "snapshotIntervalMs": 500,
+        "treeChecks": null
+      }
+    },
+    {
+      "nodes": 5000,
+      "variant": "before",
+      "pair": 3,
+      "measurement": {
+        "changedLayoutRendered": true,
+        "changedLayouts": [
+          {
+            "cpuSeconds": 0.18000000000000005,
+            "latencyMs": 326.93645799999996,
+            "round": 0,
+            "uiNodes": 10000,
+            "uiSnapshotTruncated": true
+          },
+          {
+            "cpuSeconds": 0.15999999999999992,
+            "latencyMs": 302.556625,
+            "round": 1,
+            "uiNodes": 10000,
+            "uiSnapshotTruncated": true
+          },
+          {
+            "cpuSeconds": 0.17000000000000015,
+            "latencyMs": 311.28375,
+            "round": 2,
+            "uiNodes": 10000,
+            "uiSnapshotTruncated": true
+          },
+          {
+            "cpuSeconds": 0.15999999999999992,
+            "latencyMs": 302.662084,
+            "round": 3,
+            "uiNodes": 10000,
+            "uiSnapshotTruncated": true
+          },
+          {
+            "cpuSeconds": 0.15999999999999992,
+            "latencyMs": 311.791875,
+            "round": 4,
+            "uiNodes": 10000,
+            "uiSnapshotTruncated": true
+          },
+          {
+            "cpuSeconds": 0.16000000000000014,
+            "latencyMs": 315.0095,
+            "round": 5,
+            "uiNodes": 10000,
+            "uiSnapshotTruncated": true
+          },
+          {
+            "cpuSeconds": 0.16999999999999993,
+            "latencyMs": 315.008958,
+            "round": 6,
+            "uiNodes": 10000,
+            "uiSnapshotTruncated": true
+          },
+          {
+            "cpuSeconds": 0.17000000000000015,
+            "latencyMs": 301.556292,
+            "round": 7,
+            "uiNodes": 10000,
+            "uiSnapshotTruncated": true
+          }
+        ],
+        "changedWorkload": {
+          "cpuPercentOfOneCore": 27.79939107935786,
+          "cpuSeconds": 2.78,
+          "elapsedSeconds": 10.000219041,
+          "frames": 20,
+          "lastUpdateVerified": true,
+          "updates": 20
+        },
+        "cpuClockResolutionSeconds": 0.01,
+        "initialLayout": {
+          "cpuSeconds": 0.38,
+          "latencyMs": 478.037,
+          "uiNodes": 10000,
+          "uiSnapshotTruncated": true
+        },
+        "nodes": 5000,
+        "phases": [
+          {
+            "cpuPercentOfOneCore": 1.6648278182811405,
+            "cpuSeconds": 0.050000000000000044,
+            "elapsedSeconds": 3.003313583,
+            "frames": 0,
+            "snapshots": 6,
+            "visible": true
+          },
+          {
+            "cpuPercentOfOneCore": 0.0,
+            "cpuSeconds": 0.0,
+            "elapsedSeconds": 3.005041625,
+            "frames": 0,
+            "snapshots": 6,
+            "visible": false
+          }
+        ],
+        "result": "passed",
+        "settleSeconds": 2,
+        "snapshotIntervalMs": 500,
+        "treeChecks": null
+      }
+    },
+    {
+      "nodes": 5000,
+      "variant": "after",
+      "pair": 1,
+      "measurement": {
+        "changedLayoutRendered": true,
+        "changedLayouts": [
+          {
+            "cpuSeconds": 0.009999999999999981,
+            "latencyMs": 148.170416,
+            "round": 0,
+            "uiNodes": 149,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.0,
+            "latencyMs": 153.71075000000002,
+            "round": 1,
+            "uiNodes": 149,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.010000000000000009,
+            "latencyMs": 155.663417,
+            "round": 2,
+            "uiNodes": 149,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.010000000000000009,
+            "latencyMs": 147.056833,
+            "round": 3,
+            "uiNodes": 149,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.010000000000000009,
+            "latencyMs": 166.57412499999998,
+            "round": 4,
+            "uiNodes": 149,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.010000000000000009,
+            "latencyMs": 118.505,
+            "round": 5,
+            "uiNodes": 149,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.009999999999999953,
+            "latencyMs": 149.49175,
+            "round": 6,
+            "uiNodes": 149,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.0,
+            "latencyMs": 150.088958,
+            "round": 7,
+            "uiNodes": 149,
+            "uiSnapshotTruncated": false
+          }
+        ],
+        "changedWorkload": {
+          "cpuPercentOfOneCore": 1.898166592587602,
+          "cpuSeconds": 0.19,
+          "elapsedSeconds": 10.009658833,
+          "frames": 20,
+          "lastUpdateVerified": true,
+          "updates": 20
+        },
+        "cpuClockResolutionSeconds": 0.01,
+        "initialLayout": {
+          "cpuSeconds": 0.05,
+          "latencyMs": 147.0855,
+          "uiNodes": 149,
+          "uiSnapshotTruncated": false
+        },
+        "nodes": 5000,
+        "phases": [
+          {
+            "cpuPercentOfOneCore": 1.331091387202297,
+            "cpuSeconds": 0.04000000000000001,
+            "elapsedSeconds": 3.005052875,
+            "frames": 0,
+            "snapshots": 6,
+            "visible": true
+          },
+          {
+            "cpuPercentOfOneCore": 0.0,
+            "cpuSeconds": 0.0,
+            "elapsedSeconds": 3.004371792,
+            "frames": 0,
+            "snapshots": 6,
+            "visible": false
+          }
+        ],
+        "result": "passed",
+        "settleSeconds": 2,
+        "snapshotIntervalMs": 500,
+        "treeChecks": {
+          "clearFilter": true,
+          "collapseAtBottom": true,
+          "expandedLastRowReached": true,
+          "expandedUiNodes": 149,
+          "filterLastRow": true,
+          "lastRowReached": true,
+          "returnedToFirstRow": true,
+          "selectedDetailsAndSource": true
+        }
+      }
+    },
+    {
+      "nodes": 5000,
+      "variant": "after",
+      "pair": 2,
+      "measurement": {
+        "changedLayoutRendered": true,
+        "changedLayouts": [
+          {
+            "cpuSeconds": 0.009999999999999981,
+            "latencyMs": 148.60279100000002,
+            "round": 0,
+            "uiNodes": 149,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.010000000000000009,
+            "latencyMs": 114.630166,
+            "round": 1,
+            "uiNodes": 149,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.010000000000000009,
+            "latencyMs": 143.107667,
+            "round": 2,
+            "uiNodes": 149,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.010000000000000009,
+            "latencyMs": 124.90537499999999,
+            "round": 3,
+            "uiNodes": 149,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.010000000000000009,
+            "latencyMs": 118.330958,
+            "round": 4,
+            "uiNodes": 149,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.009999999999999953,
+            "latencyMs": 116.680334,
+            "round": 5,
+            "uiNodes": 149,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.0,
+            "latencyMs": 119.17958300000001,
+            "round": 6,
+            "uiNodes": 149,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.010000000000000009,
+            "latencyMs": 151.700709,
+            "round": 7,
+            "uiNodes": 149,
+            "uiSnapshotTruncated": false
+          }
+        ],
+        "changedWorkload": {
+          "cpuPercentOfOneCore": 1.799305288228215,
+          "cpuSeconds": 0.18,
+          "elapsedSeconds": 10.003861,
+          "frames": 20,
+          "lastUpdateVerified": true,
+          "updates": 20
+        },
+        "cpuClockResolutionSeconds": 0.01,
+        "initialLayout": {
+          "cpuSeconds": 0.04,
+          "latencyMs": 162.345667,
+          "uiNodes": 149,
+          "uiSnapshotTruncated": false
+        },
+        "nodes": 5000,
+        "phases": [
+          {
+            "cpuPercentOfOneCore": 1.3306542827108092,
+            "cpuSeconds": 0.04000000000000001,
+            "elapsedSeconds": 3.00604,
+            "frames": 0,
+            "snapshots": 6,
+            "visible": true
+          },
+          {
+            "cpuPercentOfOneCore": 0.0,
+            "cpuSeconds": 0.0,
+            "elapsedSeconds": 3.009113042,
+            "frames": 0,
+            "snapshots": 6,
+            "visible": false
+          }
+        ],
+        "result": "passed",
+        "settleSeconds": 2,
+        "snapshotIntervalMs": 500,
+        "treeChecks": {
+          "clearFilter": true,
+          "collapseAtBottom": true,
+          "expandedLastRowReached": true,
+          "expandedUiNodes": 149,
+          "filterLastRow": true,
+          "lastRowReached": true,
+          "returnedToFirstRow": true,
+          "selectedDetailsAndSource": true
+        }
+      }
+    },
+    {
+      "nodes": 5000,
+      "variant": "after",
+      "pair": 3,
+      "measurement": {
+        "changedLayoutRendered": true,
+        "changedLayouts": [
+          {
+            "cpuSeconds": 0.010000000000000009,
+            "latencyMs": 142.624041,
+            "round": 0,
+            "uiNodes": 149,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.0,
+            "latencyMs": 121.0055,
+            "round": 1,
+            "uiNodes": 149,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.010000000000000009,
+            "latencyMs": 119.337166,
+            "round": 2,
+            "uiNodes": 149,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.010000000000000009,
+            "latencyMs": 150.816042,
+            "round": 3,
+            "uiNodes": 149,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.009999999999999953,
+            "latencyMs": 152.182958,
+            "round": 4,
+            "uiNodes": 149,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.010000000000000009,
+            "latencyMs": 156.442792,
+            "round": 5,
+            "uiNodes": 149,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.0,
+            "latencyMs": 119.852583,
+            "round": 6,
+            "uiNodes": 149,
+            "uiSnapshotTruncated": false
+          },
+          {
+            "cpuSeconds": 0.010000000000000009,
+            "latencyMs": 119.262084,
+            "round": 7,
+            "uiNodes": 149,
+            "uiSnapshotTruncated": false
+          }
+        ],
+        "changedWorkload": {
+          "cpuPercentOfOneCore": 1.6991188441037468,
+          "cpuSeconds": 0.16999999999999998,
+          "elapsedSeconds": 10.005185958,
+          "frames": 20,
+          "lastUpdateVerified": true,
+          "updates": 20
+        },
+        "cpuClockResolutionSeconds": 0.01,
+        "initialLayout": {
+          "cpuSeconds": 0.05,
+          "latencyMs": 146.752084,
+          "uiNodes": 149,
+          "uiSnapshotTruncated": false
+        },
+        "nodes": 5000,
+        "phases": [
+          {
+            "cpuPercentOfOneCore": 1.3284745113171144,
+            "cpuSeconds": 0.04000000000000001,
+            "elapsedSeconds": 3.010972334,
+            "frames": 0,
+            "snapshots": 6,
+            "visible": true
+          },
+          {
+            "cpuPercentOfOneCore": 0.0,
+            "cpuSeconds": 0.0,
+            "elapsedSeconds": 3.000994083,
+            "frames": 0,
+            "snapshots": 6,
+            "visible": false
+          }
+        ],
+        "result": "passed",
+        "settleSeconds": 2,
+        "snapshotIntervalMs": 500,
+        "treeChecks": {
+          "clearFilter": true,
+          "collapseAtBottom": true,
+          "expandedLastRowReached": true,
+          "expandedUiNodes": 149,
+          "filterLastRow": true,
+          "lastRowReached": true,
+          "returnedToFirstRow": true,
+          "selectedDetailsAndSource": true
+        }
+      }
+    }
+  ]
+}
