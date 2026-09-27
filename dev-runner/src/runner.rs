@@ -168,6 +168,18 @@ pub fn run(options: RunOptions) -> Result<()> {
     let mut command = if options.hot_reload {
         emit("toolchain", "Preparing hot-patch compiler");
         let dx = toolchain::ensure(&options.cache.join("tools"))?;
+        // Dioxus uses its executable as Cargo's workspace wrapper. A path per
+        // lease separates application artifacts while dependencies remain shared.
+        let dx = match &lease {
+            Some(lease) => lease.stage_executable(&dx)?,
+            None => dx,
+        };
+        if profile {
+            println!(
+                "{}",
+                serde_json::json!({"cranposeDev":"compilerAlias", "path":dx})
+            );
+        }
         let mut command = Command::new(dx);
         command.args([
             "serve",
