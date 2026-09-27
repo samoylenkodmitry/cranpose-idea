@@ -19,7 +19,7 @@
         <p>Install JetBrains Rust support for full Rust language editing. Preview applications need
         Cranpose's preview feature. See the repository for setup and supported framework revisions.</p>
     ]]></description>
-    <change-notes><![CDATA[0.7: Showcase project wizard; compile-free eligible literal updates, including valid unsaved edits; Cranpose floating value controls and shader editor decorations; document preview gutters; component selection reveals its invocation in source; refined Studio controls and inspector. Shared authoring infrastructure remains Rust in the template SDK. Application release builds are unchanged.]]></change-notes>
+    <change-notes><![CDATA[0.7.1: Faster authoring catalogs in larger source files through a shared Rust source-position index. Literal identities and editor UTF-16 positions remain compatible, with Unicode regression coverage in the IDE. Includes the 0.7 Showcase project wizard, compile-free live values, Cranpose floating controls and shader accents, preview gutters and inspector source navigation. Application release builds are unchanged.]]></change-notes>
     <depends>com.intellij.modules.platform</depends>
     <extensions defaultExtensionNs="com.intellij">
         <postStartupActivity implementation="dev.cranpose.rust.Startup"/>
