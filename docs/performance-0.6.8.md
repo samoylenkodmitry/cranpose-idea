@@ -81,3 +81,17 @@ Rust tests cover ownership, executable refresh, cross-filesystem copy permission
 and actual execution through the alias. The runner passes RustRover analysis;
 the SDK has existing `anyhow::ensure!` resolution errors in RustRover while compiler
 checks and Clippy pass.
+
+## Additional reload validation
+
+The shipped SDK pin `2fc831e5480d5803497278c16aa55635ee914eeb` adds bounded observed-text/runtime details to
+harness timeout errors; its production alias implementation matches the measured
+`94d9470` build.
+
+One local counter run acknowledged generation 2 but timed out waiting for its
+expected label. Its original console/compiler logs are retained. The same runner
+and workspace then passed four edits plus recovery, followed by 21 consecutive
+edits plus recovery with the same PID. A baseline run also passed four edits plus
+recovery. The initial failure has not been reproduced or assigned a cause; it is
+not evidence of improved live-edit reliability or speed. The added diagnostics
+make a recurrence observable. This limitation remains a follow-up investigation.
