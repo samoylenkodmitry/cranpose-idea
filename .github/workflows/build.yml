@@ -78,7 +78,7 @@ jobs:
       - name: Binary application
         run: cargo run --locked -p xtask -- hot-smoke --runner target/debug/cranpose-dev-runner --fixture counter --reuse-fixture --cache "${{ runner.temp }}/cranpose-hot-cache" --log counter-hot-reload.log --measure-rounds 2 --background-noise-ms 1000 --idle-seconds 20 --idle-settle-seconds 5 --profile-startup --build-diagnostics --report counter-hot-reload.json
       - name: Cached support and dependencies on preview restart
-        run: cargo run --locked -p xtask -- hot-smoke --runner target/debug/cranpose-dev-runner --fixture counter --reuse-fixture --cache "${{ runner.temp }}/cranpose-hot-cache" --log restart-hot-reload.log --startup-only --restart-rounds 2 --profile-startup --require-cached-dependencies --require-cached-workspace --build-diagnostics --require-cached-support --report restart-hot-reload.json
+        run: cargo run --locked -p xtask -- hot-smoke --runner target/debug/cranpose-dev-runner --fixture counter --reuse-fixture --cache "${{ runner.temp }}/cranpose-hot-cache" --log restart-hot-reload.log --startup-only --restart-rounds 2 --require-isolated-restarts --profile-startup --require-cached-dependencies --require-cached-workspace --build-diagnostics --require-cached-support --report restart-hot-reload.json
       - name: Inspector unchanged and changed layouts
         run: |
           cargo build --locked --no-default-features -p cranpose-intellij-ui
