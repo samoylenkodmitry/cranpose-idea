@@ -5,8 +5,9 @@ value leaves the editor clear for placing the caret and selecting text. Clicking
 source text dismisses an open control; clicking its glyph focuses the control.
 
 Eligible live edits now charge a small cyan/violet constellation beside the edit.
-Once the exact revision has been accepted and composed, a subsequent preview
-frame triggers a bounded search for the affected view. A confirmed match releases
+The host waits for exact revision acceptance, a frame received after acceptance
+and composition confirmation. Frames and queued composition messages can arrive
+in either order. A bounded search then finds the affected view. A confirmed match releases
 lightning, sparks and an expanding outline. The transparent Cranpose overlay
 passes pointer input through. Rejected or superseded edits cancel it, and a
 ten-second deadline bounds pending animation and matching work.
@@ -38,3 +39,8 @@ sources and dependencies are unchanged. No new polling loop or timer is added.
 
 These checks establish behavior, not a before/after latency or CPU improvement.
 Frame receipt and composition acknowledgment are not physical display timing.
+
+Windows authoring checks run on CI and can be repeated with its `windows-test-tools`
+artifact. The shared Rust SDK reads Windows process CPU time through
+`GetProcessTimes` with query-only handles. Counters use 100 ns units but OS
+accounting granularity is coarser; zero observed frames does not imply zero CPU.
