@@ -1,0 +1,106 @@
+{
+  "backgroundNoiseMs": 0,
+  "cargoReportedBuildMs": 870.0,
+  "connection": "unchanged",
+  "frames": 22,
+  "idle": [],
+  "liveValues": [
+    {
+      "round": 0,
+      "sendToAppliedMs": 22.850334,
+      "sendToSnapshotMs": 229.443459
+    },
+    {
+      "round": 1,
+      "sendToAppliedMs": 31.242375,
+      "sendToSnapshotMs": 237.385917
+    },
+    {
+      "round": 2,
+      "sendToAppliedMs": 49.845583,
+      "sendToSnapshotMs": 257.638583
+    },
+    {
+      "round": 3,
+      "sendToAppliedMs": 53.308791,
+      "sendToSnapshotMs": 257.985
+    },
+    {
+      "round": 4,
+      "sendToAppliedMs": 28.814334,
+      "sendToSnapshotMs": 235.875209
+    },
+    {
+      "round": 5,
+      "sendToAppliedMs": 51.340208,
+      "sendToSnapshotMs": 258.74491700000004
+    }
+  ],
+  "patches": [
+    {
+      "generation": 8,
+      "round": 0,
+      "saveToAppliedMs": 123.198459,
+      "saveToSnapshotMs": 329.276042
+    },
+    {
+      "generation": 9,
+      "round": 1,
+      "saveToAppliedMs": 100.35266700000001,
+      "saveToSnapshotMs": 306.52925
+    },
+    {
+      "generation": 10,
+      "round": 2,
+      "saveToAppliedMs": 120.756958,
+      "saveToSnapshotMs": 326.64104100000003
+    },
+    {
+      "generation": 11,
+      "round": 3,
+      "saveToAppliedMs": 136.515458,
+      "saveToSnapshotMs": 342.90845800000005
+    },
+    {
+      "generation": 12,
+      "round": 4,
+      "saveToAppliedMs": 121.709125,
+      "saveToSnapshotMs": 328.569709
+    },
+    {
+      "generation": 13,
+      "round": 5,
+      "saveToAppliedMs": 136.882125,
+      "saveToSnapshotMs": 340.571542
+    },
+    {
+      "generation": 14,
+      "round": 6,
+      "saveToAppliedMs": 100.764875,
+      "saveToSnapshotMs": 305.585417
+    }
+  ],
+  "pid": 81096,
+  "recovery": "compiler error, invalid syntax, and state type change",
+  "result": "passed",
+  "shutdownMs": 181.716666,
+  "snapshotPollMs": 200,
+  "startupMs": 3625.179208,
+  "startupPhases": null,
+  "state": 8,
+  "stoppedPids": [
+    80821,
+    80858,
+    81096
+  ],
+  "supportBuilds": [
+    {
+      "crate": "cranpose_dev_macros",
+      "fresh": true
+    },
+    {
+      "crate": "cranpose_dev_runtime",
+      "fresh": true
+    }
+  ]
+}

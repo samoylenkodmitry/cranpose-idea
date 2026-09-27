@@ -76,13 +76,15 @@ jobs:
       - run: cargo build --locked -p cranpose-dev-runner
       # Generated sources must stay outside rust-cache's pruned target directory.
       - name: Binary application
-        run: cargo run --locked -p xtask -- hot-smoke --runner target/debug/cranpose-dev-runner --fixture counter --reuse-fixture --cache "${{ runner.temp }}/cranpose-hot-cache" --log counter-hot-reload.log --measure-rounds 2 --background-noise-ms 1000 --idle-seconds 20 --idle-settle-seconds 5 --profile-startup --build-diagnostics --report counter-hot-reload.json
+        run: cargo run --locked -p xtask -- hot-smoke --runner target/debug/cranpose-dev-runner --fixture counter --reuse-fixture --cache "${{ runner.temp }}/cranpose-hot-cache" --log counter-hot-reload.log --measure-rounds 2 --live-values-rounds 4 --background-noise-ms 1000 --idle-seconds 20 --idle-settle-seconds 5 --profile-startup --build-diagnostics --report counter-hot-reload.json
       - name: Cached support and dependencies on preview restart
         run: cargo run --locked -p xtask -- hot-smoke --runner target/debug/cranpose-dev-runner --fixture counter --reuse-fixture --cache "${{ runner.temp }}/cranpose-hot-cache" --log restart-hot-reload.log --startup-only --restart-rounds 2 --require-isolated-restarts --profile-startup --require-cached-dependencies --require-cached-workspace --build-diagnostics --require-cached-support --report restart-hot-reload.json
       - name: Inspector unchanged and changed layouts
         run: |
           cargo build --locked --no-default-features -p cranpose-intellij-ui
           cargo run --locked -p xtask -- inspection-profile --binary target/debug/cranpose-intellij-ui --nodes 1000 --seconds 5 --settle-seconds 3 --require-quiet --change-rounds 3 --change-seconds 5 --exercise-tree --max-ui-nodes 200 --log inspector-hot-reload.log --report inspector-hot-reload.json
+      - name: Cranpose editor decorations
+        run: cargo run --locked -p xtask -- authoring-smoke --binary target/debug/cranpose-intellij-ui --log authoring-hot-reload.log --report authoring-hot-reload.json
       - name: Library and binary application
         run: cargo run --locked -p xtask -- hot-smoke --runner target/debug/cranpose-dev-runner --fixture library --reuse-fixture --source src/lib.rs --cache "${{ runner.temp }}/cranpose-hot-cache" --log library-hot-reload.log --measure-rounds 2 --profile-startup --report library-hot-reload.json
       - uses: actions/upload-artifact@v7

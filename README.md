@@ -3,6 +3,28 @@
 Build Cranpose applications in IntelliJ IDEA and RustRover, with interactive previews
 beside Rust source. The Studio controls, inspector and tool window are written in Rust and rendered by Cranpose.
 
+## Create and tune
+
+Choose **File → New Project → Cranpose** to start from
+[Cranpose Showcase](https://github.com/samoylenkodmitry/cranpose-showcase). The native
+Cranpose wizard uses a pinned starter with Cranpose 0.1.167. Choose an empty
+location; Git and internet access are required. Cargo attaches automatically.
+
+Inside explicit composables, **◆** marks supported string, character, boolean,
+integer and float literals. Click a diamond for a Cranpose floating editor with
+Apply, Reset, numeric steps or a boolean toggle. Each change is undoable in the
+source editor. Valid unsaved edits also update an active hot preview.
+
+Eligible literal changes bypass compilation through a private development value
+store. Const contexts, macro tokens, remembered-state initializers, key identities
+and structural/type changes retain the compiler/restart workflow. Callback values
+take effect when the callback runs. This does not make arbitrary Rust compilation
+instant. [Measurements and limits](docs/performance-0.7.0.md).
+
+The editor adds Cranpose shader accents to component calls and stability badges.
+The shaders are static: they redraw when content, theme or geometry changes.
+Document-based preview gutters appear alongside Rust's macro-expansion markers.
+
 ## Preview and inspect
 
 Open a Rust source file and choose **Split**. Select a Cargo binary or example, then
@@ -87,8 +109,8 @@ desktop compiler. A normal Rust toolchain and platform linker are required.
 Set `CRANPOSE_DX` to an existing 0.7.10 CLI for offline development.
 
 This release accepts literal changes inside function bodies when types, captures
-and call-site locations stay unchanged: labels, colors, dimensions and callback
-amounts are examples. Type changes, new hooks, changed captures, macro tokens,
+and source lines stay unchanged: labels, colors, dimensions and callback amounts
+are examples. String length may change on the fast path. Type changes, new hooks, changed captures, macro tokens,
 manifest edits and moved call sites require **Restart**, which resets live state.
 Invalid syntax and failed patches keep the last successful code running. The
 plugin never attempts to reinterpret existing Rust values under a new type.
@@ -168,8 +190,10 @@ Marketplace publication is a separate step.
 - Previews run local Cargo binaries and examples. Library components need a fixture
   reachable from one of those targets.
 - Explicit restarts reset in-memory state; compatible hot patches preserve it.
-- Inspection covers the primary surface. Source origins identify enclosing
-  composable functions; they are not individual modifier call-site locations.
+- Inspection covers the primary surface. Selecting a node or using Pick reveals
+  its application component invocation in source. The private preview build adds
+  these call origins; enclosing composables are the fallback for other nodes.
+  Individual modifier calls do not have separate source origins.
 - Rust language analysis and debugging use the JetBrains Rust plugin. Cranpose's
   saved configurations provide Run, Check and Test.
 - The embedded host's current IME, IDE shortcut and screen-reader limitations

@@ -306,6 +306,26 @@ fn model_clones_share_immutable_inspection_and_old_views_survive_new_snapshots()
 }
 
 #[test]
+fn selection_prefers_private_application_call_over_framework_implementation() {
+    let mut model = Studio {
+        root: "/app".into(),
+        private_root: "/cache/workspace".into(),
+        ..Studio::default()
+    };
+    model.snapshot = Snapshot::parse(&json!({"schema":2,"nodes":[{"id":"text","sources":[
+        {"name":"App","file":"src/main.rs","line":3,"manifestDir":"/cache/workspace"},
+        {"name":"__cranpose_call:Text","file":"src/main.rs","line":12,"manifestDir":"/cache/workspace"},
+        {"name":"Text","file":"src/text.rs","line":90,"manifestDir":"/cargo/cranpose-ui"}
+    ]}]}).to_string()).expect("snapshot").into();
+    model.select_node("text".into());
+    let request = model.selected_source_request().expect("source");
+    assert_eq!(request["file"], "/app/src/main.rs");
+    assert_eq!(request["line"], 12);
+    model.selected = "missing".into();
+    assert!(model.selected_source_request().is_none());
+}
+
+#[test]
 fn unchanged_inspection_preserves_model_and_rejects_delayed_layouts() {
     let mut model = studio();
     model.start();

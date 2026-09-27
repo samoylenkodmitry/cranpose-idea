@@ -3,6 +3,13 @@ use syn::spanned::Spanned;
 
 /// Adds development attributes without moving the source's existing line numbers.
 pub fn instrument(source: &str) -> Result<String> {
+    instrument_file(source, "")
+}
+
+pub fn instrument_file(source: &str, file_key: &str) -> Result<String> {
+    let catalog = cranpose_plugin_authoring::Catalog::parse(source)?;
+    let source = catalog.instrument(source, file_key);
+    let source = source.as_str();
     let file = syn::parse_file(source).context("parse Rust source for hot reload")?;
     let mut insertions = Vec::new();
     collect(&file.items, &mut insertions);

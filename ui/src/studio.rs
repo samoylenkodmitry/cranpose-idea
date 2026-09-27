@@ -255,7 +255,7 @@ pub fn PreviewStudio() {
                             );
                             if studio.pid > 0 {
                                 Text(
-                                    format!("PID {}", studio.pid),
+                                    "● Live",
                                     Modifier::empty(),
                                     style(palette.muted, 10.0, false),
                                 );
@@ -270,15 +270,10 @@ pub fn PreviewStudio() {
 
 #[composable]
 fn Toolbar(state: MutableState<Studio>, palette: Palette, width: f32) {
-    let wide = width >= 760.0;
     let first_scroll = remember(|| ScrollState::new(0.0)).with(|s| *s);
     let second_scroll = remember(|| ScrollState::new(0.0)).with(|s| *s);
-    let third_scroll = remember(|| ScrollState::new(0.0)).with(|s| *s);
     Column(
-        Modifier::empty()
-            .fill_max_width()
-            .height(if wide { 88.0 } else { 126.0 })
-            .padding(6.0),
+        Modifier::empty().fill_max_width().height(84.0).padding(8.0),
         ColumnSpec::default().vertical_arrangement(LinearArrangement::spaced_by(4.0)),
         move || {
             Row(
@@ -296,22 +291,25 @@ fn Toolbar(state: MutableState<Studio>, palette: Palette, width: f32) {
                     .horizontal_scroll(second_scroll, false),
                 RowSpec::default().horizontal_arrangement(LinearArrangement::spaced_by(5.0)),
                 move || {
-                    ViewControls(state, palette);
-                    if wide {
-                        InspectionControls(state, palette, width);
-                    }
+                    let studio = state.get();
+                    let variant = studio
+                        .previews
+                        .iter()
+                        .find(|p| p.id == studio.settings.preview)
+                        .map(|p| p.name.as_str())
+                        .unwrap_or("Application");
+                    Chip(
+                        format!("{} ▾", short_label(variant, 18)),
+                        palette,
+                        false,
+                        move || toggle_menu(state, "preview"),
+                    );
+                    InspectionControls(state, palette);
+                    Chip("View ▾".into(), palette, false, move || {
+                        toggle_menu(state, "view")
+                    });
                 },
             );
-            if !wide {
-                Row(
-                    Modifier::empty()
-                        .fill_max_width()
-                        .height(34.0)
-                        .horizontal_scroll(third_scroll, false),
-                    RowSpec::default().horizontal_arrangement(LinearArrangement::spaced_by(5.0)),
-                    move || InspectionControls(state, palette, width),
-                );
-            }
         },
     );
 }
@@ -323,9 +321,6 @@ fn TargetControls(state: MutableState<Studio>, palette: Palette, width: f32) {
         .target()
         .map(|target| target.name.clone())
         .unwrap_or_else(|| "Select application".into());
-    Chip(format!("{target} ▾"), palette, false, move || {
-        toggle_menu(state, "target")
-    });
     Chip(
         if studio.session == 0 {
             "Run"
@@ -337,22 +332,29 @@ fn TargetControls(state: MutableState<Studio>, palette: Palette, width: f32) {
         true,
         move || start(state),
     );
-    Chip("Stop".into(), palette, false, move || {
-        let session = state.get().session;
-        send(json!({"action": "stop", "session": session}));
-        edit(state, |studio| {
-            studio.connected = false;
-            studio.busy = false;
-            studio.session = 0;
-            studio.pid = 0;
-            studio.status = "Preview stopped".into();
-        });
-    });
-    if width > 510.0 {
-        Chip("Run config".into(), palette, false, move || {
-            send(json!({"action": "configure", "target": state.get().settings.target}))
+    if studio.session > 0 || studio.busy {
+        Chip("Stop".into(), palette, false, move || {
+            let session = state.get().session;
+            send(json!({"action": "stop", "session": session}));
+            edit(state, |studio| {
+                studio.connected = false;
+                studio.busy = false;
+                studio.session = 0;
+                studio.pid = 0;
+                studio.status = "Preview stopped".into();
+            });
         });
     }
+    let budget = ((width - 215.0) / 7.0).max(8.0) as usize;
+    Chip(
+        format!("{} ▾", short_label(&target, budget)),
+        palette,
+        false,
+        move || toggle_menu(state, "target"),
+    );
+    Chip("More ▾".into(), palette, false, move || {
+        toggle_menu(state, "more")
+    });
 }
 
 #[composable]
@@ -397,14 +399,8 @@ fn ViewControls(state: MutableState<Studio>, palette: Palette) {
 }
 
 #[composable]
-fn InspectionControls(state: MutableState<Studio>, palette: Palette, width: f32) {
+fn InspectionControls(state: MutableState<Studio>, palette: Palette) {
     let studio = state.get();
-    Chip(
-        "Reload ▾".into(),
-        palette,
-        studio.settings.hot_reload,
-        move || toggle_menu(state, "reload"),
-    );
     Chip("Pick".into(), palette, studio.pick, move || {
         edit(state, |studio| {
             studio.pick = !studio.pick;
@@ -425,14 +421,6 @@ fn InspectionControls(state: MutableState<Studio>, palette: Palette, width: f32)
             request_snapshot(&state.get());
         },
     );
-    Chip("PNG".into(), palette, false, move || {
-        send(json!({"action": "export", "session": state.get().session}))
-    });
-    if width > 420.0 {
-        Chip("Source".into(), palette, false, move || {
-            navigate_selected(&state.get())
-        });
-    }
 }
 
 fn menu_height(studio: &Studio) -> f32 {
@@ -442,6 +430,7 @@ fn menu_height(studio: &Studio) -> f32 {
         "size" => 6,
         "reload" => 3,
         "zoom" => 5,
+        "view" | "more" => 4,
         _ => 0,
     };
     if count == 0 {
@@ -468,6 +457,27 @@ fn Menu(state: MutableState<Studio>, palette: Palette, width: f32, height: f32) 
         move || {
             let studio = state.get();
             match studio.menu.as_str() {
+                "view" => ViewControls(state, palette),
+                "more" => {
+                    Chip(
+                        "Reload ▾".into(),
+                        palette,
+                        studio.settings.hot_reload,
+                        move || toggle_menu(state, "reload"),
+                    );
+                    Chip("Run configuration".into(), palette, false, move || {
+                        send(json!({"action":"configure","target":state.get().settings.target}));
+                        edit(state, |s| s.menu.clear());
+                    });
+                    Chip("Export PNG".into(), palette, false, move || {
+                        send(json!({"action":"export","session":state.get().session}));
+                        edit(state, |s| s.menu.clear());
+                    });
+                    Chip("Reveal source".into(), palette, false, move || {
+                        navigate_selected(&state.get());
+                        edit(state, |s| s.menu.clear());
+                    });
+                }
                 "target" => {
                     for target in studio.targets {
                         let id = target.id();
@@ -856,7 +866,7 @@ fn LayoutTree(
                                     .fill_max_width()
                                     .height(28.0)
                                     .background(if selected {
-                                        palette.accent
+                                        palette.selection()
                                     } else {
                                         palette.surface
                                     })
@@ -889,7 +899,7 @@ fn LayoutTree(
                                         ),
                                         style(
                                             if selected {
-                                                palette.on_accent
+                                                palette.accent
                                             } else {
                                                 palette.muted
                                             },
@@ -904,16 +914,17 @@ fn LayoutTree(
                                             .height(28.0)
                                             .padding(6.0)
                                             .clickable(move |_| {
-                                                edit(state, |s| s.select_node(select.clone()))
+                                                edit(state, |s| s.select_node(select.clone()));
+                                                navigate_selected(&state.get());
                                             }),
                                         style(
                                             if selected {
-                                                palette.on_accent
+                                                palette.accent
                                             } else {
                                                 palette.text
                                             },
                                             11.0,
-                                            selected || row.matches,
+                                            row.matches,
                                         ),
                                         TextOptions {
                                             max_lines: Some(1),
@@ -981,6 +992,17 @@ fn NodeDetails(state: MutableState<Studio>, palette: Palette, width: f32, height
                         style(palette.text, 12.0, false),
                     );
                 }
+                if let Some(source) = studio.selected_source_request() {
+                    let path = source["file"].as_str().unwrap_or_default().to_owned();
+                    let line = source["line"].as_u64().unwrap_or(1);
+                    let file = std::path::Path::new(&path)
+                        .file_name()
+                        .unwrap_or_default()
+                        .to_string_lossy();
+                    Chip(format!("↗ {file}:{line}"), palette, true, move || {
+                        send(json!({"action":"navigate","file":path,"line":line}));
+                    });
+                }
                 Text(
                     "Hierarchy",
                     Modifier::empty().padding(2.0),
@@ -991,21 +1013,26 @@ fn NodeDetails(state: MutableState<Studio>, palette: Palette, width: f32, height
                     let label = ancestor.kind.clone();
                     cranpose::key(&ancestor.id, move || {
                         Chip(label, palette, id == state.get().selected, move || {
-                            edit(state, |s| s.select_node(id.clone()))
+                            edit(state, |s| s.select_node(id.clone()));
+                            navigate_selected(&state.get());
                         });
                     });
                 }
                 if !node.sources.is_empty() {
                     Text(
-                        "Source",
+                        "Source stack",
                         Modifier::empty().padding(2.0),
                         style(palette.muted, 10.0, true),
                     );
                 }
-                for (index, source) in node.sources.iter().enumerate() {
+                for (index, source) in node.sources.iter().enumerate().rev() {
                     let path = studio.resolve_source(source);
                     let line = source.line;
-                    let label = format!("{} :{} ↗", source.name, line);
+                    let name = source
+                        .name
+                        .strip_prefix("__cranpose_call:")
+                        .unwrap_or(&source.name);
+                    let label = format!("{name} :{line} ↗");
                     cranpose::key(index, move || {
                         Chip(label, palette, false, move || {
                             send(json!({"action":"navigate","file":path,"line":line}))
@@ -1113,6 +1140,10 @@ fn request_snapshot(studio: &Studio) {
     }
 }
 fn navigate_selected(studio: &Studio) {
+    if let Some(request) = studio.selected_source_request() {
+        send(request);
+        return;
+    }
     if let Some(source) = studio
         .snapshot
         .nodes
@@ -1137,12 +1168,12 @@ fn navigate_selected(studio: &Studio) {
 #[expect(non_snake_case)]
 fn Chip(label: String, palette: Palette, selected: bool, action: impl Fn() + 'static) {
     let color = if selected {
-        palette.accent
+        palette.selection()
     } else {
-        palette.surface
+        Color::TRANSPARENT
     };
     let foreground = if selected {
-        palette.on_accent
+        palette.accent
     } else {
         palette.text
     };
@@ -1151,8 +1182,8 @@ fn Chip(label: String, palette: Palette, selected: bool, action: impl Fn() + 'st
         Button(
             Modifier::empty()
                 .height(30.0)
-                .background(color)
-                .rounded_corners(5.0),
+                .rounded_corners(6.0)
+                .background(color),
             ButtonSpec::default(),
             action,
             move || {
@@ -1164,6 +1195,14 @@ fn Chip(label: String, palette: Palette, selected: bool, action: impl Fn() + 'st
             },
         );
     });
+}
+fn short_label(text: &str, limit: usize) -> String {
+    let mut chars = text.chars();
+    let mut result = chars.by_ref().take(limit).collect::<String>();
+    if chars.next().is_some() {
+        result.push('…');
+    }
+    result
 }
 fn style(color: Color, size: f32, bold: bool) -> TextStyle {
     TextStyle {

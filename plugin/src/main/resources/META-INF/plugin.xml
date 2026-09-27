@@ -13,12 +13,13 @@
             <li>Persistent Cargo run configurations and source-linked compiler diagnostics.</li>
             <li>Inline stability badges on Rust parameters, with explanations from the standalone Cranpose stability linter.</li>
             <li>Composable gutter markers, source navigation and component completions.</li>
-            <li>Create a working Cranpose application in an empty project.</li>
+            <li>File → New Project → Cranpose, using the Cranpose Showcase starter.</li>
+            <li>Live literal diamonds and Cranpose floating controls with editor Undo, plus shader editor accents.</li>
         </ul>
         <p>Install JetBrains Rust support for full Rust language editing. Preview applications need
         Cranpose's preview feature. See the repository for setup and supported framework revisions.</p>
     ]]></description>
-    <change-notes><![CDATA[0.5: native Rust IDE integration and Cranpose run settings. Rust generates the thin JVM extension adapters; the host, analyzer, tests, packaging and release tooling are written in Rust. Includes native previews, inspector, persistent Cargo configurations, inline stability badges and isolated development hot reload.]]></change-notes>
+    <change-notes><![CDATA[0.7: Showcase project wizard; compile-free eligible literal updates, including valid unsaved edits; Cranpose floating value controls and shader editor decorations; document preview gutters; component selection reveals its invocation in source; refined Studio controls and inspector. Shared authoring infrastructure remains Rust in the template SDK. Application release builds are unchanged.]]></change-notes>
     <depends>com.intellij.modules.platform</depends>
     <extensions defaultExtensionNs="com.intellij">
         <postStartupActivity implementation="dev.cranpose.rust.Startup"/>
@@ -27,7 +28,8 @@
         <notificationGroup id="Cranpose" displayType="BALLOON"/>
         <fileEditorProvider implementation="dev.cranpose.rust.PreviewProvider"/>
         <configurationType implementation="dev.cranpose.rust.ConfigurationType"/>
-        <codeInsight.lineMarkerProvider language="Rust" implementationClass="dev.cranpose.rust.LineMarker"/>
+        <directoryProjectGenerator implementation="dev.cranpose.rust.ShowcaseGenerator"/>
+        <moduleBuilder id="cranpose.showcase" builderClass="dev.cranpose.rust.ShowcaseBuilder"/>
         <completion.contributor language="any" implementationClass="dev.cranpose.rust.Completion"/>
     </extensions>
     <actions>
