@@ -1,0 +1,601 @@
+{
+  "conditions": {
+    "runs": 3,
+    "secondsPerPhase": 20,
+    "settleSeconds": 5,
+    "machine": "Apple M5, macOS 27.0, Rust 1.98.1",
+    "fixture": "counter, warm build and private lock cache",
+    "originalPreviewPreserved": true,
+    "otherLocalBuilds": false,
+    "note": "Observed idle cost, not an idle optimization comparison."
+  },
+  "baselineObservation": {
+    "cargoReportedBuildMs": 2009.9999999999998,
+    "idle": [
+      {
+        "cpuClockResolutionSeconds": 0.01,
+        "frames": 0,
+        "inspectorRequests": 0,
+        "mode": "visible",
+        "processes": [
+          {
+            "cpuSeconds": 0.010000000000000002,
+            "percentOfOneCore": 0.049812749101575196,
+            "pid": 65149,
+            "role": "runner"
+          },
+          {
+            "cpuSeconds": 0.0,
+            "percentOfOneCore": 0.0,
+            "pid": 65186,
+            "role": "compiler"
+          },
+          {
+            "cpuSeconds": 0.15999999999999998,
+            "percentOfOneCore": 0.7970039856252028,
+            "pid": 65528,
+            "role": "application"
+          }
+        ],
+        "seconds": 20.075181917,
+        "settleSeconds": 5
+      },
+      {
+        "cpuClockResolutionSeconds": 0.01,
+        "frames": 0,
+        "inspectorRequests": 40,
+        "mode": "inspecting",
+        "processes": [
+          {
+            "cpuSeconds": 0.0,
+            "percentOfOneCore": 0.0,
+            "pid": 65149,
+            "role": "runner"
+          },
+          {
+            "cpuSeconds": 0.0,
+            "percentOfOneCore": 0.0,
+            "pid": 65186,
+            "role": "compiler"
+          },
+          {
+            "cpuSeconds": 0.18999999999999995,
+            "percentOfOneCore": 0.9467086765911393,
+            "pid": 65528,
+            "role": "application"
+          }
+        ],
+        "seconds": 20.069531916,
+        "settleSeconds": 5
+      },
+      {
+        "cpuClockResolutionSeconds": 0.01,
+        "frames": 0,
+        "inspectorRequests": 0,
+        "mode": "hidden",
+        "processes": [
+          {
+            "cpuSeconds": 0.0,
+            "percentOfOneCore": 0.0,
+            "pid": 65149,
+            "role": "runner"
+          },
+          {
+            "cpuSeconds": 0.0,
+            "percentOfOneCore": 0.0,
+            "pid": 65186,
+            "role": "compiler"
+          },
+          {
+            "cpuSeconds": 0.0,
+            "percentOfOneCore": 0.0,
+            "pid": 65528,
+            "role": "application"
+          }
+        ],
+        "seconds": 20.095238834,
+        "settleSeconds": 5
+      }
+    ],
+    "mode": "startup",
+    "result": "passed",
+    "shutdownMs": 151.669833,
+    "snapshotPollMs": 200,
+    "startupMs": 9527.563708000001,
+    "startupPhases": {
+      "connectionPollMs": 100,
+      "connectionToSnapshotMs": 268.541583000002,
+      "runner": [
+        {
+          "cranposeDev": "startupPhase",
+          "durationMs": 49.867,
+          "elapsedMs": 49.867,
+          "phase": "metadata"
+        },
+        {
+          "cranposeDev": "startupPhase",
+          "durationMs": 5.302917,
+          "elapsedMs": 55.169917,
+          "phase": "workspace"
+        },
+        {
+          "cranposeDev": "startupPhase",
+          "durationMs": 18.649583,
+          "elapsedMs": 73.81949999999999,
+          "phase": "toolchain"
+        },
+        {
+          "cranposeDev": "startupPhase",
+          "durationMs": 0.309083,
+          "elapsedMs": 74.12858299999999,
+          "phase": "compilerSpawn"
+        }
+      ],
+      "spawnToConnectionMs": 9259.022125
+    },
+    "stoppedPids": [
+      65149,
+      65186,
+      65528
+    ],
+    "supportBuilds": [
+      {
+        "crate": "cranpose_dev_macros",
+        "fresh": true
+      },
+      {
+        "crate": "cranpose_dev_runtime",
+        "fresh": true
+      }
+    ]
+  },
+  "samples": [
+    {
+      "cargoReportedBuildMs": 2190.0,
+      "idle": [
+        {
+          "cpuClockResolutionSeconds": 0.01,
+          "frames": 0,
+          "inspectorRequests": 0,
+          "mode": "visible",
+          "processes": [
+            {
+              "cpuSeconds": 0.010000000000000002,
+              "percentOfOneCore": 0.049811503103239,
+              "pid": 66407,
+              "role": "runner"
+            },
+            {
+              "cpuSeconds": 0.0,
+              "percentOfOneCore": 0.0,
+              "pid": 66444,
+              "role": "compiler"
+            },
+            {
+              "cpuSeconds": 0.17000000000000004,
+              "percentOfOneCore": 0.846795552755063,
+              "pid": 66761,
+              "role": "application"
+            }
+          ],
+          "seconds": 20.075684083,
+          "settleSeconds": 5
+        },
+        {
+          "cpuClockResolutionSeconds": 0.01,
+          "frames": 0,
+          "inspectorRequests": 40,
+          "mode": "inspecting",
+          "processes": [
+            {
+              "cpuSeconds": 0.0,
+              "percentOfOneCore": 0.0,
+              "pid": 66407,
+              "role": "runner"
+            },
+            {
+              "cpuSeconds": 0.0,
+              "percentOfOneCore": 0.0,
+              "pid": 66444,
+              "role": "compiler"
+            },
+            {
+              "cpuSeconds": 0.1399999999999999,
+              "percentOfOneCore": 0.6972450612807787,
+              "pid": 66761,
+              "role": "application"
+            }
+          ],
+          "seconds": 20.079023542,
+          "settleSeconds": 5
+        },
+        {
+          "cpuClockResolutionSeconds": 0.01,
+          "frames": 0,
+          "inspectorRequests": 0,
+          "mode": "hidden",
+          "processes": [
+            {
+              "cpuSeconds": 0.0,
+              "percentOfOneCore": 0.0,
+              "pid": 66407,
+              "role": "runner"
+            },
+            {
+              "cpuSeconds": 0.0,
+              "percentOfOneCore": 0.0,
+              "pid": 66444,
+              "role": "compiler"
+            },
+            {
+              "cpuSeconds": 0.0,
+              "percentOfOneCore": 0.0,
+              "pid": 66761,
+              "role": "application"
+            }
+          ],
+          "seconds": 20.072405875,
+          "settleSeconds": 5
+        }
+      ],
+      "mode": "startup",
+      "result": "passed",
+      "shutdownMs": 114.344291,
+      "snapshotPollMs": 200,
+      "startupMs": 4394.0097080000005,
+      "startupPhases": {
+        "compilerBuildCompletedMs": 3380.0,
+        "compilerServingMs": 290.0,
+        "connectionPollMs": 100,
+        "connectionToSnapshotMs": 284.4618330000012,
+        "dependencyCacheHit": true,
+        "runner": [
+          {
+            "cranposeDev": "startupPhase",
+            "durationMs": 29.379667,
+            "elapsedMs": 29.379667,
+            "phase": "metadata"
+          },
+          {
+            "cranposeDev": "startupPhase",
+            "durationMs": 10.04775,
+            "elapsedMs": 39.427417,
+            "phase": "workspace"
+          },
+          {
+            "cranposeDev": "startupPhase",
+            "durationMs": 12.761333,
+            "elapsedMs": 52.18875,
+            "phase": "dependencyCache"
+          },
+          {
+            "cranposeDev": "startupPhase",
+            "durationMs": 17.81125,
+            "elapsedMs": 70.0,
+            "phase": "toolchain"
+          },
+          {
+            "cranposeDev": "startupPhase",
+            "durationMs": 0.374083,
+            "elapsedMs": 70.374083,
+            "phase": "compilerSpawn"
+          }
+        ],
+        "spawnToConnectionMs": 4109.547874999999
+      },
+      "stoppedPids": [
+        66407,
+        66444,
+        66761
+      ],
+      "supportBuilds": [
+        {
+          "crate": "cranpose_dev_macros",
+          "fresh": true
+        },
+        {
+          "crate": "cranpose_dev_runtime",
+          "fresh": true
+        }
+      ]
+    },
+    {
+      "cargoReportedBuildMs": 2140.0,
+      "idle": [
+        {
+          "cpuClockResolutionSeconds": 0.01,
+          "frames": 0,
+          "inspectorRequests": 0,
+          "mode": "visible",
+          "processes": [
+            {
+              "cpuSeconds": 0.0,
+              "percentOfOneCore": 0.0,
+              "pid": 69155,
+              "role": "runner"
+            },
+            {
+              "cpuSeconds": 0.0,
+              "percentOfOneCore": 0.0,
+              "pid": 69192,
+              "role": "compiler"
+            },
+            {
+              "cpuSeconds": 0.14,
+              "percentOfOneCore": 0.6973518687611072,
+              "pid": 69435,
+              "role": "application"
+            }
+          ],
+          "seconds": 20.075948208,
+          "settleSeconds": 5
+        },
+        {
+          "cpuClockResolutionSeconds": 0.01,
+          "frames": 0,
+          "inspectorRequests": 40,
+          "mode": "inspecting",
+          "processes": [
+            {
+              "cpuSeconds": 0.0,
+              "percentOfOneCore": 0.0,
+              "pid": 69155,
+              "role": "runner"
+            },
+            {
+              "cpuSeconds": 0.0,
+              "percentOfOneCore": 0.0,
+              "pid": 69192,
+              "role": "compiler"
+            },
+            {
+              "cpuSeconds": 0.10999999999999999,
+              "percentOfOneCore": 0.5475825269650961,
+              "pid": 69435,
+              "role": "application"
+            }
+          ],
+          "seconds": 20.088296208,
+          "settleSeconds": 5
+        },
+        {
+          "cpuClockResolutionSeconds": 0.01,
+          "frames": 0,
+          "inspectorRequests": 0,
+          "mode": "hidden",
+          "processes": [
+            {
+              "cpuSeconds": 0.0,
+              "percentOfOneCore": 0.0,
+              "pid": 69155,
+              "role": "runner"
+            },
+            {
+              "cpuSeconds": 0.0,
+              "percentOfOneCore": 0.0,
+              "pid": 69192,
+              "role": "compiler"
+            },
+            {
+              "cpuSeconds": 0.0,
+              "percentOfOneCore": 0.0,
+              "pid": 69435,
+              "role": "application"
+            }
+          ],
+          "seconds": 20.087492584,
+          "settleSeconds": 5
+        }
+      ],
+      "mode": "startup",
+      "result": "passed",
+      "shutdownMs": 223.931917,
+      "snapshotPollMs": 200,
+      "startupMs": 4343.545375,
+      "startupPhases": {
+        "compilerBuildCompletedMs": 3350.0,
+        "compilerServingMs": 280.0,
+        "connectionPollMs": 100,
+        "connectionToSnapshotMs": 281.4156670000002,
+        "dependencyCacheHit": true,
+        "runner": [
+          {
+            "cranposeDev": "startupPhase",
+            "durationMs": 20.084458,
+            "elapsedMs": 20.084458,
+            "phase": "metadata"
+          },
+          {
+            "cranposeDev": "startupPhase",
+            "durationMs": 2.845459,
+            "elapsedMs": 22.929917,
+            "phase": "workspace"
+          },
+          {
+            "cranposeDev": "startupPhase",
+            "durationMs": 12.12075,
+            "elapsedMs": 35.050667,
+            "phase": "dependencyCache"
+          },
+          {
+            "cranposeDev": "startupPhase",
+            "durationMs": 7.808624999999999,
+            "elapsedMs": 42.859292,
+            "phase": "toolchain"
+          },
+          {
+            "cranposeDev": "startupPhase",
+            "durationMs": 0.4470829999999999,
+            "elapsedMs": 43.306375,
+            "phase": "compilerSpawn"
+          }
+        ],
+        "spawnToConnectionMs": 4062.1297079999995
+      },
+      "stoppedPids": [
+        69155,
+        69192,
+        69435
+      ],
+      "supportBuilds": [
+        {
+          "crate": "cranpose_dev_macros",
+          "fresh": true
+        },
+        {
+          "crate": "cranpose_dev_runtime",
+          "fresh": true
+        }
+      ]
+    },
+    {
+      "cargoReportedBuildMs": 2270.0,
+      "idle": [
+        {
+          "cpuClockResolutionSeconds": 0.01,
+          "frames": 0,
+          "inspectorRequests": 0,
+          "mode": "visible",
+          "processes": [
+            {
+              "cpuSeconds": 0.010000000000000002,
+              "percentOfOneCore": 0.049767253485623796,
+              "pid": 73659,
+              "role": "runner"
+            },
+            {
+              "cpuSeconds": 0.0,
+              "percentOfOneCore": 0.0,
+              "pid": 73703,
+              "role": "compiler"
+            },
+            {
+              "cpuSeconds": 0.08999999999999997,
+              "percentOfOneCore": 0.4479052813706139,
+              "pid": 74078,
+              "role": "application"
+            }
+          ],
+          "seconds": 20.093534,
+          "settleSeconds": 5
+        },
+        {
+          "cpuClockResolutionSeconds": 0.01,
+          "frames": 0,
+          "inspectorRequests": 40,
+          "mode": "inspecting",
+          "processes": [
+            {
+              "cpuSeconds": 0.0,
+              "percentOfOneCore": 0.0,
+              "pid": 73659,
+              "role": "runner"
+            },
+            {
+              "cpuSeconds": 0.0,
+              "percentOfOneCore": 0.0,
+              "pid": 73703,
+              "role": "compiler"
+            },
+            {
+              "cpuSeconds": 0.11999999999999994,
+              "percentOfOneCore": 0.5977043421237169,
+              "pid": 74078,
+              "role": "application"
+            }
+          ],
+          "seconds": 20.076815834,
+          "settleSeconds": 5
+        },
+        {
+          "cpuClockResolutionSeconds": 0.01,
+          "frames": 0,
+          "inspectorRequests": 0,
+          "mode": "hidden",
+          "processes": [
+            {
+              "cpuSeconds": 0.0,
+              "percentOfOneCore": 0.0,
+              "pid": 73659,
+              "role": "runner"
+            },
+            {
+              "cpuSeconds": 0.0,
+              "percentOfOneCore": 0.0,
+              "pid": 73703,
+              "role": "compiler"
+            },
+            {
+              "cpuSeconds": 0.0,
+              "percentOfOneCore": 0.0,
+              "pid": 74078,
+              "role": "application"
+            }
+          ],
+          "seconds": 20.065268708,
+          "settleSeconds": 5
+        }
+      ],
+      "mode": "startup",
+      "result": "passed",
+      "shutdownMs": 99.385333,
+      "snapshotPollMs": 200,
+      "startupMs": 4544.003334,
+      "startupPhases": {
+        "compilerBuildCompletedMs": 3580.0,
+        "compilerServingMs": 450.0,
+        "connectionPollMs": 100,
+        "connectionToSnapshotMs": 283.8965840000001,
+        "dependencyCacheHit": true,
+        "runner": [
+          {
+            "cranposeDev": "startupPhase",
+            "durationMs": 59.611,
+            "elapsedMs": 59.611,
+            "phase": "metadata"
+          },
+          {
+            "cranposeDev": "startupPhase",
+            "durationMs": 2.287541,
+            "elapsedMs": 61.898541,
+            "phase": "workspace"
+          },
+          {
+            "cranposeDev": "startupPhase",
+            "durationMs": 11.024917,
+            "elapsedMs": 72.923458,
+            "phase": "dependencyCache"
+          },
+          {
+            "cranposeDev": "startupPhase",
+            "durationMs": 6.484792,
+            "elapsedMs": 79.40825,
+            "phase": "toolchain"
+          },
+          {
+            "cranposeDev": "startupPhase",
+            "durationMs": 0.265291,
+            "elapsedMs": 79.673541,
+            "phase": "compilerSpawn"
+          }
+        ],
+        "spawnToConnectionMs": 4260.10675
+      },
+      "stoppedPids": [
+        73659,
+        73703,
+        74078
+      ],
+      "supportBuilds": [
+        {
+          "crate": "cranpose_dev_macros",
+          "fresh": true
+        },
+        {
+          "crate": "cranpose_dev_runtime",
+          "fresh": true
+        }
+      ]
+    }
+  ]
+}

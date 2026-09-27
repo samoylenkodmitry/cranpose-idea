@@ -17,7 +17,7 @@ use std::{
         Arc,
         atomic::{AtomicBool, Ordering},
     },
-    time::{Duration, SystemTime, UNIX_EPOCH},
+    time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
 
 /// A preview launch requested by the native Studio UI.
@@ -45,8 +45,24 @@ pub fn run(options: RunOptions) -> Result<()> {
     if !matches!(options.kind.as_str(), "bin" | "example") {
         bail!("preview target must be a binary or example");
     }
+    let started = Instant::now();
+    let mut phase = started;
+    let profile = std::env::var_os("CRANPOSE_PROFILE_STARTUP").is_some();
+    let mut measured = |name: &str| {
+        let now = Instant::now();
+        if profile {
+            println!(
+                "{}",
+                serde_json::json!({"cranposeDev":"startupPhase", "phase":name,
+                "durationMs":(now-phase).as_secs_f64()*1000.0,
+                "elapsedMs":(now-started).as_secs_f64()*1000.0})
+            );
+        }
+        phase = now;
+    };
     emit("preparing", "Preparing private development workspace");
     let metadata = Metadata::read(&options.root)?;
+    measured("metadata");
     let package = metadata
         .packages
         .iter()
@@ -91,6 +107,30 @@ pub fn run(options: RunOptions) -> Result<()> {
         &options.kind
     };
     let launch_package = launcher.unwrap_or_else(|| options.package.clone());
+    measured("workspace");
+    let dependency_cache = if options.hot_reload {
+        match crate::dependency_cache::DependencyCache::restore(
+            &workspace.directory,
+            &options.cache.join("dependency-locks"),
+        ) {
+            Ok(cache) => {
+                if profile {
+                    println!(
+                        "{}",
+                        serde_json::json!({"cranposeDev":"dependencyCache", "hit":cache.hit})
+                    );
+                }
+                Some(cache)
+            }
+            Err(error) => {
+                eprintln!("Development dependency cache unavailable: {error}");
+                None
+            }
+        }
+    } else {
+        None
+    };
+    measured("dependencyCache");
     println!(
         "{}",
         serde_json::json!({"cranposeDev": "workspace", "private": workspace.directory, "original": workspace.original})
@@ -127,6 +167,7 @@ pub fn run(options: RunOptions) -> Result<()> {
         command.arg("run");
         command
     };
+    measured("toolchain");
     command.args([
         "--package",
         &launch_package,
@@ -146,6 +187,7 @@ pub fn run(options: RunOptions) -> Result<()> {
         .stdin(Stdio::null());
     let mut child = cranpose_plugin_process::Process::spawn_worker(command)
         .context("start development compiler")?;
+    measured("compilerSpawn");
     println!(
         "{}",
         serde_json::json!({"cranposeDev":"compiler", "pid":child.id()})
@@ -272,6 +314,11 @@ pub fn run(options: RunOptions) -> Result<()> {
     child
         .terminate(Duration::from_millis(500))
         .context("stop development compiler")?;
+    if let Some(cache) = dependency_cache
+        && let Err(error) = cache.save()
+    {
+        eprintln!("Development dependency cache not saved: {error}");
+    }
     Ok(())
 }
 
