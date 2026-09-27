@@ -41,8 +41,8 @@ and event handlers.
   Narrow panels switch between Layout and Details; larger inspector panels show both.
 - **Viewport controls:** change logical dimensions, Fit or fixed zoom, switch theme,
   and export the rendered surface as PNG.
-- **Hot code reload:** compatible Rust literal edits compile and appear on save while
-  retaining the process, remembered state and input connection. Compiler errors link
+- **Hot code reload:** eligible literals update without compilation; other supported
+  edits compile on save. Both retain the process, remembered state and input connection. Compiler errors link
   to source and leave the previous preview interactive. Structural edits show
   **Restart required**. The Reload menu controls hot reload and file watching.
 - **Editor integration:** Code / Split / Preview modes, composable gutter actions,
