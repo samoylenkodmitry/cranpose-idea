@@ -1,4 +1,6 @@
 fn main() -> anyhow::Result<()> {
+    #[cfg(target_os = "linux")]
+    cranpose_dev_runner::linker::dispatch()?;
     if let Some(options) = std::env::args().nth(1).filter(|arg| arg.starts_with('{')) {
         return cranpose_dev_runner::runner::run(serde_json::from_str(&options)?);
     }
