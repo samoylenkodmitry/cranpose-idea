@@ -4,11 +4,6 @@ use cranpose::{AppLauncher, embed::EmbedEndpoint};
 use cranpose_intellij_ui::ToolWindow;
 
 fn main() {
-    #[cfg(target_os = "linux")]
-    if let Err(error) = cranpose_dev_runner::linker::dispatch() {
-        eprintln!("{error:#}");
-        std::process::exit(1);
-    }
     let mut args = std::env::args().skip(1);
     let mode = args.next();
     if mode.as_deref() == Some("--stability") {

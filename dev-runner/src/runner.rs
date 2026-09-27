@@ -181,13 +181,6 @@ pub fn run(options: RunOptions) -> Result<()> {
             );
         }
         let mut command = Command::new(dx);
-        #[cfg(target_os = "linux")]
-        crate::linker::configure(
-            &mut command,
-            lease.as_ref(),
-            &workspace.directory,
-            &options.cache.join("target"),
-        )?;
         command.args([
             "serve",
             "--hot-patch",
