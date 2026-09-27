@@ -1,3 +1,10 @@
+
+
+
+
+
+https://github.com/user-attachments/assets/aede3fd5-b144-4eed-b13a-2a8b9b86cefd
+
 # Cranpose for IntelliJ IDEA
 
 Build Cranpose applications in IntelliJ IDEA and RustRover, with interactive previews
