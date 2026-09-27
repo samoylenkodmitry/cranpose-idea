@@ -1,0 +1,119 @@
+{
+  "cases": [
+    {
+      "calls": 64,
+      "catalogSha256": "6b8c1b840f98cbc944fe26f865bd11221029583a9bc1fdcaafb9cc2402cf8371",
+      "functions": 32,
+      "literals": 64,
+      "medianMs": 0.425375,
+      "milliseconds": [
+        0.690625,
+        0.475792,
+        0.425375,
+        0.423417,
+        0.4195,
+        0.435792,
+        0.42195900000000003
+      ],
+      "singleLineBodies": false,
+      "sourceBytes": 4118,
+      "unicode": false
+    },
+    {
+      "calls": 512,
+      "catalogSha256": "9d5b883dd94abcc16698d2cecfb96a6be5fac081bfd7dab0406d2c687678cf7a",
+      "functions": 256,
+      "literals": 512,
+      "medianMs": 3.376333,
+      "milliseconds": [
+        3.417917,
+        3.376333,
+        3.640917,
+        3.3842920000000003,
+        3.324417,
+        3.264583,
+        3.374292
+      ],
+      "singleLineBodies": false,
+      "sourceBytes": 33170,
+      "unicode": false
+    },
+    {
+      "calls": 2048,
+      "catalogSha256": "b766774f7b8d73faf5c7b730a6f3aaa73880a8c3ca4d2cd0e3206989fece71db",
+      "functions": 1024,
+      "literals": 2048,
+      "medianMs": 14.216958,
+      "milliseconds": [
+        14.216958,
+        13.997792,
+        13.953,
+        14.301625,
+        14.477708,
+        14.157458,
+        14.631207999999999
+      ],
+      "singleLineBodies": false,
+      "sourceBytes": 133034,
+      "unicode": false
+    },
+    {
+      "calls": 4096,
+      "catalogSha256": "e7b592795be95e7e03ae12eb9fbd0e5212076c00ce97dda63380c778092d0ade",
+      "functions": 2048,
+      "literals": 4096,
+      "medianMs": 29.138792,
+      "milliseconds": [
+        31.626875,
+        29.13125,
+        29.138792,
+        29.225209,
+        28.925833,
+        28.725875000000002,
+        29.305999999999997
+      ],
+      "singleLineBodies": false,
+      "sourceBytes": 267178,
+      "unicode": false
+    },
+    {
+      "calls": 2048,
+      "catalogSha256": "5789269c1a3206c71f11002db93dce40a2a526c40b991f3e512d213e25abc07c",
+      "functions": 1024,
+      "literals": 2048,
+      "medianMs": 14.358208000000001,
+      "milliseconds": [
+        14.358208000000001,
+        14.515042000000001,
+        14.077458,
+        14.108625,
+        14.340208,
+        15.046417,
+        14.392042
+      ],
+      "singleLineBodies": false,
+      "sourceBytes": 138154,
+      "unicode": true
+    },
+    {
+      "calls": 4096,
+      "catalogSha256": "42394b949bd3eff3b07733a8e7018386a6d5d9d7a4ada433ba51aeb2b8b4d3ab",
+      "functions": 32,
+      "literals": 4096,
+      "medianMs": 26.217875000000003,
+      "milliseconds": [
+        26.158708,
+        26.086708,
+        26.282334000000002,
+        26.217875000000003,
+        26.45325,
+        25.947208,
+        26.338458
+      ],
+      "singleLineBodies": true,
+      "sourceBytes": 213942,
+      "unicode": true
+    }
+  ],
+  "samples": 7
+}
