@@ -29,5 +29,10 @@ pub fn observe_patch() {
             }
         }
     }));
-    let _ = observed.get();
+    let composed = observed.get();
+    crate::__cranpose_api::SideEffect(move || {
+        if shared::claim_composed(composed) {
+            crate::__cranpose_api::send_to_host("cranpose.dev.composed", &format!("{{\"generation\":{composed}}}"));
+        }
+    });
 }
