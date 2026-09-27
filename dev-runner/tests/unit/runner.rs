@@ -1,6 +1,29 @@
 use super::*;
 
 #[test]
+fn live_literal_width_changes_are_not_safe_compiler_call_sites() {
+    let initial = "#[composable] fn App() { Text(\"a\"); Text(12); }";
+    let edited = initial.replace("\"a\"", "\"a much longer label\"");
+    let initial_catalog = cranpose_plugin_authoring::Catalog::parse(initial).expect("initial");
+    let edited_catalog = cranpose_plugin_authoring::Catalog::parse(&edited).expect("edited");
+    assert_eq!(initial_catalog.schema, edited_catalog.schema);
+    assert!(matches!(
+        classify(initial, &edited),
+        ReloadDecision::Restart(_)
+    ));
+    assert!(matches!(
+        classify(&edited, &edited.replace("12", "13")),
+        ReloadDecision::Patch
+    ));
+    // After a value update, a compiler fallback must still compare with the
+    // original compiled positions, not the most recent editor text.
+    assert!(matches!(
+        classify(initial, &edited.replace("12", "13")),
+        ReloadDecision::Restart(_)
+    ));
+}
+
+#[test]
 fn compiler_diagnostics_map_windows_escaping_and_private_launcher_paths() {
     let windows =
         serde_json::json!({"message": {"spans": [{"file_name": r"C:\cache\session\src\main.rs"}]}})

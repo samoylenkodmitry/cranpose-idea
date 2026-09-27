@@ -278,6 +278,10 @@ pub fn run(options: RunOptions) -> Result<()> {
     }
     let mut watcher_invalidated = false;
     let mut dirty = BTreeSet::new();
+    // Value updates may change source widths without changing compiled code.
+    // Compiler fallback must retain the original call-site identities, even
+    // after several such edits or a failed compilation.
+    let initial_sources = workspace.sources.clone();
     loop {
         if stop.load(Ordering::Acquire) {
             break;
@@ -394,7 +398,7 @@ pub fn run(options: RunOptions) -> Result<()> {
                         continue;
                     }
                 }
-                if workspace.sources.get(&relative).is_some_and(|previous| {
+                if initial_sources.get(&relative).is_some_and(|previous| {
                     matches!(classify(previous, &source), ReloadDecision::Restart(_))
                 }) {
                     emit(
