@@ -112,16 +112,16 @@ jobs:
         with:
           pattern: native-*
           path: native
-      - run: cargo run --locked -p xtask -- package --native-dir native
-      - run: cargo run --locked -p xtask -- release check-zip target/plugin/cranpose-idea-*.zip
+      - run: cargo run --locked -p xtask -- package --native-dir native --output "${{ runner.temp }}/cranpose-package"
+      - run: cargo run --locked -p xtask -- release check-zip "${{ runner.temp }}/cranpose-package"/cranpose-idea-*.zip
       - run: cargo run --locked -p xtask -- fetch-ide
-      - run: cargo run --locked -p xtask -- release verify target/plugin/cranpose-idea-*.zip --ide "$CRANPOSE_TEST_IDE"
+      - run: cargo run --locked -p xtask -- release verify "${{ runner.temp }}/cranpose-package"/cranpose-idea-*.zip --ide "$CRANPOSE_TEST_IDE"
       - run: cargo run --locked -p xtask -- fetch-ide --product RustRover --version 2026.2.3
-      - run: cargo run --locked -p xtask -- release verify target/plugin/cranpose-idea-*.zip --ide "$CRANPOSE_TEST_IDE"
+      - run: cargo run --locked -p xtask -- release verify "${{ runner.temp }}/cranpose-package"/cranpose-idea-*.zip --ide "$CRANPOSE_TEST_IDE"
       - uses: actions/upload-artifact@v7
         with:
           name: plugin
-          path: target/plugin/*.zip
+          path: ${{ runner.temp }}/cranpose-package/*.zip
           if-no-files-found: error
       - uses: actions/upload-artifact@v7
         if: always()
