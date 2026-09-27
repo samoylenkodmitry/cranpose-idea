@@ -1,0 +1,75 @@
+{
+  "backgroundNoiseMs": 0,
+  "cargoReportedBuildMs": 22040.0,
+  "connection": "unchanged",
+  "frames": 15,
+  "idle": [],
+  "liveValues": [],
+  "patches": [
+    {
+      "generation": 1,
+      "round": 0,
+      "saveToAppliedMs": 755.5625419999999,
+      "saveToSnapshotMs": 961.188083
+    },
+    {
+      "generation": 2,
+      "round": 1,
+      "saveToAppliedMs": 647.895209,
+      "saveToSnapshotMs": 853.96575
+    },
+    {
+      "generation": 3,
+      "round": 2,
+      "saveToAppliedMs": 679.5198340000001,
+      "saveToSnapshotMs": 885.5104590000001
+    },
+    {
+      "generation": 4,
+      "round": 3,
+      "saveToAppliedMs": 657.27525,
+      "saveToSnapshotMs": 863.4271249999999
+    },
+    {
+      "generation": 5,
+      "round": 4,
+      "saveToAppliedMs": 663.975084,
+      "saveToSnapshotMs": 869.9636670000001
+    },
+    {
+      "generation": 6,
+      "round": 5,
+      "saveToAppliedMs": 657.563542,
+      "saveToSnapshotMs": 864.459917
+    },
+    {
+      "generation": 7,
+      "round": 6,
+      "saveToAppliedMs": 783.548958,
+      "saveToSnapshotMs": 989.57575
+    }
+  ],
+  "pid": 79378,
+  "recovery": "compiler error, invalid syntax, and state type change",
+  "result": "passed",
+  "shutdownMs": 47.103541,
+  "snapshotPollMs": 200,
+  "startupMs": 30401.221583000002,
+  "startupPhases": null,
+  "state": 8,
+  "stoppedPids": [
+    77827,
+    77918,
+    79378
+  ],
+  "supportBuilds": [
+    {
+      "crate": "cranpose_dev_macros",
+      "fresh": false
+    },
+    {
+      "crate": "cranpose_dev_runtime",
+      "fresh": false
+    }
+  ]
+}

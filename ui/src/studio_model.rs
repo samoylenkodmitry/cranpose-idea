@@ -331,6 +331,32 @@ impl Studio {
         }
     }
 
+    /// Prefer the exact application call recorded by the private preview build,
+    /// then an application composable definition. Framework internals are never
+    /// the automatic destination when the application supplied an origin.
+    pub fn selected_source_request(&self) -> Option<Value> {
+        let node = self
+            .snapshot
+            .nodes
+            .iter()
+            .find(|node| node.id == self.selected)?;
+        if self.root.is_empty() {
+            return None;
+        }
+        let local = |source: &&Source| {
+            std::path::Path::new(&self.resolve_source(source)).starts_with(&self.root)
+        };
+        let source = node
+            .sources
+            .iter()
+            .rev()
+            .find(|source| source.name.starts_with("__cranpose_call:") && local(source))
+            .or_else(|| node.sources.iter().rev().find(local))?;
+        Some(
+            json!({"action":"navigate","file":self.resolve_source(source),"line":source.line,"reveal":true}),
+        )
+    }
+
     pub fn selection_path(&self) -> Vec<&Node> {
         let mut path = Vec::new();
         let mut current = self
@@ -538,6 +564,7 @@ impl Studio {
                                 .map(|node| node.id.clone())
                                 .unwrap_or_default();
                             self.select_node(picked);
+                            requests.extend(self.selected_source_request());
                         }
                     }
                     "pan" => {
@@ -714,7 +741,7 @@ pub struct StudioLayout {
 impl StudioLayout {
     pub fn new(width: f32, height: f32, inspect: bool, menu: f32, problems: f32) -> Self {
         let wide = width >= 760.0;
-        let top = (if wide { 88.0 } else { 126.0 }) + menu;
+        let top = 84.0 + menu;
         let body = (height - top - problems - 28.0).max(0.0);
         let inspector_width = if inspect && wide {
             (width * 0.4).clamp(320.0, 420.0)

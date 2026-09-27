@@ -1,8 +1,8 @@
 use crate::ide::{Palette, rememberPalette};
 use cranpose::{
-    Button, ButtonSpec, Color, Column, ColumnSpec, LinearArrangement, Modifier, Row, RowSpec,
-    ScrollState, SpanStyle, Text, TextStyle, composable, remember, rememberHostMessages,
-    rememberMutableStateOf, send_to_host,
+    Box as UiBox, BoxSpec, Button, ButtonSpec, Color, Column, ColumnSpec, GraphicsLayer,
+    LinearArrangement, Modifier, Row, RowSpec, ScrollState, SpanStyle, Text, TextStyle, composable,
+    remember, rememberHostMessages, rememberMutableStateOf, send_to_host,
     text::{FontWeight, TextUnit},
 };
 use cranpose_core::CollectEvents;
@@ -95,9 +95,38 @@ pub fn Dashboard() {
             .fill_max_size()
             .background(palette.background)
             .vertical_scroll(scroll, false)
-            .padding(12.0),
-        ColumnSpec::default().vertical_arrangement(LinearArrangement::spaced_by(14.0)),
+            .padding(16.0),
+        ColumnSpec::default().vertical_arrangement(LinearArrangement::spaced_by(16.0)),
         move || {
+            Column(
+                Modifier::empty().fill_max_width(),
+                ColumnSpec::default().vertical_arrangement(LinearArrangement::spaced_by(6.0)),
+                move || {
+                    Text(
+                        "Cranpose Studio",
+                        Modifier::empty(),
+                        style(palette.text, 20.0, false),
+                    );
+                    Text(
+                        "Preview · Inspect · Tune",
+                        Modifier::empty(),
+                        style(palette.muted, 12.0, false),
+                    );
+                    UiBox(
+                        Modifier::empty()
+                            .fill_max_width()
+                            .height(2.0)
+                            .graphics_layer(move || GraphicsLayer {
+                                render_effect: Some(cranpose_plugin_authoring_ui::accent_effect(
+                                    palette.accent,
+                                )),
+                                ..Default::default()
+                            }),
+                        BoxSpec::default(),
+                        || {},
+                    );
+                },
+            );
             Row(
                 Modifier::empty(),
                 RowSpec::default().horizontal_arrangement(LinearArrangement::spaced_by(6.0)),
@@ -112,7 +141,7 @@ pub fn Dashboard() {
                 Modifier::empty(),
                 style(palette.muted, 12.0, false),
             );
-            Section(palette, "TARGETS", move || {
+            Section(palette, "Application", move || {
                 let state = workspace.get();
                 if state.targets.is_empty() {
                     Text(
@@ -129,11 +158,11 @@ pub fn Dashboard() {
                         Modifier::empty()
                             .fill_max_width()
                             .background(if chosen {
-                                palette.surface
+                                palette.selection()
                             } else {
-                                palette.background
+                                Color::TRANSPARENT
                             })
-                            .rounded_corners(4.0)
+                            .rounded_corners(8.0)
                             .padding(8.0)
                             .clickable(move |_| request("select", &id)),
                         RowSpec::default()
@@ -186,7 +215,7 @@ pub fn Dashboard() {
                     );
                 }
             });
-            Section(palette, "COMPONENTS", move || {
+            Section(palette, "Components", move || {
                 let current = editor.get();
                 Text(
                     if current.path.is_empty() {
@@ -216,7 +245,7 @@ pub fn Dashboard() {
                 }
             });
             if !state.diagnostics.is_empty() {
-                Section(palette, "BUILD PROBLEMS", move || {
+                Section(palette, "Build problems", move || {
                     for (index, diagnostic) in workspace.get().diagnostics.into_iter().enumerate() {
                         Column(
                             Modifier::empty()
@@ -250,13 +279,17 @@ pub fn Dashboard() {
 #[composable]
 fn Section(palette: Palette, title: &'static str, content: impl FnMut() + 'static) {
     Column(
-        Modifier::empty().fill_max_width(),
-        ColumnSpec::default().vertical_arrangement(LinearArrangement::spaced_by(7.0)),
+        Modifier::empty()
+            .fill_max_width()
+            .rounded_corners(10.0)
+            .background(palette.surface)
+            .padding(12.0),
+        ColumnSpec::default().vertical_arrangement(LinearArrangement::spaced_by(8.0)),
         move || {
             Text(
                 title,
                 Modifier::empty().padding(4.0),
-                style(palette.muted, 10.0, true),
+                style(palette.text, 13.0, true),
             );
             content();
         },
@@ -265,18 +298,18 @@ fn Section(palette: Palette, title: &'static str, content: impl FnMut() + 'stati
 
 #[expect(non_snake_case)]
 fn Action(palette: Palette, label: &str, action: &str, value: &str, enabled: bool) {
-    let primary = action == "preview" || action == "refresh";
+    let primary = action == "preview" || action == "create";
     let label = label.to_owned();
     let action = action.to_owned();
     let value = value.to_owned();
     Button(
         Modifier::empty()
             .background(if enabled && primary {
-                palette.accent
+                palette.selection()
             } else {
-                palette.surface
+                Color::TRANSPARENT
             })
-            .rounded_corners(4.0)
+            .rounded_corners(6.0)
             .padding(7.0),
         ButtonSpec::default(),
         move || {
@@ -292,7 +325,7 @@ fn Action(palette: Palette, label: &str, action: &str, value: &str, enabled: boo
                     if !enabled {
                         palette.muted
                     } else if primary {
-                        palette.on_accent
+                        palette.accent
                     } else {
                         palette.text
                     },

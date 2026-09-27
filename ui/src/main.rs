@@ -27,7 +27,13 @@ fn main() {
         }
         return;
     }
-    let content: fn() = if std::env::var_os("CRANPOSE_RUN_SETTINGS").is_some() {
+    let content: fn() = if let Ok(mode) = std::env::var("CRANPOSE_AUTHORING") {
+        match mode.as_str() {
+            "overlay" => cranpose_plugin_authoring_ui::EditorDecorations,
+            "value" => cranpose_plugin_authoring_ui::ValueControl,
+            _ => cranpose_plugin_authoring_ui::ShowcaseCard,
+        }
+    } else if std::env::var_os("CRANPOSE_RUN_SETTINGS").is_some() {
         cranpose_intellij_ui::run_settings::RunSettings
     } else if std::env::var_os("CRANPOSE_STUDIO").is_some() {
         cranpose_intellij_ui::studio::PreviewStudio

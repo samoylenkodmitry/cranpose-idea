@@ -223,6 +223,13 @@ pub fn run(options: RunOptions) -> Result<()> {
     command
         .current_dir(&workspace.directory)
         .env("CARGO_TARGET_DIR", options.cache.join("target"));
+    let mut live_values = options
+        .hot_reload
+        .then(cranpose_plugin_authoring::transport::Bridge::new)
+        .transpose()?;
+    if let Some(bridge) = &live_values {
+        command.envs(bridge.environment()?);
+    }
     command
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -271,6 +278,10 @@ pub fn run(options: RunOptions) -> Result<()> {
     }
     let mut watcher_invalidated = false;
     let mut dirty = BTreeSet::new();
+    // Value updates may change source widths without changing compiled code.
+    // Compiler fallback must retain the original call-site identities, even
+    // after several such edits or a failed compilation.
+    let initial_sources = workspace.sources.clone();
     loop {
         if stop.load(Ordering::Acquire) {
             break;
@@ -316,7 +327,16 @@ pub fn run(options: RunOptions) -> Result<()> {
                 reason = Some("Source file removed".to_owned());
                 break;
             };
-            match classify(previous, &next) {
+            // Literal edits can shift later columns without changing executable
+            // structure. Classify these before the compiler's position policy.
+            let values_only = options.hot_reload
+                && previous != &next
+                && matches!((cranpose_plugin_authoring::Catalog::parse(previous), cranpose_plugin_authoring::Catalog::parse(&next)), (Ok(a), Ok(b)) if a.schema == b.schema && !b.literals.is_empty());
+            match if values_only {
+                ReloadDecision::Patch
+            } else {
+                classify(previous, &next)
+            } {
                 ReloadDecision::Unchanged => {}
                 ReloadDecision::Patch if options.hot_reload => {
                     patches.push((relative.clone(), next))
@@ -343,11 +363,55 @@ pub fn run(options: RunOptions) -> Result<()> {
         }
         dirty.clear();
         if !patches.is_empty() {
-            emit(
-                "patching",
-                "Compiling changes; the running preview remains interactive",
-            );
             for (relative, source) in patches {
+                if let (Some(bridge), Some(previous)) =
+                    (&mut live_values, workspace.sources.get(&relative))
+                    && let (Ok(old), Ok(next)) = (
+                        cranpose_plugin_authoring::Catalog::parse(previous),
+                        cranpose_plugin_authoring::Catalog::parse(&source),
+                    )
+                    && old.schema == next.schema
+                    && !next.literals.is_empty()
+                {
+                    let request = cranpose_plugin_authoring::runtime::Update {
+                        file: relative.to_string_lossy().replace('\\', "/"),
+                        schema: next.schema,
+                        revision: SystemTime::now().duration_since(UNIX_EPOCH)?.as_micros() as u64,
+                        values: next
+                            .literals
+                            .into_iter()
+                            .map(|v| cranpose_plugin_authoring::runtime::Value {
+                                id: v.id,
+                                kind: v.kind,
+                                value: v.value,
+                            })
+                            .collect(),
+                    };
+                    if let Ok(reply) = bridge.exchange(
+                        &serde_json::to_string(&request)?,
+                        Duration::from_millis(500),
+                    ) && serde_json::from_str::<serde_json::Value>(&reply)
+                        .is_ok_and(|v| v["accepted"] == true)
+                    {
+                        workspace.sources.insert(relative, source);
+                        emit("valuesApplied", "Live values updated without compilation");
+                        continue;
+                    }
+                }
+                if initial_sources.get(&relative).is_some_and(|previous| {
+                    matches!(classify(previous, &source), ReloadDecision::Restart(_))
+                }) {
+                    emit(
+                        "restartRequired",
+                        "Live value update unavailable; restart to compile the shifted source",
+                    );
+                    dirty.insert(relative);
+                    continue;
+                }
+                emit(
+                    "patching",
+                    "Compiling changes; the running preview remains interactive",
+                );
                 workspace.write_source(&relative, &source)?;
                 workspace.sources.insert(relative, source);
             }
