@@ -5,7 +5,7 @@
 //! with the plugin's `ide-host's Rust message bridge`.
 
 pub mod dashboard;
-pub mod ide;
+pub use cranpose_plugin_ui::ide;
 pub mod platform_builds;
 pub mod run_settings;
 pub mod stability;

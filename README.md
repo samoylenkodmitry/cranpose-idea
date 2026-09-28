@@ -294,7 +294,7 @@ One ZIP contains all six platforms. See [Publishing](docs/publishing.md).
 - `ui`: Cranpose workspace controls, Studio, inspector, run settings and analyzer integration.
 - `ide-host`: a small Rust entry point configuring the template's shared native host.
 - `xtask`: a small Rust entry point configuring the template's shared build and release tools.
-- [Template SDK](https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template/tree/main/sdk): owns the JNI host, JVM classfile writer, packaging and IDE tests, theme model and searchable trees. This plugin pins those crates by commit; the template has no dependency back on this repository.
+- [Template SDK](https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template/tree/main/sdk): owns the JNI host, JVM classfile writer, packaging and IDE tests, live authoring, shaders, theme model and searchable trees. Its [shared UI and job APIs](https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template/blob/main/docs/shared-ui-and-jobs.md) also provide Studio's compact actions, task output and safe document-save dispatch. This plugin pins those crates by commit; the template has no dependency back on this repository.
 - `dev-runner` / `dev-macros`: private debug workspace, compiler provisioning, edit compatibility checks and hot-call instrumentation.
 - [Cranpose Stability](https://github.com/samoylenkodmitry/cranpose-stability): the separate Rust analyzer and CI action, pinned by commit.
 - Cranpose supplies component registration, layout metadata, source origins and rendering.
