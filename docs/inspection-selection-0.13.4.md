@@ -21,6 +21,10 @@ an unchanged model update is discarded. Request IDs continue increasing.
 The template's native `inspection-profile --exercise-selection` regression
 exercises the real controller and layout protocol.
 
+The final integration retains the separately merged Cranpose 0.1.173 update.
+The host and Cranpose Build share its process SDK; the direct UI request fence
+and development regression tools use newer pinned template commits.
+
 ## Validation and limits
 
 The new native regression fails against the signed 0.13.3 renderer because the

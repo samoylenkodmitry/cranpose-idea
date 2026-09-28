@@ -9,6 +9,8 @@ Uses the template's reusable Rust request fence. No new polling timer or
 application release change is added. This is a selection correctness fix;
 no speedup is claimed.
 
+Includes the Cranpose 0.1.173 framework and shared SDK dependency update.
+
 ## Included since 0.13.3
 
 Dense live-value marker replacement now uses the template's reusable Rust inlay
