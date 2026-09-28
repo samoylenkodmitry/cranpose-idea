@@ -21,12 +21,12 @@ default = ["desktop"]
 desktop = ["cranpose/desktop"]
 
 [dependencies]
-cranpose-plugin-ui = { git = "https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template", rev = "5e0b8b8e514af83906e18b6c42c033eca3837589" }
-cranpose-plugin-authoring-ui = { git = "https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template", rev = "5e0b8b8e514af83906e18b6c42c033eca3837589" }
-cranpose-plugin-ux = { git = "https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template", rev = "5e0b8b8e514af83906e18b6c42c033eca3837589" }
-cranpose = { version = "0.1.171", features = ["embed"], git = "https://github.com/samoylenkodmitry/Cranpose", rev = "8fa9ba77b24506d4351ca1fcea255e0ac64099ef" }
-cranpose-core = { git = "https://github.com/samoylenkodmitry/Cranpose", rev = "8fa9ba77b24506d4351ca1fcea255e0ac64099ef", version = "0.1.171" }
+cranpose-plugin-ui = { git = "https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template", rev = "d17c4714a6a97029bda20bb490c4c4dcc95675c6" }
+cranpose-plugin-authoring-ui = { git = "https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template", rev = "d17c4714a6a97029bda20bb490c4c4dcc95675c6" }
+cranpose-plugin-ux = { git = "https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template", rev = "d17c4714a6a97029bda20bb490c4c4dcc95675c6" }
+cranpose = { version = "0.1.171", features = ["embed"], git = "https://github.com/samoylenkodmitry/Cranpose", rev = "29b1075da8fc4b8b15891061d13fe1b576843d59" }
+cranpose-core = { git = "https://github.com/samoylenkodmitry/Cranpose", rev = "29b1075da8fc4b8b15891061d13fe1b576843d59", version = "0.1.171" }
 cranpose-dev-runner = { version = "0.1.0", path = "../dev-runner" }
-cranpose-stability = { git = "https://github.com/samoylenkodmitry/cranpose-stability", rev = "16cdf362483f05649f05319d1191b21a6db813e0" }
+cranpose-stability = { git = "https://github.com/samoylenkodmitry/cranpose-stability", rev = "83b885882c519cf2dc059de9dbd9ea62691be0f6" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
