@@ -12,6 +12,14 @@ use cranpose::{
 use cranpose_core::{CollectEvents, SideEffect};
 use serde_json::{Value, json};
 
+#[derive(Clone, Copy, PartialEq)]
+struct InspectorScrolls {
+    controls: ScrollState,
+    tree: ScrollState,
+    details: ScrollState,
+    previous_query: MutableState<String>,
+}
+
 fn send(value: Value) {
     let _ = send_to_host("studio.host", &value.to_string());
 }
@@ -44,6 +52,16 @@ pub fn PreviewStudio() {
     let state = rememberMutableStateOf(Studio::default);
     // Keep the search field when inspection moves between the side and bottom panels.
     let query = remember(|| TextFieldState::new("")).with(|value| *value);
+    // Responsive branches are disposed during subcomposition. Their modifiers must
+    // detach before scroll state is released; keep it with the persistent inspector.
+    let previous_query = rememberMutableStateOf(String::new);
+    let scrolls = remember(|| InspectorScrolls {
+        controls: ScrollState::new(0.0),
+        tree: ScrollState::new(0.0),
+        details: ScrollState::new(0.0),
+        previous_query,
+    })
+    .with(|value| *value);
     let last_layout = remember(|| {
         std::rc::Rc::new(std::cell::RefCell::new(
             cranpose_plugin_ux::delivery::LastValue::<(bool, Value)>::default(),
@@ -226,12 +244,19 @@ pub fn PreviewStudio() {
                                 },
                             );
                             if inspector_width > 0.0 {
-                                Inspector(state, query, palette, inspector_width, stage_height);
+                                Inspector(
+                                    state,
+                                    query,
+                                    scrolls,
+                                    palette,
+                                    inspector_width,
+                                    stage_height,
+                                );
                             }
                         },
                     );
                     if inspector_height > 0.0 {
-                        Inspector(state, query, palette, width, inspector_height);
+                        Inspector(state, query, scrolls, palette, width, inspector_height);
                     }
                     if problems_height > 0.0 {
                         Column(
@@ -664,12 +689,12 @@ fn Menu(state: MutableState<Studio>, palette: Palette, width: f32, height: f32) 
 fn Inspector(
     state: MutableState<Studio>,
     query: TextFieldState,
+    scrolls: InspectorScrolls,
     palette: Palette,
     width: f32,
     height: f32,
 ) {
     let narrow = width < 560.0;
-    let controls_scroll = remember(|| ScrollState::new(0.0)).with(|value| *value);
     Column(
         Modifier::empty()
             .fill_max_width()
@@ -681,7 +706,7 @@ fn Inspector(
                 Modifier::empty()
                     .fill_max_width()
                     .height(38.0)
-                    .horizontal_scroll(controls_scroll, false)
+                    .horizontal_scroll(scrolls.controls, false)
                     .padding(4.0),
                 RowSpec::default().horizontal_arrangement(LinearArrangement::spaced_by(6.0)),
                 move || {
@@ -743,6 +768,8 @@ fn Inspector(
                         LayoutTree(
                             state,
                             query,
+                            scrolls.tree,
+                            scrolls.previous_query,
                             palette,
                             if narrow { width } else { width * 0.48 },
                             height - 38.0,
@@ -751,6 +778,7 @@ fn Inspector(
                     if !narrow || state.get().inspector_details {
                         NodeDetails(
                             state,
+                            scrolls.details,
                             palette,
                             if narrow { width } else { width * 0.52 },
                             height - 38.0,
@@ -766,17 +794,16 @@ fn Inspector(
 fn LayoutTree(
     state: MutableState<Studio>,
     query: TextFieldState,
+    scroll: ScrollState,
+    previous_query: MutableState<String>,
     palette: Palette,
     width: f32,
     height: f32,
 ) {
-    let scroll = remember(|| ScrollState::new(0.0)).with(|value| *value);
     let text = query.text();
     // Return to the first match after editing a filter, preserving scroll during live snapshots.
-    let previous_query =
-        remember(|| std::rc::Rc::new(std::cell::RefCell::new(String::new()))).with(Clone::clone);
     SideEffect(move || {
-        if *previous_query.borrow() != text {
+        if previous_query.get() != text {
             let studio = state.get();
             let first_match = studio
                 .snapshot
@@ -785,7 +812,7 @@ fn LayoutTree(
                 .position(|row| row.matches)
                 .unwrap_or(0);
             scroll.scroll_to(first_match.saturating_sub(1) as f32 * 28.0);
-            *previous_query.borrow_mut() = text;
+            previous_query.set(text);
         }
     });
     Column(
@@ -971,8 +998,13 @@ fn LayoutTree(
 }
 
 #[composable]
-fn NodeDetails(state: MutableState<Studio>, palette: Palette, width: f32, height: f32) {
-    let scroll = remember(|| ScrollState::new(0.0)).with(|value| *value);
+fn NodeDetails(
+    state: MutableState<Studio>,
+    scroll: ScrollState,
+    palette: Palette,
+    width: f32,
+    height: f32,
+) {
     Column(
         Modifier::empty()
             .width(width)
