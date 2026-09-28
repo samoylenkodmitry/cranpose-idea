@@ -3,7 +3,7 @@ use anyhow::{Result, bail};
 use cranpose_build::{Host, Platform, Request, engine, tools};
 use cranpose_host::{
     jobs,
-    jvm::{J, O},
+    jvm::{self, J, O},
 };
 use serde::Deserialize;
 use serde_json::json;
@@ -37,6 +37,20 @@ pub fn handle(j: &mut J<'_>, project: &O, channel: &str, payload: &str) -> Resul
     if channel != CHANNEL {
         return Ok(false);
     }
+    // Native panel messages arrive through a Swing timer, which has no write
+    // intent. Queue every action through the IDE so save and cancellation keep
+    // their request order and saving happens in a safe, non-modal context.
+    let project = project.clone();
+    let payload = payload.to_owned();
+    jvm::later_non_modal(j, move |j| {
+        if !j.bool(&project, "isDisposed")? {
+            perform(j, &project, &payload)?;
+        }
+        Ok(())
+    })?;
+    Ok(true)
+}
+fn perform(j: &mut J<'_>, project: &O, payload: &str) -> Result<()> {
     let result = dispatch(j, project, payload);
     if let Err(error) = result {
         jobs::publish(
@@ -46,7 +60,7 @@ pub fn handle(j: &mut J<'_>, project: &O, channel: &str, payload: &str) -> Resul
             &json!({"type":"job_finished","error":format!("{error:#}"),"cancelled":false}),
         )?;
     }
-    Ok(true)
+    Ok(())
 }
 fn dispatch(j: &mut J<'_>, project: &O, payload: &str) -> Result<()> {
     let action: Action = serde_json::from_str(payload)?;
