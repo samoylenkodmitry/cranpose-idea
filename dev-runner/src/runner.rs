@@ -7,18 +7,23 @@ use anyhow::{Context, Result, bail};
 use cranpose_plugin_watch::{BatchPolicy, ChangeQueue};
 use notify::Watcher;
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use std::{
-    collections::BTreeSet,
+    collections::{BTreeMap, BTreeSet},
     fs,
     io::{BufRead, BufReader},
-    path::PathBuf,
+    path::{Path, PathBuf},
     process::{Command, Stdio},
     sync::{
         Arc,
         atomic::{AtomicBool, Ordering},
+        mpsc,
     },
     time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
+
+/// Quiet period after the last edit that needs a new process before a rebuild is requested.
+pub const REBUILD_DELAY: Duration = Duration::from_millis(400);
 
 /// A preview launch requested by the native Studio UI.
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -241,11 +246,12 @@ pub fn run(options: RunOptions) -> Result<()> {
         "{}",
         serde_json::json!({"cranposeDev":"compiler", "pid":child.id()})
     );
+    let (reports, compiler) = mpsc::channel();
     if let Some(stdout) = child.stdout.take() {
-        pump(stdout, workspace.source_maps());
+        pump(stdout, workspace.source_maps(), reports.clone());
     }
     if let Some(stderr) = child.stderr.take() {
-        pump(stderr, workspace.source_maps());
+        pump(stderr, workspace.source_maps(), reports);
     }
     let stop = Arc::new(AtomicBool::new(false));
     let signal = stop.clone();
@@ -275,13 +281,24 @@ pub fn run(options: RunOptions) -> Result<()> {
         })?;
     if options.watch {
         watcher.watch(&workspace.original, notify::RecursiveMode::Recursive)?;
+        // Edits saved while the private copy was prepared precede the watcher.
+        for (relative, source) in &workspace.sources {
+            if fs::read_to_string(workspace.original.join(relative))
+                .ok()
+                .as_ref()
+                != Some(source)
+            {
+                changes.push(relative.clone());
+            }
+        }
     }
-    let mut watcher_invalidated = false;
     let mut dirty = BTreeSet::new();
-    // Value updates may change source widths without changing compiled code.
-    // Compiler fallback must retain the original call-site identities, even
-    // after several such edits or a failed compilation.
-    let initial_sources = workspace.sources.clone();
+    // Value updates change `workspace.sources` only; interfaces compare with compiled code.
+    let mut compiled = workspace.sources.clone();
+    let mut rebuild = Rebuild::default();
+    // Once the running process cannot follow its sources, only a rebuild helps.
+    let mut stale: Option<String> = None;
+    let mut patches = Patches::default();
     loop {
         if stop.load(Ordering::Acquire) {
             break;
@@ -292,129 +309,111 @@ pub fn run(options: RunOptions) -> Result<()> {
             }
             break;
         }
-        let Some(batch) = changes.take(Duration::from_millis(200)) else {
+        while let Ok(report) = compiler.try_recv() {
+            let Some(outcome) = patches.report(report) else {
+                continue;
+            };
+            if stale.is_none() {
+                let (Outcome::Unbuilt(reason) | Outcome::Behind(reason)) = &outcome;
+                emit("restartRequired", reason);
+                rebuild.request(reason, Instant::now() + REBUILD_DELAY);
+            }
+            if let (Outcome::Behind(reason), None) = (outcome, &stale) {
+                stale = Some(reason);
+            }
+        }
+        if let Some(reason) = rebuild.due(Instant::now()) {
+            emit("rebuildRequired", &reason);
+        }
+        let Some(batch) = changes.take(Duration::from_millis(100)) else {
             continue;
         };
-        if batch.invalidated {
-            watcher_invalidated = true;
-            emit(
-                "restartRequired",
-                "File watcher lost changes; restart the preview",
-            );
-            continue;
-        }
-        if watcher_invalidated {
-            continue;
-        }
         dirty.extend(batch.items);
-        if dirty.len() > 4096 {
+        if stale.is_none() && batch.invalidated {
+            stale = Some("File watcher lost changes".into());
+        }
+        if stale.is_none() && dirty.len() > 4096 {
+            stale = Some("Too many pending changes".into());
+        }
+        if let Some(reason) = &stale {
             dirty.clear();
-            watcher_invalidated = true;
-            emit(
-                "restartRequired",
-                "Too many pending changes; restart the preview",
-            );
+            emit("restartRequired", reason);
+            rebuild.request(reason, Instant::now() + REBUILD_DELAY);
             continue;
         }
-        let mut patches = Vec::new();
-        let mut reason = None;
-        for relative in &dirty {
-            let Some(previous) = workspace.sources.get(relative) else {
-                reason = Some("Project files changed".to_owned());
-                break;
-            };
-            let Ok(next) = fs::read_to_string(workspace.original.join(relative)) else {
-                reason = Some("Source file removed".to_owned());
-                break;
-            };
-            // Literal edits can shift later columns without changing executable
-            // structure. Classify these before the compiler's position policy.
-            let values_only = options.hot_reload
-                && previous != &next
-                && matches!((cranpose_plugin_authoring::Catalog::parse(previous), cranpose_plugin_authoring::Catalog::parse(&next)), (Ok(a), Ok(b)) if a.schema == b.schema && !b.literals.is_empty());
-            match if values_only {
-                ReloadDecision::Patch
-            } else {
-                classify(previous, &next)
-            } {
-                ReloadDecision::Unchanged => {}
-                ReloadDecision::Patch if options.hot_reload => {
-                    patches.push((relative.clone(), next))
-                }
-                ReloadDecision::Invalid(error) => {
-                    emit("error", &error);
-                    patches.clear();
-                    reason = Some("Fix the Rust syntax to reload".into());
-                    break;
-                }
-                ReloadDecision::Restart(message) => {
-                    reason = Some(message);
-                    break;
-                }
-                ReloadDecision::Patch => {
-                    reason = Some("Source changed; rebuild the preview".into());
-                    break;
-                }
+        let decisions: Vec<_> = dirty
+            .iter()
+            .map(|relative| {
+                let change = change(&workspace, &compiled, relative, options.hot_reload);
+                (relative.clone(), change)
+            })
+            .collect();
+        let mut invalid = false;
+        for (_, change) in &decisions {
+            if let Change::Invalid(error) = change {
+                emit("error", error);
+                invalid = true;
             }
         }
-        if let Some(reason) = reason {
-            emit("restartRequired", &reason);
+        if invalid {
+            // Keep the syntax error visible; a rebuild waits for a parseable source.
+            rebuild.cancel();
+            emit("restartRequired", "Fix the Rust syntax to reload");
             continue;
         }
+        if let Some(reason) = decisions.iter().find_map(|(_, change)| match change {
+            Change::Restart(reason) => Some(reason),
+            _ => None,
+        }) {
+            emit("restartRequired", reason);
+            rebuild.request(reason, Instant::now() + REBUILD_DELAY);
+            continue;
+        }
+        rebuild.cancel();
         dirty.clear();
-        if !patches.is_empty() {
-            for (relative, source) in patches {
-                if let (Some(bridge), Some(previous)) =
-                    (&mut live_values, workspace.sources.get(&relative))
-                    && let (Ok(old), Ok(next)) = (
-                        cranpose_plugin_authoring::Catalog::parse(previous),
-                        cranpose_plugin_authoring::Catalog::parse(&source),
-                    )
-                    && old.schema == next.schema
-                    && !next.literals.is_empty()
+        for (relative, change) in decisions {
+            let (source, values) = match change {
+                Change::Values(source) => (source, true),
+                Change::Compile(source) => (source, false),
+                _ => continue,
+            };
+            if values
+                && let Some(bridge) = &mut live_values
+                && let Ok(catalog) = cranpose_plugin_authoring::Catalog::parse(&source)
+            {
+                let request = cranpose_plugin_authoring::runtime::Update {
+                    file: relative.to_string_lossy().replace('\\', "/"),
+                    schema: catalog.schema,
+                    revision: SystemTime::now().duration_since(UNIX_EPOCH)?.as_micros() as u64,
+                    values: catalog
+                        .literals
+                        .into_iter()
+                        .map(|v| cranpose_plugin_authoring::runtime::Value {
+                            id: v.id,
+                            kind: v.kind,
+                            value: v.value,
+                        })
+                        .collect(),
+                };
+                if let Ok(reply) = bridge.exchange(
+                    &serde_json::to_string(&request)?,
+                    Duration::from_millis(500),
+                ) && serde_json::from_str::<serde_json::Value>(&reply)
+                    .is_ok_and(|v| v["accepted"] == true)
                 {
-                    let request = cranpose_plugin_authoring::runtime::Update {
-                        file: relative.to_string_lossy().replace('\\', "/"),
-                        schema: next.schema,
-                        revision: SystemTime::now().duration_since(UNIX_EPOCH)?.as_micros() as u64,
-                        values: next
-                            .literals
-                            .into_iter()
-                            .map(|v| cranpose_plugin_authoring::runtime::Value {
-                                id: v.id,
-                                kind: v.kind,
-                                value: v.value,
-                            })
-                            .collect(),
-                    };
-                    if let Ok(reply) = bridge.exchange(
-                        &serde_json::to_string(&request)?,
-                        Duration::from_millis(500),
-                    ) && serde_json::from_str::<serde_json::Value>(&reply)
-                        .is_ok_and(|v| v["accepted"] == true)
-                    {
-                        workspace.sources.insert(relative, source);
-                        emit("valuesApplied", "Live values updated without compilation");
-                        continue;
-                    }
-                }
-                if initial_sources.get(&relative).is_some_and(|previous| {
-                    matches!(classify(previous, &source), ReloadDecision::Restart(_))
-                }) {
-                    emit(
-                        "restartRequired",
-                        "Live value update unavailable; restart to compile the shifted source",
-                    );
-                    dirty.insert(relative);
+                    workspace.sources.insert(relative, source);
+                    emit("valuesApplied", "Live values updated without compilation");
                     continue;
                 }
-                emit(
-                    "patching",
-                    "Compiling changes; the running preview remains interactive",
-                );
-                workspace.write_source(&relative, &source)?;
-                workspace.sources.insert(relative, source);
             }
+            emit(
+                "patching",
+                "Compiling changes; the running preview remains interactive",
+            );
+            workspace.write_source(&relative, &source)?;
+            workspace.sources.insert(relative.clone(), source.clone());
+            compiled.insert(relative, source);
+            patches.started();
         }
     }
     child
@@ -480,12 +479,211 @@ fn relevant_path(
     Some(relative.to_owned())
 }
 
-fn pump(reader: impl std::io::Read + Send + 'static, maps: Vec<(PathBuf, PathBuf)>) {
+fn pump(
+    reader: impl std::io::Read + Send + 'static,
+    maps: Vec<(PathBuf, PathBuf)>,
+    reports: mpsc::Sender<Compiler>,
+) {
     std::thread::spawn(move || {
         for line in BufReader::new(reader).lines().map_while(Result::ok) {
             println!("{}", map_output(&line, &maps));
+            if let Some(report) = compiler_report(&line) {
+                let _ = reports.send(report);
+            }
         }
     });
+}
+
+/// Hot-patch outcomes reported by `dx serve --json-output`.
+#[derive(Debug, PartialEq)]
+pub(crate) enum Compiler {
+    CompileError,
+    /// Workspace dependency crates report their diagnostics inside this message.
+    BuildFailed {
+        compile_error: bool,
+    },
+    Patched,
+    PatchFailed(String),
+}
+
+pub(crate) fn compiler_report(line: &str) -> Option<Compiler> {
+    let value = serde_json::from_str::<serde_json::Value>(line).ok()?;
+    if (value["$message_type"] == "diagnostic" && value["level"] == "error")
+        || (value["reason"] == "compiler-message" && value["message"]["level"] == "error")
+    {
+        return Some(Compiler::CompileError);
+    }
+    let message = plain(value["message"].as_str()?);
+    let failure = |detail: &str| {
+        let detail = detail.lines().next().unwrap_or_default();
+        Compiler::PatchFailed(format!(
+            "Hot patch failed: {}",
+            detail.chars().take(160).collect::<String>()
+        ))
+    };
+    match value["level"].as_str()? {
+        "INFO" if message.starts_with("Hot-patching:") => Some(Compiler::Patched),
+        "INFO" if message.starts_with("Starting full rebuild") => Some(failure(
+            message.trim_start_matches("Starting full rebuild: "),
+        )),
+        "ERROR" if message.contains("Build failed") => Some(Compiler::BuildFailed {
+            compile_error: message.contains(r#""level":"error""#),
+        }),
+        "ERROR" if message.starts_with("Failed to hot-patch app") => Some(failure(
+            message.trim_start_matches("Failed to hot-patch app: "),
+        )),
+        "WARN" if message.starts_with("No clients to hotreload") => {
+            Some(failure("the preview is not connected to the compiler"))
+        }
+        // After a failed first build, the compiler has no base to patch and waits forever.
+        "WARN" if message.starts_with("Ignoring patch rebuild") => {
+            Some(Compiler::PatchFailed("Previous build failed".into()))
+        }
+        _ => None,
+    }
+}
+
+fn plain(text: &str) -> String {
+    let mut output = String::with_capacity(text.len());
+    let mut characters = text.chars();
+    while let Some(character) = characters.next() {
+        if character == '\u{1b}' {
+            characters.by_ref().find(|c| c.is_ascii_alphabetic());
+        } else {
+            output.push(character);
+        }
+    }
+    output
+}
+
+/// Only failures of the patch mechanism, not compile errors in edited code, need a
+/// rebuild: a failed patch leaves the running process behind its sources.
+#[derive(Default)]
+pub(crate) struct Patches {
+    building: bool,
+    compile_error: bool,
+}
+impl Patches {
+    pub(crate) fn started(&mut self) {
+        self.building = true;
+    }
+    pub(crate) fn report(&mut self, report: Compiler) -> Option<Outcome> {
+        match report {
+            Compiler::CompileError => {
+                self.compile_error = true;
+                None
+            }
+            Compiler::Patched => {
+                *self = Self::default();
+                None
+            }
+            Compiler::BuildFailed { compile_error } => {
+                let failed = self.building && !self.compile_error && !compile_error;
+                *self = Self::default();
+                failed.then(|| Outcome::Unbuilt("Hot patch could not be built".into()))
+            }
+            Compiler::PatchFailed(reason) => Some(Outcome::Behind(reason)),
+        }
+    }
+}
+
+#[derive(Debug, PartialEq)]
+pub(crate) enum Outcome {
+    /// No patch was built; a later successful patch still catches up.
+    Unbuilt(String),
+    /// A built patch was not loaded; the process no longer follows its sources.
+    Behind(String),
+}
+
+/// A rebuild request waits until edits needing a new process have been quiet.
+#[derive(Default)]
+pub(crate) struct Rebuild(Option<(String, Instant)>);
+impl Rebuild {
+    pub(crate) fn request(&mut self, reason: &str, at: Instant) {
+        self.0 = Some((reason.to_owned(), at));
+    }
+    pub(crate) fn cancel(&mut self) {
+        self.0 = None;
+    }
+    pub(crate) fn due(&mut self, now: Instant) -> Option<String> {
+        if self.0.as_ref().is_some_and(|(_, at)| now >= *at) {
+            self.0.take().map(|(reason, _)| reason)
+        } else {
+            None
+        }
+    }
+}
+
+#[derive(Debug, PartialEq)]
+pub(crate) enum Change {
+    Unchanged,
+    Values(String),
+    Compile(String),
+    Restart(String),
+    Invalid(String),
+}
+
+/// Decides how one saved file reaches the running process. `compiled` holds the
+/// sources last written to the private workspace; `workspace.sources` also
+/// follows value updates, which never change the compiled program.
+pub(crate) fn change(
+    workspace: &DevWorkspace,
+    compiled: &BTreeMap<PathBuf, String>,
+    relative: &Path,
+    hot_reload: bool,
+) -> Change {
+    let name = relative.to_string_lossy().replace('\\', "/");
+    let path = workspace.original.join(relative);
+    if relative
+        .extension()
+        .is_none_or(|extension| extension != "rs")
+    {
+        return match (fs::read(&path), workspace.files.get(relative)) {
+            (Ok(bytes), Some(digest)) if Sha256::digest(&bytes).as_slice() == digest.as_slice() => {
+                Change::Unchanged
+            }
+            (Err(_), None) if !workspace.directory.join(relative).exists() => Change::Unchanged,
+            (Err(_), _) => Change::Restart(format!("`{name}` removed")),
+            _ => Change::Restart(format!("`{name}` changed")),
+        };
+    }
+    let applied = workspace.sources.get(relative);
+    let Ok(next) = fs::read_to_string(&path) else {
+        return match applied {
+            Some(_) => Change::Restart(format!("`{name}` removed")),
+            None => Change::Unchanged,
+        };
+    };
+    if applied == Some(&next) {
+        return Change::Unchanged;
+    }
+    if relative.file_name().is_some_and(|file| file == "build.rs") {
+        return Change::Restart(format!("`{name}` changed"));
+    }
+    let Some(previous) = compiled.get(relative) else {
+        // A new module is compiled only after a changed `mod` item rebuilds the preview.
+        return if hot_reload {
+            Change::Compile(next)
+        } else {
+            Change::Restart(format!("`{name}` added"))
+        };
+    };
+    // Literal edits keep the compiled schema, even when they move later columns.
+    if hot_reload
+        && matches!(
+            (cranpose_plugin_authoring::Catalog::parse(previous), cranpose_plugin_authoring::Catalog::parse(&next)),
+            (Ok(old), Ok(new)) if old.schema == new.schema && !new.literals.is_empty()
+        )
+    {
+        return Change::Values(next);
+    }
+    match classify(previous, &next) {
+        ReloadDecision::Unchanged => Change::Unchanged,
+        ReloadDecision::Patch if hot_reload => Change::Compile(next),
+        ReloadDecision::Patch => Change::Restart(format!("`{name}` changed")),
+        ReloadDecision::Restart(reason) => Change::Restart(reason),
+        ReloadDecision::Invalid(error) => Change::Invalid(format!("{name}: {error}")),
+    }
 }
 
 fn map_output(line: &str, maps: &[(PathBuf, PathBuf)]) -> String {
