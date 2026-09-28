@@ -1,4 +1,15 @@
-# Cranpose 0.13.5
+# Cranpose 0.13.6
+
+Clicking a live-value glyph now gives its already-open hover control keyboard
+focus. Tab enters the field; Apply and Undo work without closing and reopening
+the popup first. Hover itself leaves keyboard focus in the source editor, and
+clicking the source still places the caret on the first click.
+
+Uses the template's reusable Rust popup activation helper. No polling timer or
+application release change is added. This is a focus correction, not a measured
+performance improvement.
+
+## Included since 0.13.5
 
 Picking a view and clicking its source link now opens the original source file
 when the preview uses a generated launcher, including Showcase. The shared Rust
