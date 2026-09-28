@@ -1,7 +1,26 @@
-# Cranpose 0.13.4
+# Cranpose 0.13.5
 
-Closing Inspect now clears preview bounds and releases Pick, so you can interact
-with the application normally. Pausing retains captured details while removing
+Picking a view and clicking its source link now opens the original source file
+when the preview uses a generated launcher, including Showcase. The shared Rust
+resolver understands Cargo's workspace-relative source paths and avoids
+duplicating the generated package directory. Nested source mappings take
+precedence over their enclosing workspace.
+
+The running preview now follows Pick and source-link navigation across file tabs,
+keeping the application state and selection. Pick works with Inspect closed so
+the full preview remains available. Panel changes still wait for fresh geometry.
+
+Live popups leave source clicks available for caret placement and stay clear of
+the hovered source line. Byte-channel `Color::from_rgb_u8` and
+`Color::from_rgba_u8`, plus `Color::rgb`, now have one color control and an inline
+swatch. Edits retain the constructor, integer channels, comments and suffixes.
+
+Application release builds are unchanged. This corrects source navigation; no
+performance improvement is claimed.
+
+## Included since 0.13.4
+
+Pausing retains captured details while removing
 bounds from the running preview. Reopening or resuming waits for a fresh snapshot
 before restoring selection bounds. Delayed replies cannot restore an old highlight.
 

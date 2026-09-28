@@ -323,9 +323,6 @@ impl Studio {
             self.settings.inspect = inspecting;
             self.invalidate_inspection();
         }
-        if !inspecting {
-            self.pick = false;
-        }
     }
 
     pub fn set_live_inspection(&mut self, live: bool) {
@@ -337,14 +334,16 @@ impl Studio {
 
     pub fn set_picking(&mut self, pick: bool) {
         if pick {
-            self.set_inspecting(true);
             self.set_live_inspection(true);
+        }
+        if self.pick != pick && !self.settings.inspect {
+            self.invalidate_inspection();
         }
         self.pick = pick;
     }
 
     fn has_current_inspection(&self) -> bool {
-        self.connected && self.settings.inspect && self.live && self.inspection_fresh
+        self.connected && (self.settings.inspect || self.pick) && self.live && self.inspection_fresh
     }
 
     pub fn picking(&self) -> bool {
@@ -470,19 +469,13 @@ impl Studio {
         self.start()
     }
     pub fn resolve_source(&self, source: &Source) -> PathBuf {
-        let path = Path::new(&source.manifest_dir).join(&source.file);
-        for (private, original) in &self.source_maps {
-            if let Ok(relative) = path.strip_prefix(private) {
-                return original.join(relative);
-            }
-        }
-        path.strip_prefix(&self.private_root)
-            .ok()
-            .filter(|_| !self.private_root.is_empty())
-            .map_or_else(
-                || path.clone(),
-                |relative| Path::new(&self.root).join(relative),
-            )
+        cranpose_plugin_ux::source_paths::resolve(
+            Path::new(&source.file),
+            Path::new(&source.manifest_dir),
+            Path::new(&self.private_root),
+            Path::new(&self.root),
+            &self.source_maps,
+        )
     }
     pub fn handle(&mut self, channel: &str, payload: &str) -> Vec<Value> {
         let Ok(value) = serde_json::from_str::<Value>(payload) else {

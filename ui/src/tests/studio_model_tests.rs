@@ -11,10 +11,11 @@ fn studio() -> Studio {
 }
 
 #[test]
-fn hidden_and_paused_inspection_never_expose_old_bounds_or_pick_targets() {
+fn pick_remains_independent_of_inspector_and_waits_for_fresh_geometry() {
     let mut model = studio();
     model.start();
     model.handle("studio.child", r#"{"session":1,"event":"connected"}"#);
+    model.set_inspecting(true);
     model.set_picking(true);
     let request = |model: &Studio| -> u64 {
         model.inspection_request().expect("connected")["payload"]
@@ -36,10 +37,22 @@ fn hidden_and_paused_inspection_never_expose_old_bounds_or_pick_targets() {
     let delayed = request(&model);
 
     model.set_inspecting(false);
-    assert!(!model.pick && !model.picking());
+    assert!(model.pick && !model.picking());
     assert!(model.selected_bounds().is_none());
     assert_eq!(model.selected, "label", "keep details for reopening");
     reply(&mut model, delayed, 90);
+    assert!(model.selected_bounds().is_none());
+    let full_preview = request(&model);
+    reply(&mut model, full_preview, 20);
+    assert!(model.picking() && !model.settings.inspect);
+    assert_eq!(
+        model.selected_bounds().expect("full preview bounds")["x"],
+        20.0
+    );
+    model.set_picking(false);
+    assert!(model.selected_bounds().is_none());
+    model.set_picking(true);
+    assert!(!model.settings.inspect && !model.picking());
     model.set_inspecting(true);
     assert!(model.selected_bounds().is_none());
     reply(&mut model, delayed, 90);
@@ -240,6 +253,21 @@ fn maps_binary_launcher_paths_before_workspace_paths() {
         ..Source::default()
     });
     assert_eq!(path, PathBuf::from("/project/app/src/main.rs"));
+}
+
+#[test]
+fn picked_launcher_view_navigates_to_original_workspace_source() {
+    let mut studio = studio();
+    studio.log(r#"{"cranposeDev":"sourceMap","private":"/cache/workspace/.cranpose-dev/launcher","original":"/project"}"#);
+    studio.log(r#"{"cranposeDev":"workspace","private":"/cache/workspace"}"#);
+    studio.snapshot = Snapshot::parse(r#"{"schema":2,"nodes":[{"id":"description","kind":"Text","text":"Closest to the Sun","sources":[{"name":"__cranpose_call:Text","manifestDir":"/cache/workspace/.cranpose-dev/launcher","file":".cranpose-dev/launcher/src/screens/detail_screen.rs","line":59}]}]}"#).expect("snapshot").into();
+    studio.select_node("description".into());
+    let request = studio.selected_source_request().expect("source navigation");
+    assert_eq!(
+        request["file"],
+        json!(Path::new("/project").join("src/screens/detail_screen.rs"))
+    );
+    assert_eq!(request["line"], 59);
 }
 
 #[test]
