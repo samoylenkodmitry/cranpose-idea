@@ -1,4 +1,15 @@
-# Cranpose 0.13.0
+# Cranpose 0.13.1
+
+Desktop Build & run now shows **Application running** after the OS creates the
+process, instead of leaving **Launching application** visible until exit. Stop
+remains available. Failed spawn, failed exit and cancellation keep their own
+results; mobile deployment retains its device-handoff status. Running is process
+status, not a first-paint or readiness guarantee.
+
+Uses Cranpose Build 0.1.3 and the shared template's process-start notifications.
+No polling timer or application release change is added.
+
+## Included since 0.13.0
 
 Build application packages locally for desktop and mobile from the Cranpose panel.
 
