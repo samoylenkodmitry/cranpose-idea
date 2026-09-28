@@ -1,11 +1,15 @@
 //! Local platform packaging controls, rendered by Cranpose.
-use crate::ide::{Palette, rememberPalette};
+use crate::ide::rememberPalette;
 use cranpose::{
-    BasicTextField, Button, ButtonSpec, Column, ColumnSpec, LinearArrangement, Modifier, Row,
-    RowSpec, SpanStyle, Text, TextFieldState, TextStyle, composable, remember,
-    rememberHostMessages, rememberMutableStateOf, send_to_host, text::TextUnit,
+    BasicTextField, Column, ColumnSpec, LinearArrangement, Modifier, Row, RowSpec, Text,
+    TextFieldState, composable, remember, rememberHostMessages, rememberMutableStateOf,
+    send_to_host,
 };
 use cranpose_core::CollectEvents;
+use cranpose_plugin_ui::{
+    controls::{ActionButton as Control, label_style as style},
+    tasks::{TaskOutput, TaskState},
+};
 use serde_json::{Value, json};
 
 const PLATFORMS: &[(&str, &str)] = &[
@@ -21,34 +25,20 @@ const PLATFORMS: &[(&str, &str)] = &[
     ("ios", "iOS Device"),
 ];
 
-#[derive(Clone, Default, PartialEq)]
-pub struct BuildState {
-    pub busy: bool,
-    pub status: String,
-    pub lines: Vec<String>,
-    pub artifact: String,
-}
-impl BuildState {
-    fn begin(&mut self) {
-        self.busy = true;
-        self.status = "Working…".into();
-        self.lines.clear();
-        self.artifact.clear();
-    }
-    pub fn apply(&mut self, event: &Value) {
+/// Platform-specific presentation; generic progress and output live in the SDK.
+fn apply_build_event(state: &mut TaskState, event: &Value) {
+    if !state.apply(event) {
         match event["type"].as_str().unwrap_or_default() {
-            "stage" => self.status = event["message"].as_str().unwrap_or_default().into(),
-            "log" => self.append(event["text"].as_str().unwrap_or_default()),
             "artifact" => {
-                self.artifact = event["artifact"]["path"]
+                state.result = event["artifact"]["path"]
                     .as_str()
                     .unwrap_or_default()
                     .into();
-                self.status = "Package ready".into();
+                state.status = "Package ready".into();
             }
             "doctor" => {
-                self.lines.clear();
-                self.status = if event["report"]["ready"] == true {
+                state.lines.clear();
+                state.status = if event["report"]["ready"] == true {
                     "Base tools ready"
                 } else {
                     "Setup needed"
@@ -56,7 +46,7 @@ impl BuildState {
                 .into();
                 if let Some(checks) = event["report"]["checks"].as_array() {
                     for check in checks {
-                        self.append(&format!(
+                        state.append(&format!(
                             "{} {} · {}",
                             if check["ready"] == true { "+" } else { "!" },
                             check["name"].as_str().unwrap_or_default(),
@@ -64,37 +54,19 @@ impl BuildState {
                         ));
                     }
                 }
-                self.append(event["report"]["launch"].as_str().unwrap_or_default());
+                state.append(event["report"]["launch"].as_str().unwrap_or_default());
             }
             "devices" => {
-                self.lines.clear();
-                self.status = "Choose a device ID below".into();
-                self.append(event["text"].as_str().unwrap_or_default());
+                state.lines.clear();
+                state.status = "Choose a device ID below".into();
+                state.append(event["text"].as_str().unwrap_or_default());
             }
             "plan" => {
-                self.lines.clear();
-                self.status = "Local build plan".into();
-                self.append(&serde_json::to_string_pretty(&event["value"]).unwrap_or_default());
-            }
-            "job_finished" => {
-                self.busy = false;
-                if event["cancelled"] == true {
-                    self.status = "Stopped".into();
-                } else if let Some(error) = event["error"].as_str() {
-                    self.status = error.into();
-                } else if self.status == "Working…" {
-                    self.status = "Done".into();
-                }
+                state.lines.clear();
+                state.status = "Local build plan".into();
+                state.append(&serde_json::to_string_pretty(&event["value"]).unwrap_or_default());
             }
             _ => {}
-        }
-    }
-    fn append(&mut self, text: &str) {
-        for line in text.lines() {
-            self.lines.push(line.chars().take(600).collect());
-        }
-        if self.lines.len() > 80 {
-            self.lines.drain(..self.lines.len() - 80);
         }
     }
 }
@@ -112,11 +84,10 @@ pub fn PlatformBuilds(manifest: String, package: String, binary: String) {
             _ => "linux",
         });
     let release = rememberMutableStateOf(|| false);
-    let expanded = rememberMutableStateOf(|| false);
     let choosing = rememberMutableStateOf(|| false);
     let tools_open = rememberMutableStateOf(|| false);
     let device = remember(|| TextFieldState::new("")).with(|s| *s);
-    let state = rememberMutableStateOf(|| BuildState {
+    let state = rememberMutableStateOf(|| TaskState {
         status: "Build here. Run on your OS or device.".into(),
         ..Default::default()
     });
@@ -126,7 +97,7 @@ pub fn PlatformBuilds(manifest: String, package: String, binary: String) {
         move |payload: String| {
             if let Ok(event) = serde_json::from_str(&payload) {
                 let mut value = state.get();
-                value.apply(&event);
+                apply_build_event(&mut value, &event);
                 state.set(value);
             }
         },
@@ -249,87 +220,11 @@ pub fn PlatformBuilds(manifest: String, package: String, binary: String) {
                     },
                 );
             }
-            if state.get().busy {
-                Control(palette, "Stop build / app", true, false, || {
-                    let _ = send_to_host("cranpose.build", "{\"action\":\"cancel\"}");
-                });
-            }
-            Text(
-                state.get().status,
-                Modifier::empty().fill_max_width(),
-                style(palette, false),
-            );
-            if !state.get().artifact.is_empty() {
-                Text(
-                    state.get().artifact,
-                    Modifier::empty().fill_max_width(),
-                    style(palette, true),
-                );
-            }
-            if !state.get().lines.is_empty() {
-                Control(
-                    palette,
-                    if expanded.get() {
-                        "Hide details"
-                    } else {
-                        "Show details"
-                    },
-                    true,
-                    false,
-                    move || expanded.set(!expanded.get()),
-                );
-                if expanded.get() {
-                    for line in state.get().lines {
-                        Text(
-                            line,
-                            Modifier::empty().fill_max_width(),
-                            style(palette, true),
-                        );
-                    }
-                }
-            }
+            TaskOutput(palette, state.get(), "Stop build / app", || {
+                let _ = send_to_host("cranpose.build", "{\"action\":\"cancel\"}");
+            });
         },
     );
-}
-#[expect(non_snake_case)]
-fn Control(
-    palette: Palette,
-    label: &str,
-    enabled: bool,
-    selected: bool,
-    action: impl FnMut() + 'static,
-) {
-    let label = label.to_owned();
-    let mut action = action;
-    Button(
-        Modifier::empty()
-            .rounded_corners(6.0)
-            .background(if selected {
-                palette.selection()
-            } else {
-                palette.background
-            })
-            .padding(7.0),
-        ButtonSpec::default(),
-        move || {
-            if enabled {
-                action();
-            }
-        },
-        move || {
-            Text(label.clone(), Modifier::empty(), style(palette, !enabled));
-        },
-    );
-}
-fn style(palette: Palette, muted: bool) -> TextStyle {
-    TextStyle {
-        span_style: SpanStyle {
-            color: Some(if muted { palette.muted } else { palette.text }),
-            font_size: TextUnit::Sp(12.0),
-            ..Default::default()
-        },
-        ..Default::default()
-    }
 }
 
 #[cfg(test)]

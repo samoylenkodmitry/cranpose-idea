@@ -2,8 +2,8 @@
 use anyhow::{Result, bail};
 use cranpose_build::{Host, Platform, Request, engine, tools};
 use cranpose_host::{
-    jobs,
-    jvm::{self, J, O},
+    jobs::{self, Operation},
+    jvm::{J, O},
 };
 use serde::Deserialize;
 use serde_json::json;
@@ -34,49 +34,15 @@ impl Default for Action {
     }
 }
 pub fn handle(j: &mut J<'_>, project: &O, channel: &str, payload: &str) -> Result<bool> {
-    if channel != CHANNEL {
-        return Ok(false);
-    }
-    // Native panel messages arrive through a Swing timer, which has no write
-    // intent. Queue every action through the IDE so save and cancellation keep
-    // their request order and saving happens in a safe, non-modal context.
-    let project = project.clone();
-    let payload = payload.to_owned();
-    jvm::later_non_modal(j, move |j| {
-        if !j.bool(&project, "isDisposed")? {
-            perform(j, &project, &payload)?;
-        }
-        Ok(())
-    })?;
-    Ok(true)
+    jobs::handle_message(j, project, CHANNEL, channel, payload, prepare)
 }
-fn perform(j: &mut J<'_>, project: &O, payload: &str) -> Result<()> {
-    let result = dispatch(j, project, payload);
-    if let Err(error) = result {
-        jobs::publish(
-            j,
-            project,
-            CHANNEL,
-            &json!({"type":"job_finished","error":format!("{error:#}"),"cancelled":false}),
-        )?;
-    }
-    Ok(())
-}
-fn dispatch(j: &mut J<'_>, project: &O, payload: &str) -> Result<()> {
+fn prepare(payload: &str) -> Result<Operation> {
     let action: Action = serde_json::from_str(payload)?;
     if action.action == "cancel" {
-        return jobs::cancel(j, project);
+        return Ok(Operation::Cancel);
     }
-    if matches!(action.action.as_str(), "build" | "run") {
-        let manager = j.static_obj(
-            "com/intellij/openapi/fileEditor/FileDocumentManager",
-            "getInstance",
-            "()Lcom/intellij/openapi/fileEditor/FileDocumentManager;",
-            &[],
-        )?;
-        j.void(&manager, "saveAllDocuments", "()V", &[])?;
-    }
-    jobs::start(j, project, CHANNEL, move |context| {
+    let save_documents = matches!(action.action.as_str(), "build" | "run");
+    Ok(Operation::run(save_documents, move |context| {
         let manifest = if action.manifest.is_empty() {
             context.root.join("Cargo.toml")
         } else {
@@ -106,5 +72,5 @@ fn dispatch(j: &mut J<'_>, project: &O, payload: &str) -> Result<()> {
             _ => bail!("Unknown platform operation"),
         }
         Ok(())
-    })
+    }))
 }

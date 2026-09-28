@@ -51,3 +51,16 @@ Local Clippy, workspace tests and RustRover diagnostics passed. Release CI addit
 checks six native hosts/renderers, actual IDEA integration, preview recovery and
 both Plugin Verifier targets. All new implementation and tests are Rust; controls
 are Cranpose.
+
+## Reuse in another plugin
+
+The theme/editor helpers, compact actions, bounded output and Stop controls now
+live in the template's `cranpose-plugin-ui` crate. The host uses the shared
+`jobs::handle_message` API for queued parsing, trust checks, document saves and
+cancellation. Studio retains only its platform choices and build-specific event
+formatting. Cranpose Build 0.1.2 uses the same pinned process SDK, keeping one
+cancellation type across the builder and host.
+
+The template consumes these APIs too, with a cancellable project scan example.
+See [shared UI and project jobs](https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template/blob/main/docs/shared-ui-and-jobs.md)
+for the complete host/UI contract and links to reusable authoring and shaders.
