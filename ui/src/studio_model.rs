@@ -243,6 +243,8 @@ pub struct Studio {
     #[serde(skip)]
     inspection_sequence: cranpose_plugin_ux::delivery::SequenceGate,
     #[serde(skip)]
+    inspection_fresh: bool,
+    #[serde(skip)]
     pub initialized: bool,
     pub selected: String,
     pub collapsed: std::collections::HashSet<String>,
@@ -279,6 +281,7 @@ impl Default for Studio {
             previews: vec![],
             snapshot: Snapshot::default().into(),
             inspection_sequence: Default::default(),
+            inspection_fresh: false,
             initialized: false,
             selected: String::new(),
             collapsed: Default::default(),
@@ -310,6 +313,55 @@ impl Default for Studio {
 }
 
 impl Studio {
+    fn invalidate_inspection(&mut self) {
+        self.inspection_fresh = false;
+        self.inspection_sequence.discard_pending();
+    }
+
+    pub fn set_inspecting(&mut self, inspecting: bool) {
+        if self.settings.inspect != inspecting {
+            self.settings.inspect = inspecting;
+            self.invalidate_inspection();
+        }
+        if !inspecting {
+            self.pick = false;
+        }
+    }
+
+    pub fn set_live_inspection(&mut self, live: bool) {
+        if self.live != live {
+            self.live = live;
+            self.invalidate_inspection();
+        }
+    }
+
+    pub fn set_picking(&mut self, pick: bool) {
+        if pick {
+            self.set_inspecting(true);
+            self.set_live_inspection(true);
+        }
+        self.pick = pick;
+    }
+
+    fn has_current_inspection(&self) -> bool {
+        self.connected && self.settings.inspect && self.live && self.inspection_fresh
+    }
+
+    pub fn picking(&self) -> bool {
+        self.pick && self.has_current_inspection()
+    }
+
+    pub fn selected_bounds(&self) -> Option<Value> {
+        if !self.has_current_inspection() {
+            return None;
+        }
+        self.snapshot
+            .nodes
+            .iter()
+            .find(|node| node.id == self.selected)
+            .map(|node| json!({"x":node.x,"y":node.y,"width":node.width,"height":node.height}))
+    }
+
     pub fn inspection_request(&self) -> Option<Value> {
         self.connected.then(|| {
             json!({"action":"message", "session":self.session,
@@ -529,6 +581,7 @@ impl Studio {
                     "connected" => {
                         self.snapshot = Snapshot::default().into();
                         self.inspection_sequence = Default::default();
+                        self.inspection_fresh = false;
                         self.selected.clear();
                         self.collapsed.clear();
                         self.inspector_details = false;
@@ -561,7 +614,7 @@ impl Studio {
                     }
                     "log" => self.log(value["line"].as_str().unwrap_or_default()),
                     "pointer" => {
-                        if self.pick {
+                        if self.picking() {
                             let picked = self
                                 .snapshot
                                 .pick(
@@ -594,6 +647,7 @@ impl Studio {
                                 Ok(snapshot)
                                     if self.inspection_sequence.accept(snapshot.request_id) =>
                                 {
+                                    self.inspection_fresh = true;
                                     // Request IDs and capture duration change on every poll.
                                     // Retain the shared view when the actual layout is unchanged.
                                     if snapshot.schema != self.snapshot.schema

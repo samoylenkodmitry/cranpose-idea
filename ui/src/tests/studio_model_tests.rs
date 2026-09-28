@@ -11,6 +11,77 @@ fn studio() -> Studio {
 }
 
 #[test]
+fn hidden_and_paused_inspection_never_expose_old_bounds_or_pick_targets() {
+    let mut model = studio();
+    model.start();
+    model.handle("studio.child", r#"{"session":1,"event":"connected"}"#);
+    model.set_picking(true);
+    let request = |model: &Studio| -> u64 {
+        model.inspection_request().expect("connected")["payload"]
+            .as_str()
+            .expect("request string")
+            .parse()
+            .expect("request id")
+    };
+    let reply = |model: &mut Studio, id, x| {
+        model.handle("studio.child", &json!({"session":1,"event":"message",
+            "channel":"cranpose.inspector.v2.snapshot","payload":json!({"schema":2,
+            "requestId":id,"nodes":[{"id":"label","text":"Sun","x":x,"width":40,"height":20}]}).to_string()}).to_string());
+    };
+    let first = request(&model);
+    reply(&mut model, first, 10);
+    model.select_node("label".into());
+    assert_eq!(model.selected_bounds().expect("fresh bounds")["x"], 10.0);
+    assert!(model.picking());
+    let delayed = request(&model);
+
+    model.set_inspecting(false);
+    assert!(!model.pick && !model.picking());
+    assert!(model.selected_bounds().is_none());
+    assert_eq!(model.selected, "label", "keep details for reopening");
+    reply(&mut model, delayed, 90);
+    model.set_inspecting(true);
+    assert!(model.selected_bounds().is_none());
+    reply(&mut model, delayed, 90);
+    assert!(
+        model.selected_bounds().is_none(),
+        "late reply cannot restore bounds"
+    );
+    let fresh = request(&model);
+    // Even identical nodes must make the fresh observation visible to composition.
+    reply(&mut model, fresh, 10);
+    assert!(model.selected_bounds().is_some());
+
+    model.set_live_inspection(false);
+    assert!(model.selected_bounds().is_none());
+    let refresh = request(&model);
+    reply(&mut model, refresh, 30);
+    assert!(
+        model.selected_bounds().is_none(),
+        "paused details are not live bounds"
+    );
+    model.set_live_inspection(true);
+    reply(&mut model, refresh, 30);
+    assert!(model.selected_bounds().is_none());
+    let resumed = request(&model);
+    reply(&mut model, resumed, 50);
+    assert_eq!(model.selected_bounds().expect("new bounds")["x"], 50.0);
+
+    model.set_live_inspection(false);
+    model.set_picking(true);
+    assert!(model.live && model.settings.inspect);
+    assert!(
+        !model.picking(),
+        "Pick waits for a new snapshot after Resume"
+    );
+    let pick = request(&model);
+    reply(&mut model, pick, 50);
+    assert!(model.picking());
+    model.handle("studio.child", r#"{"session":1,"event":"stopped"}"#);
+    assert!(model.selected_bounds().is_none() && !model.picking());
+}
+
+#[test]
 fn native_controller_starts_only_a_debug_development_runner() {
     let mut studio = studio();
     let request = studio.start().expect("runnable target");
