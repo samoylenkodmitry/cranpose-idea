@@ -21,7 +21,7 @@
         offline without Git. The plugin owns preview instrumentation and leaves application release
         builds unchanged. JetBrains Rust support provides full Rust language editing.</p>
     ]]></description>
-    <change-notes><![CDATA[<p>0.13.4 — Preview selection follows inspection.</p><p>Closing Inspect clears preview bounds and releases Pick, so you can interact with the application normally. Pausing keeps captured details without drawing stale bounds over the running preview. Reopening or resuming waits for a fresh snapshot before restoring selection bounds. Delayed snapshots cannot restore an old highlight. Application release builds are unchanged.</p>]]></change-notes>
+    <change-notes><![CDATA[<p>0.13.5 — Navigate from picked views to their source.</p><p>Picking a view or clicking its source link now opens the original source file for previews using generated launchers, including Showcase. Cargo workspace paths no longer duplicate the generated package directory. Application release builds are unchanged.</p>]]></change-notes>
     <depends>com.intellij.modules.platform</depends>
     <extensions defaultExtensionNs="com.intellij">
         <postStartupActivity implementation="dev.cranpose.rust.Startup"/>

@@ -1,4 +1,15 @@
-# Cranpose 0.13.4
+# Cranpose 0.13.5
+
+Picking a view and clicking its source link now opens the original source file
+when the preview uses a generated launcher, including Showcase. The shared Rust
+resolver understands Cargo's workspace-relative source paths and avoids
+duplicating the generated package directory. Nested source mappings take
+precedence over their enclosing workspace.
+
+Application release builds are unchanged. This corrects source navigation; no
+performance improvement is claimed.
+
+## Included since 0.13.4
 
 Closing Inspect now clears preview bounds and releases Pick, so you can interact
 with the application normally. Pausing retains captured details while removing

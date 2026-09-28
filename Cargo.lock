@@ -1060,7 +1060,7 @@ dependencies = [
  "cranpose-dev-runner",
  "cranpose-plugin-authoring-ui",
  "cranpose-plugin-ui",
- "cranpose-plugin-ux 0.1.0 (git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=723692b2dd8d2d56a012689f14f1b13ef57f18e5)",
+ "cranpose-plugin-ux 0.1.0 (git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=f8fa62eb7d3b9db8de0c4f8fd9bfc6828f1b7128)",
  "cranpose-stability",
  "serde",
  "serde_json",
@@ -1268,7 +1268,7 @@ dependencies = [
 [[package]]
 name = "cranpose-plugin-ux"
 version = "0.1.0"
-source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=723692b2dd8d2d56a012689f14f1b13ef57f18e5#723692b2dd8d2d56a012689f14f1b13ef57f18e5"
+source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=944c68abaf1d0a15a105b67a600ea1dadf6a36f1#944c68abaf1d0a15a105b67a600ea1dadf6a36f1"
 dependencies = [
  "serde",
  "serde_json",
@@ -1277,7 +1277,7 @@ dependencies = [
 [[package]]
 name = "cranpose-plugin-ux"
 version = "0.1.0"
-source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=944c68abaf1d0a15a105b67a600ea1dadf6a36f1#944c68abaf1d0a15a105b67a600ea1dadf6a36f1"
+source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=f8fa62eb7d3b9db8de0c4f8fd9bfc6828f1b7128#f8fa62eb7d3b9db8de0c4f8fd9bfc6828f1b7128"
 dependencies = [
  "serde",
  "serde_json",

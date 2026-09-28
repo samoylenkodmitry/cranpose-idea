@@ -470,19 +470,13 @@ impl Studio {
         self.start()
     }
     pub fn resolve_source(&self, source: &Source) -> PathBuf {
-        let path = Path::new(&source.manifest_dir).join(&source.file);
-        for (private, original) in &self.source_maps {
-            if let Ok(relative) = path.strip_prefix(private) {
-                return original.join(relative);
-            }
-        }
-        path.strip_prefix(&self.private_root)
-            .ok()
-            .filter(|_| !self.private_root.is_empty())
-            .map_or_else(
-                || path.clone(),
-                |relative| Path::new(&self.root).join(relative),
-            )
+        cranpose_plugin_ux::source_paths::resolve(
+            Path::new(&source.file),
+            Path::new(&source.manifest_dir),
+            Path::new(&self.private_root),
+            Path::new(&self.root),
+            &self.source_maps,
+        )
     }
     pub fn handle(&mut self, channel: &str, payload: &str) -> Vec<Value> {
         let Ok(value) = serde_json::from_str::<Value>(payload) else {

@@ -243,6 +243,18 @@ fn maps_binary_launcher_paths_before_workspace_paths() {
 }
 
 #[test]
+fn picked_launcher_view_navigates_to_original_workspace_source() {
+    let mut studio = studio();
+    studio.log(r#"{"cranposeDev":"sourceMap","private":"/cache/workspace/.cranpose-dev/launcher","original":"/project"}"#);
+    studio.log(r#"{"cranposeDev":"workspace","private":"/cache/workspace"}"#);
+    studio.snapshot = Snapshot::parse(r#"{"schema":2,"nodes":[{"id":"description","kind":"Text","text":"Closest to the Sun","sources":[{"name":"__cranpose_call:Text","manifestDir":"/cache/workspace/.cranpose-dev/launcher","file":".cranpose-dev/launcher/src/screens/detail_screen.rs","line":59}]}]}"#).expect("snapshot").into();
+    studio.select_node("description".into());
+    let request = studio.selected_source_request().expect("source navigation");
+    assert_eq!(request["file"], "/project/src/screens/detail_screen.rs");
+    assert_eq!(request["line"], 59);
+}
+
+#[test]
 fn inspector_search_includes_full_text_source_and_modifier_values() {
     let snapshot = Snapshot::parse(r#"{"schema":2,"nodes":[{"id":"root","kind":"Column"},{"id":"label","parent":"root","kind":"Text","text":"Café quiet morning","sources":[{"name":"Card","file":"src/card.rs"}],"modifiers":[{"name":"padding","properties":[{"name":"all","value":"12"}]}]}]}"#).expect("snapshot");
     for query in ["café morning", "card.rs", "padding 12"] {
