@@ -27,7 +27,7 @@ fn package_success_and_cancellation_have_distinct_status() {
     state.apply(&json!({"type":"job_finished","cancelled":false,"error":null}));
     assert_eq!(state.status, "Package ready");
     assert!(!state.busy);
-    state.apply(&json!({"type":"job_finished","cancelled":true,"error":null}));
+    state.apply(&json!({"type":"job_finished","cancelled":true,"error":"Cancelled: /long/package/path/application"}));
     assert_eq!(state.status, "Stopped");
     state.begin();
     assert!(state.busy);

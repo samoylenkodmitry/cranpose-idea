@@ -78,10 +78,10 @@ impl BuildState {
             }
             "job_finished" => {
                 self.busy = false;
-                if let Some(error) = event["error"].as_str() {
-                    self.status = error.into();
-                } else if event["cancelled"] == true {
+                if event["cancelled"] == true {
                     self.status = "Stopped".into();
+                } else if let Some(error) = event["error"].as_str() {
+                    self.status = error.into();
                 } else if self.status == "Working…" {
                     self.status = "Done".into();
                 }
