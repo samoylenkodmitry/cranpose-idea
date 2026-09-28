@@ -250,7 +250,10 @@ fn picked_launcher_view_navigates_to_original_workspace_source() {
     studio.snapshot = Snapshot::parse(r#"{"schema":2,"nodes":[{"id":"description","kind":"Text","text":"Closest to the Sun","sources":[{"name":"__cranpose_call:Text","manifestDir":"/cache/workspace/.cranpose-dev/launcher","file":".cranpose-dev/launcher/src/screens/detail_screen.rs","line":59}]}]}"#).expect("snapshot").into();
     studio.select_node("description".into());
     let request = studio.selected_source_request().expect("source navigation");
-    assert_eq!(request["file"], "/project/src/screens/detail_screen.rs");
+    assert_eq!(
+        request["file"],
+        json!(Path::new("/project").join("src/screens/detail_screen.rs"))
+    );
     assert_eq!(request["line"], 59);
 }
 
