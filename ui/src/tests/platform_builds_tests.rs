@@ -62,3 +62,47 @@ fn doctor_retains_actionable_missing_tool_details() {
         ["! xcrun · Install Xcode", "Requires an iOS simulator"]
     );
 }
+
+#[test]
+fn running_status_keeps_stop_available_until_job_completion() {
+    for (completion, expected) in [
+        (
+            json!({"type":"job_finished","cancelled":false,"error":null}),
+            "Application exited",
+        ),
+        (
+            json!({"type":"job_finished","cancelled":true,"error":"Cancelled"}),
+            "Stopped",
+        ),
+        (
+            json!({"type":"job_finished","cancelled":false,"error":"Application exited with code 23"}),
+            "Application exited with code 23",
+        ),
+    ] {
+        let mut state = TaskState::default();
+        state.begin();
+        apply_build_event(
+            &mut state,
+            &json!({"type":"stage","message":"Launching application"}),
+        );
+        apply_build_event(
+            &mut state,
+            &json!({"type":"stage","message":"Application running"}),
+        );
+        apply_build_event(
+            &mut state,
+            &json!({"type":"log","text":"Application output"}),
+        );
+        assert!(state.busy);
+        assert_eq!(state.status, "Application running");
+        if completion["error"].is_null() {
+            apply_build_event(
+                &mut state,
+                &json!({"type":"stage","message":"Application exited"}),
+            );
+        }
+        apply_build_event(&mut state, &completion);
+        assert!(!state.busy);
+        assert_eq!(state.status, expected);
+    }
+}

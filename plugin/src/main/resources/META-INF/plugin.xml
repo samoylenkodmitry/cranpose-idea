@@ -21,7 +21,7 @@
         offline without Git. The plugin owns preview instrumentation and leaves application release
         builds unchanged. JetBrains Rust support provides full Rust language editing.</p>
     ]]></description>
-    <change-notes><![CDATA[<p>0.13.0 — Local platform builds.</p><ul><li>Build, package and launch desktop and mobile applications through the Rust Cranpose Build library.</li><li>Platform and profile selection, prerequisite checks, pinned backend setup, build plans, device discovery and cancellable jobs in the Cranpose panel.</li><li>Portable application packages with ZIP archives and SHA256 manifests.</li></ul><p>Platform SDKs are required. iOS requires macOS/Xcode; foreign desktop execution needs its matching runtime. Application release code is unchanged.</p>]]></change-notes>
+    <change-notes><![CDATA[<p>0.13.1 — Accurate desktop run status.</p><p>Build &amp; run now shows Application running after successful OS process creation, with Stop available until exit. Failed launches never report running. This does not promise application readiness or first paint. Mobile deployment retains its device-handoff status. Uses Cranpose Build 0.1.3 and shared Rust process notifications; no polling timer or application release change is added.</p>]]></change-notes>
     <depends>com.intellij.modules.platform</depends>
     <extensions defaultExtensionNs="com.intellij">
         <postStartupActivity implementation="dev.cranpose.rust.Startup"/>
