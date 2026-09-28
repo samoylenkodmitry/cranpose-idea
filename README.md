@@ -46,6 +46,10 @@ Badges redraw when content, theme or geometry changes. Finite shader animations
 mark source navigation and supported live updates without an idle animation loop.
 Document-based preview gutters appear alongside Rust's macro-expansion markers.
 
+Large, dense sets of live-value markers use fewer editor layout updates when a
+structural source change rebuilds them. See the
+[editor placement measurements and limits](docs/performance-0.13.3.md).
+
 ## Preview and inspect
 
 Open a Rust source file and choose **Split**. Select a Cargo binary or example, then
