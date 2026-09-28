@@ -358,12 +358,12 @@ fn wide_inspection_preserves_preview_height_and_clips_before_the_sidebar() {
     assert_eq!(wide.inspector_width, 400.0);
     assert_eq!(wide.stage_width, 600.0);
     assert_eq!(wide.inspector_height, 0.0);
-    assert_eq!(wide.stage_height + wide.top + 28.0, 600.0);
+    assert_eq!(wide.stage_height + wide.top + STATUS_HEIGHT, 600.0);
     let small = StudioLayout::new(500.0, 240.0, true, 0.0, 0.0);
     assert_eq!(small.inspector_width, 0.0);
     assert!(small.stage_height > 0.0);
     assert_eq!(
-        small.stage_height + small.inspector_height + small.top + 28.0,
+        small.stage_height + small.inspector_height + small.top + STATUS_HEIGHT,
         240.0
     );
 }
@@ -538,4 +538,55 @@ fn inspector_requests_use_decimal_ids_and_advance_when_the_layout_does_not() {
         model.inspection_request().expect("new connection")["payload"],
         "1"
     );
+}
+
+#[test]
+fn native_menus_describe_and_apply_choices() {
+    let mut studio = studio();
+    let targets = studio.menu_items("target");
+    assert!(!targets.is_empty());
+    assert_eq!(targets.iter().filter(|i| i["checked"] == true).count(), 1);
+
+    studio.settings.width = 480;
+    studio.settings.height = 760;
+    let sizes = studio.menu_items("size");
+    assert!(
+        sizes
+            .iter()
+            .any(|i| i["id"] == "480x760" && i["checked"] == true)
+    );
+    assert!(
+        sizes
+            .iter()
+            .any(|i| i["id"] == "rotate" && i["separator"] == true)
+    );
+    studio.choose("size", "rotate");
+    assert_eq!((studio.settings.width, studio.settings.height), (760, 480));
+    studio.choose("size", "1280x800");
+    assert_eq!((studio.settings.width, studio.settings.height), (1280, 800));
+    studio.choose("size", "custom");
+    assert_eq!(studio.menu, "size");
+
+    studio.choose("zoom", "1.5");
+    assert!(!studio.settings.fit);
+    assert_eq!(studio.settings.zoom, 1.5);
+    assert!(
+        studio
+            .menu_items("zoom")
+            .iter()
+            .any(|i| i["label"] == "150%" && i["checked"] == true)
+    );
+    studio.choose("zoom", "0");
+    assert!(studio.settings.fit);
+
+    // Process-shaping settings restart a running preview instead of asking.
+    studio.session = 3;
+    let hot = studio.settings.hot_reload;
+    let requests = studio.choose("more", "hotReload");
+    assert_eq!(studio.settings.hot_reload, !hot);
+    assert!(requests.iter().any(|r| r["action"] == "start"));
+    assert!(!studio.restart_required);
+    let requests = studio.choose("more", "configure");
+    assert_eq!(requests[0]["action"], "configure");
+    assert!(studio.choose("target", "missing").is_empty());
 }

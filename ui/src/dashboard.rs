@@ -1,10 +1,11 @@
-use crate::ide::{Palette, rememberPalette};
+use crate::{
+    ide::rememberPalette,
+    kit::{Glyph, Label, Look, PrimaryButton, ToolButton, icons, style},
+};
 use cranpose::{
-    Box as UiBox, BoxSpec, Button, ButtonSpec, Color, Column, ColumnSpec, GraphicsLayer,
-    LinearArrangement, Modifier, Row, RowSpec, ScrollState, SpanStyle, Text, TextStyle,
-    VerticalAlignment, composable, remember, rememberHostMessages, rememberMutableStateOf,
-    send_to_host,
-    text::{FontWeight, TextUnit},
+    Box as UiBox, BoxSpec, Color, Column, ColumnSpec, LinearArrangement, Modifier, Row, RowSpec,
+    ScrollState, Text, VerticalAlignment, composable, remember, rememberHostMessages,
+    rememberMutableStateOf, send_to_host, text::FontWeight,
 };
 use cranpose_core::CollectEvents;
 use serde::Deserialize;
@@ -70,6 +71,7 @@ fn request(action: &str, value: &str) {
 #[composable]
 pub fn Dashboard() {
     let palette = rememberPalette();
+    let look = Look::new(palette);
     let scroll = remember(|| ScrollState::new(0.0)).with(|value| *value);
     let workspace = rememberMutableStateOf(Workspace::default);
     let editor = rememberMutableStateOf(Editor::default);
@@ -101,113 +103,147 @@ pub fn Dashboard() {
                 Modifier::empty()
                     .fill_max_size()
                     .vertical_scroll(scroll, false)
-                    .padding(16.0),
-                ColumnSpec::default().vertical_arrangement(LinearArrangement::spaced_by(16.0)),
+                    .padding(14.0),
+                ColumnSpec::default().vertical_arrangement(LinearArrangement::spaced_by(12.0)),
                 move || {
-                    Column(
-                        Modifier::empty().fill_max_width(),
-                        ColumnSpec::default()
-                            .vertical_arrangement(LinearArrangement::spaced_by(6.0)),
-                        move || {
-                            Text(
-                                "Cranpose Studio",
-                                Modifier::empty(),
-                                style(palette.text, 20.0, false),
-                            );
-                            Text(
-                                "Preview · Inspect · Tune",
-                                Modifier::empty(),
-                                style(palette.muted, 12.0, false),
-                            );
-                            UiBox(
-                                Modifier::empty()
-                                    .fill_max_width()
-                                    .height(2.0)
-                                    .graphics_layer(move || GraphicsLayer {
-                                        render_effect: Some(
-                                            cranpose_plugin_authoring_ui::accent_effect(
-                                                palette.accent,
-                                            ),
-                                        ),
-                                        ..Default::default()
-                                    }),
-                                BoxSpec::default(),
-                                || {},
-                            );
-                        },
-                    );
                     Row(
-                        Modifier::empty(),
+                        Modifier::empty().fill_max_width(),
                         RowSpec::default()
-                            .horizontal_arrangement(LinearArrangement::spaced_by(6.0))
+                            .horizontal_arrangement(LinearArrangement::spaced_by(10.0))
                             .vertical_alignment(VerticalAlignment::CenterVertically),
                         move || {
-                            Action(palette, "Refresh", "refresh", "", !workspace.get().busy);
-                            Action(palette, "Docs", "docs", "", true);
+                            UiBox(
+                                Modifier::empty()
+                                    .width(32.0)
+                                    .height(32.0)
+                                    .rounded_corners(9.0)
+                                    .background(look.accent(if look.dark { 0.2 } else { 0.12 })),
+                                BoxSpec::default().content_alignment(cranpose::Alignment::CENTER),
+                                move || Glyph(icons::PLAY, 18.0, palette.accent),
+                            );
+                            Column(
+                                Modifier::empty().weight(1.0),
+                                ColumnSpec::default(),
+                                move || {
+                                    Text(
+                                        "Cranpose Studio",
+                                        Modifier::empty(),
+                                        style(palette.text, 15.0, Some(FontWeight::SEMI_BOLD)),
+                                    );
+                                    Label(
+                                        workspace.get().status,
+                                        Modifier::empty(),
+                                        style(palette.muted, 11.5, None),
+                                    );
+                                },
+                            );
+                            ToolButton(
+                                look,
+                                icons::REFRESH,
+                                String::new(),
+                                false,
+                                false,
+                                !workspace.get().busy,
+                                ("", None),
+                                |_| request("refresh", ""),
+                            );
+                            ToolButton(
+                                look,
+                                icons::DOCS,
+                                String::new(),
+                                false,
+                                false,
+                                true,
+                                ("", None),
+                                |_| request("docs", ""),
+                            );
                         },
                     );
-                    let state = workspace.get();
-                    Text(
-                        state.status.clone(),
-                        Modifier::empty(),
-                        style(palette.muted, 12.0, false),
-                    );
-                    Section(palette, "Application", move || {
+                    Section(look, icons::APP, "Application", move || {
                         let state = workspace.get();
                         if state.targets.is_empty() {
                             Text(
-                                "Open a Cargo workspace with a Cranpose application.",
-                                Modifier::empty(),
-                                style(palette.muted, 12.0, false),
+                                "Open a Cargo workspace with a Cranpose application, or start from the included Showcase.",
+                                Modifier::empty().fill_max_width(),
+                                style(palette.muted, 12.0, None),
                             );
-                            Action(palette, "Create project", "create", "", !state.busy);
+                            if !state.busy {
+                                PrimaryButton(look, icons::ADD, "Create project".into(), || {
+                                    request("create", "")
+                                });
+                            }
+                            return;
                         }
-                        if !state.targets.is_empty() {
-                            cranpose_plugin_ui::choice::CompactChoice(
-                                palette,
-                                "target",
-                                state
-                                    .targets
-                                    .iter()
-                                    .map(|target| cranpose_plugin_ui::choice::ChoiceItem {
-                                        id: target.id.clone(),
-                                        label: target.name.clone(),
-                                        detail: format!("{} · {}", target.package, target.kind),
-                                    })
-                                    .collect(),
-                                state.selected,
-                                |id| request("select", id),
-                            );
-                        }
-                        if !workspace.get().targets.is_empty() {
-                            Row(
-                                Modifier::empty(),
-                                RowSpec::default()
-                                    .horizontal_arrangement(LinearArrangement::spaced_by(6.0))
-                                    .vertical_alignment(VerticalAlignment::CenterVertically),
-                                move || {
-                                    let enabled = !workspace.get().busy;
-                                    Action(palette, "Preview", "preview", "", enabled);
-                                    Action(palette, "Run", "run", "", enabled);
-                                    Action(palette, "Check", "check", "", enabled);
-                                },
-                            );
-                            Row(
-                                Modifier::empty(),
-                                RowSpec::default()
-                                    .horizontal_arrangement(LinearArrangement::spaced_by(6.0))
-                                    .vertical_alignment(VerticalAlignment::CenterVertically),
-                                move || {
-                                    Action(palette, "Test", "test", "", !workspace.get().busy);
-                                    Action(palette, "Run config", "configure", "", true);
-                                    if workspace.get().busy {
-                                        Action(palette, "Stop", "stop", "", true);
-                                    }
-                                },
-                            );
-                        }
+                        cranpose_plugin_ui::choice::CompactChoice(
+                            palette,
+                            "target",
+                            state
+                                .targets
+                                .iter()
+                                .map(|target| cranpose_plugin_ui::choice::ChoiceItem {
+                                    id: target.id.clone(),
+                                    label: target.name.clone(),
+                                    detail: format!("{} · {}", target.package, target.kind),
+                                })
+                                .collect(),
+                            state.selected,
+                            |id| request("select", id),
+                        );
+                        Row(
+                            Modifier::empty().fill_max_width(),
+                            RowSpec::default()
+                                .horizontal_arrangement(LinearArrangement::spaced_by(4.0))
+                                .vertical_alignment(VerticalAlignment::CenterVertically),
+                            move || {
+                                let enabled = !workspace.get().busy;
+                                if enabled {
+                                    PrimaryButton(look, icons::PLAY, "Preview".into(), || {
+                                        request("preview", "")
+                                    });
+                                }
+                                for (icon, label, action) in [
+                                    (icons::BUILD, "Run", "run"),
+                                    (icons::CHECK, "Check", "check"),
+                                    (icons::TEST, "Test", "test"),
+                                ] {
+                                    ToolButton(
+                                        look,
+                                        icon,
+                                        label.into(),
+                                        false,
+                                        false,
+                                        enabled,
+                                        ("", None),
+                                        move |_| request(action, ""),
+                                    );
+                                }
+                                UiBox(Modifier::empty().weight(1.0), BoxSpec::default(), || {});
+                                if workspace.get().busy {
+                                    ToolButton(
+                                        look,
+                                        icons::STOP,
+                                        "Stop".into(),
+                                        false,
+                                        false,
+                                        true,
+                                        ("", None),
+                                        |_| request("stop", ""),
+                                    );
+                                }
+                                ToolButton(
+                                    look,
+                                    icons::SETTINGS,
+                                    String::new(),
+                                    false,
+                                    false,
+                                    true,
+                                    ("", None),
+                                    |_| request("configure", ""),
+                                );
+                            },
+                        );
                     });
-                    Section(palette, "Build for a platform", move || {
+                    Section(look, icons::BUILD, "Build for a platform", move || {
                         let workspace = workspace.get();
                         let target = workspace
                             .targets
@@ -226,60 +262,113 @@ pub fn Dashboard() {
                                 .unwrap_or_default(),
                         );
                     });
-                    Section(palette, "Components", move || {
+                    Section(look, icons::LAYERS, "Components", move || {
                         let current = editor.get();
-                        Text(
-                            if current.path.is_empty() {
-                                "Open a Rust source file".to_owned()
-                            } else {
-                                current.name
-                            },
-                            Modifier::empty(),
-                            style(palette.muted, 11.0, false),
-                        );
+                        if current.path.is_empty() {
+                            Text(
+                                "Open a Rust source file to list its composables.",
+                                Modifier::empty(),
+                                style(palette.muted, 12.0, None),
+                            );
+                        } else if current.composables.is_empty() {
+                            Text(
+                                format!("No composables in {}", current.name),
+                                Modifier::empty(),
+                                style(palette.muted, 12.0, None),
+                            );
+                        } else {
+                            Text(
+                                current.name.clone(),
+                                Modifier::empty(),
+                                style(palette.muted, 11.0, None),
+                            );
+                        }
                         for symbol in current.composables {
+                            let offset = symbol.offset.to_string();
+                            let name = symbol.name.clone();
                             Row(
-                                Modifier::empty().fill_max_width(),
+                                Modifier::empty()
+                                    .fill_max_width()
+                                    .height(30.0)
+                                    .rounded_corners(6.0)
+                                    .padding_horizontal(6.0)
+                                    .clickable(move |_| request("navigate", &offset)),
                                 RowSpec::default()
-                                    .horizontal_arrangement(LinearArrangement::SpaceBetween)
+                                    .horizontal_arrangement(LinearArrangement::spaced_by(8.0))
                                     .vertical_alignment(VerticalAlignment::CenterVertically),
                                 move || {
-                                    let offset = symbol.offset.to_string();
-                                    Text(
-                                        format!("{}  :{}", symbol.name, symbol.line),
-                                        Modifier::empty()
-                                            .padding(6.0)
-                                            .clickable(move |_| request("navigate", &offset)),
-                                        style(palette.text, 13.0, false),
+                                    Glyph(icons::SOURCE, 14.0, palette.muted);
+                                    Label(
+                                        symbol.name.clone(),
+                                        Modifier::empty().weight(1.0),
+                                        style(palette.text, 12.5, None),
                                     );
-                                    Action(palette, "›", "component", &symbol.name, true);
+                                    Text(
+                                        format!(":{}", symbol.line),
+                                        Modifier::empty(),
+                                        style(palette.muted, 11.0, None),
+                                    );
+                                    let name = name.clone();
+                                    ToolButton(
+                                        look,
+                                        icons::PLAY,
+                                        String::new(),
+                                        false,
+                                        false,
+                                        true,
+                                        ("", None),
+                                        move |_| request("component", &name),
+                                    );
                                 },
                             );
                         }
                     });
-                    if !state.diagnostics.is_empty() {
-                        Section(palette, "Build problems", move || {
+                    if !workspace.get().diagnostics.is_empty() {
+                        Section(look, icons::WARNING, "Build problems", move || {
                             for (index, diagnostic) in
                                 workspace.get().diagnostics.into_iter().enumerate()
                             {
-                                Column(
-                                    Modifier::empty().fill_max_width().padding(6.0).clickable(
-                                        move |_| request("diagnostic", &index.to_string()),
-                                    ),
-                                    ColumnSpec::default(),
+                                Row(
+                                    Modifier::empty()
+                                        .fill_max_width()
+                                        .rounded_corners(6.0)
+                                        .padding(6.0)
+                                        .clickable(move |_| {
+                                            request("diagnostic", &index.to_string())
+                                        }),
+                                    RowSpec::default()
+                                        .horizontal_arrangement(LinearArrangement::spaced_by(8.0)),
                                     move || {
-                                        Text(
-                                            diagnostic.message.clone(),
-                                            Modifier::empty(),
-                                            style(palette.text, 12.0, false),
+                                        Glyph(
+                                            icons::WARNING,
+                                            14.0,
+                                            if diagnostic.level == "warning" {
+                                                look.warning
+                                            } else {
+                                                look.danger
+                                            },
                                         );
-                                        Text(
-                                            format!(
-                                                "{} · {}:{}",
-                                                diagnostic.level, diagnostic.file, diagnostic.line
+                                        let diagnostic = diagnostic.clone();
+                                        Column(
+                                            Modifier::empty().weight(1.0),
+                                            ColumnSpec::default().vertical_arrangement(
+                                                LinearArrangement::spaced_by(2.0),
                                             ),
-                                            Modifier::empty(),
-                                            style(palette.muted, 11.0, false),
+                                            move || {
+                                                Text(
+                                                    diagnostic.message.clone(),
+                                                    Modifier::empty().fill_max_width(),
+                                                    style(palette.text, 12.0, None),
+                                                );
+                                                Text(
+                                                    format!(
+                                                        "{}:{}",
+                                                        diagnostic.file, diagnostic.line
+                                                    ),
+                                                    Modifier::empty(),
+                                                    style(palette.accent, 11.0, None),
+                                                );
+                                            },
                                         );
                                     },
                                 );
@@ -292,77 +381,39 @@ pub fn Dashboard() {
     );
 }
 
+/// A titled card. Content lays out in a column with comfortable spacing.
 #[composable]
-fn Section(palette: Palette, title: &'static str, content: impl FnMut() + 'static) {
+fn Section(look: Look, icon: &'static str, title: &'static str, content: impl FnMut() + 'static) {
     Column(
         Modifier::empty()
             .fill_max_width()
             .rounded_corners(10.0)
-            .background(palette.surface)
+            .background(Color(
+                look.palette.surface.0,
+                look.palette.surface.1,
+                look.palette.surface.2,
+                if look.dark { 0.7 } else { 0.9 },
+            ))
             .padding(12.0),
-        ColumnSpec::default().vertical_arrangement(LinearArrangement::spaced_by(8.0)),
+        ColumnSpec::default().vertical_arrangement(LinearArrangement::spaced_by(10.0)),
         move || {
-            Text(
-                title,
-                Modifier::empty().padding(4.0),
-                style(palette.text, 13.0, true),
+            Row(
+                Modifier::empty(),
+                RowSpec::default()
+                    .horizontal_arrangement(LinearArrangement::spaced_by(7.0))
+                    .vertical_alignment(VerticalAlignment::CenterVertically),
+                move || {
+                    Glyph(icon, 15.0, look.palette.muted);
+                    Text(
+                        title,
+                        Modifier::empty(),
+                        style(look.palette.text, 13.0, Some(FontWeight::SEMI_BOLD)),
+                    );
+                },
             );
             content();
         },
     );
-}
-
-#[expect(non_snake_case)]
-fn Action(palette: Palette, label: &str, action: &str, value: &str, enabled: bool) {
-    let primary = action == "preview" || action == "create";
-    let label = label.to_owned();
-    let action = action.to_owned();
-    let value = value.to_owned();
-    Button(
-        Modifier::empty()
-            .background(if enabled && primary {
-                palette.selection()
-            } else {
-                Color::TRANSPARENT
-            })
-            .rounded_corners(6.0)
-            .padding(7.0),
-        ButtonSpec::default(),
-        move || {
-            if enabled {
-                request(&action, &value);
-            }
-        },
-        move || {
-            Text(
-                label.clone(),
-                Modifier::empty(),
-                style(
-                    if !enabled {
-                        palette.muted
-                    } else if primary {
-                        palette.accent
-                    } else {
-                        palette.text
-                    },
-                    12.0,
-                    false,
-                ),
-            );
-        },
-    );
-}
-
-fn style(color: Color, size: f32, bold: bool) -> TextStyle {
-    TextStyle {
-        span_style: SpanStyle {
-            color: Some(color),
-            font_size: TextUnit::Sp(size),
-            font_weight: bold.then_some(FontWeight::BOLD),
-            ..SpanStyle::default()
-        },
-        ..TextStyle::default()
-    }
 }
 
 #[cfg(test)]

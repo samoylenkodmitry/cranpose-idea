@@ -550,6 +550,10 @@ impl Studio {
             }
             "studio.command" => match value["action"].as_str().unwrap_or_default() {
                 "build" => requests.extend(self.start()),
+                "menu" => requests.extend(self.choose(
+                    value["menu"].as_str().unwrap_or_default(),
+                    value["item"].as_str().unwrap_or_default(),
+                )),
                 "showFunction" => {
                     self.requested_function = value["name"].as_str().unwrap_or_default().into();
                     if self.session == 0 {
@@ -690,6 +694,164 @@ impl Studio {
         }
         requests
     }
+    /// Items for a native IDE menu, in the host's `menu` request format.
+    pub fn menu_items(&self, menu: &str) -> Vec<Value> {
+        let item = |id: &str, label: &str, checked: bool| json!({"id": id, "label": label, "checked": checked});
+        let separated = |mut value: Value| {
+            value["separator"] = json!(true);
+            value
+        };
+        match menu {
+            "target" => self
+                .targets
+                .iter()
+                .map(|target| {
+                    let mut label = target.name.clone();
+                    if target.package_name != target.name {
+                        label.push_str(&format!(" · {}", target.package_name));
+                    }
+                    if target.kind == "example" {
+                        label.push_str(" · example");
+                    }
+                    let id = target.id();
+                    item(&id, &label, id == self.settings.target)
+                })
+                .collect(),
+            "preview" => std::iter::once(item("", "Application", self.settings.preview.is_empty()))
+                .chain(self.previews.iter().enumerate().map(|(index, preview)| {
+                    let label = if preview.group.is_empty() {
+                        preview.name.clone()
+                    } else {
+                        format!("{} › {}", preview.group, preview.name)
+                    };
+                    let entry = item(&preview.id, &label, preview.id == self.settings.preview);
+                    if index == 0 { separated(entry) } else { entry }
+                }))
+                .collect(),
+            "size" => {
+                let (width, height) = (self.settings.width, self.settings.height);
+                let mut items: Vec<_> = SIZES
+                    .iter()
+                    .map(|(name, w, h)| {
+                        item(
+                            &format!("{w}x{h}"),
+                            &format!("{name}  {w} × {h}"),
+                            (width, height) == (*w, *h),
+                        )
+                    })
+                    .collect();
+                items.push(separated(item("rotate", "Rotate", false)));
+                items.push(item("custom", "Custom size…", false));
+                items
+            }
+            "zoom" => ZOOMS
+                .iter()
+                .map(|(label, zoom)| {
+                    let checked = if *zoom == 0.0 {
+                        self.settings.fit
+                    } else {
+                        !self.settings.fit && (self.settings.zoom - zoom).abs() < 0.001
+                    };
+                    item(&zoom.to_string(), label, checked)
+                })
+                .collect(),
+            "more" => vec![
+                item("hotReload", "Hot code reload", self.settings.hot_reload),
+                item("autoBuild", "Rebuild on save", self.settings.auto_build),
+                item("live", "Live inspection", self.live),
+                separated(item("configure", "Run configuration…", false)),
+                item("export", "Export PNG…", false),
+                item("reveal", "Reveal source", false),
+            ],
+            _ => vec![],
+        }
+    }
+
+    /// Apply a native menu choice. Settings that shape the running process
+    /// restart the preview immediately rather than waiting for the user.
+    pub fn choose(&mut self, menu: &str, item: &str) -> Vec<Value> {
+        let mut requests = vec![];
+        match (menu, item) {
+            ("target", id) if self.targets.iter().any(|t| t.id() == id) => {
+                if self.settings.target != id {
+                    self.settings.target = id.into();
+                    self.settings.preview.clear();
+                    if self.session > 0 {
+                        requests.extend(self.start());
+                    }
+                }
+            }
+            ("preview", id) if id.is_empty() || self.previews.iter().any(|p| p.id == id) => {
+                requests.extend(self.select_preview(id.into()));
+            }
+            ("size", "rotate") => {
+                let settings = &mut self.settings;
+                (settings.width, settings.height) = (settings.height, settings.width);
+            }
+            ("size", "custom") => self.menu = "size".into(),
+            ("size", preset) => {
+                if let Some((w, h)) = preset.split_once('x')
+                    && let (Ok(w), Ok(h)) = (w.parse(), h.parse())
+                {
+                    self.settings.width = w;
+                    self.settings.height = h;
+                    self.settings.normalize();
+                }
+            }
+            ("zoom", zoom) => {
+                if let Ok(zoom) = zoom.parse::<f32>() {
+                    self.settings.fit = zoom == 0.0;
+                    if zoom > 0.0 {
+                        self.settings.zoom = zoom;
+                        self.settings.normalize();
+                    }
+                }
+            }
+            ("more", "hotReload" | "autoBuild") => {
+                if item == "hotReload" {
+                    self.settings.hot_reload = !self.settings.hot_reload;
+                } else {
+                    self.settings.auto_build = !self.settings.auto_build;
+                }
+                if self.session > 0 {
+                    requests.extend(self.start());
+                }
+            }
+            ("more", "live") => self.set_live_inspection(!self.live),
+            ("more", "configure") => {
+                requests.push(json!({"action":"configure","target":self.settings.target}))
+            }
+            ("more", "export") => requests.push(json!({"action":"export","session":self.session})),
+            ("more", "reveal") => requests.extend(self.reveal_request()),
+            _ => {}
+        }
+        requests
+    }
+
+    /// The selected node's application source, else the preview function.
+    pub fn reveal_request(&self) -> Option<Value> {
+        if let Some(request) = self.selected_source_request() {
+            return Some(request);
+        }
+        if let Some(source) = self
+            .snapshot
+            .nodes
+            .iter()
+            .find(|node| node.id == self.selected)
+            .and_then(|node| node.sources.last())
+        {
+            return Some(
+                json!({"action": "navigate", "file": self.resolve_source(source), "line": source.line}),
+            );
+        }
+        self.previews
+            .iter()
+            .find(|preview| preview.id == self.settings.preview)
+            .map(|preview| {
+                json!({"action": "navigate", "file": Path::new(&self.root).join(&preview.file), "line": preview.line})
+            })
+    }
+
     fn choose_requested(&mut self, requests: &mut Vec<Value>) {
         if self.requested_function.is_empty() {
             return;
@@ -783,6 +945,25 @@ impl Studio {
 #[path = "tests/studio_model_tests.rs"]
 mod tests;
 
+/// Toolbar height including its bottom hairline.
+pub const TOOLBAR_HEIGHT: f32 = 45.0;
+/// Status bar height below the stage.
+pub const STATUS_HEIGHT: f32 = 26.0;
+const SIZES: [(&str, u32, u32); 4] = [
+    ("Compact", 360, 640),
+    ("Phone", 480, 760),
+    ("Tablet", 800, 600),
+    ("Desktop", 1280, 800),
+];
+const ZOOMS: [(&str, f32); 6] = [
+    ("Fit", 0.0),
+    ("50%", 0.5),
+    ("75%", 0.75),
+    ("100%", 1.0),
+    ("150%", 1.5),
+    ("200%", 2.0),
+];
+
 /// Placement shared by the Cranpose layout and the native viewport clip.
 #[derive(Clone, Copy, Debug)]
 pub struct StudioLayout {
@@ -795,8 +976,8 @@ pub struct StudioLayout {
 impl StudioLayout {
     pub fn new(width: f32, height: f32, inspect: bool, menu: f32, problems: f32) -> Self {
         let wide = width >= 760.0;
-        let top = 84.0 + menu;
-        let body = (height - top - problems - 28.0).max(0.0);
+        let top = TOOLBAR_HEIGHT + menu;
+        let body = (height - top - problems - STATUS_HEIGHT).max(0.0);
         let inspector_width = if inspect && wide {
             (width * 0.4).clamp(320.0, 420.0)
         } else {
