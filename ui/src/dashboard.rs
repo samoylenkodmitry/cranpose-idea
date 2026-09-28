@@ -91,190 +91,203 @@ pub fn Dashboard() {
             }
         },
     );
-    Column(
+    UiBox(
         Modifier::empty()
             .fill_max_size()
-            .background(palette.background)
-            .vertical_scroll(scroll, false)
-            .padding(16.0),
-        ColumnSpec::default().vertical_arrangement(LinearArrangement::spaced_by(16.0)),
+            .background(palette.background),
+        BoxSpec::default(),
         move || {
             Column(
-                Modifier::empty().fill_max_width(),
-                ColumnSpec::default().vertical_arrangement(LinearArrangement::spaced_by(6.0)),
+                Modifier::empty()
+                    .fill_max_size()
+                    .vertical_scroll(scroll, false)
+                    .padding(16.0),
+                ColumnSpec::default().vertical_arrangement(LinearArrangement::spaced_by(16.0)),
                 move || {
-                    Text(
-                        "Cranpose Studio",
-                        Modifier::empty(),
-                        style(palette.text, 20.0, false),
+                    Column(
+                        Modifier::empty().fill_max_width(),
+                        ColumnSpec::default()
+                            .vertical_arrangement(LinearArrangement::spaced_by(6.0)),
+                        move || {
+                            Text(
+                                "Cranpose Studio",
+                                Modifier::empty(),
+                                style(palette.text, 20.0, false),
+                            );
+                            Text(
+                                "Preview · Inspect · Tune",
+                                Modifier::empty(),
+                                style(palette.muted, 12.0, false),
+                            );
+                            UiBox(
+                                Modifier::empty()
+                                    .fill_max_width()
+                                    .height(2.0)
+                                    .graphics_layer(move || GraphicsLayer {
+                                        render_effect: Some(
+                                            cranpose_plugin_authoring_ui::accent_effect(
+                                                palette.accent,
+                                            ),
+                                        ),
+                                        ..Default::default()
+                                    }),
+                                BoxSpec::default(),
+                                || {},
+                            );
+                        },
                     );
+                    Row(
+                        Modifier::empty(),
+                        RowSpec::default()
+                            .horizontal_arrangement(LinearArrangement::spaced_by(6.0))
+                            .vertical_alignment(VerticalAlignment::CenterVertically),
+                        move || {
+                            Action(palette, "Refresh", "refresh", "", !workspace.get().busy);
+                            Action(palette, "Docs", "docs", "", true);
+                        },
+                    );
+                    let state = workspace.get();
                     Text(
-                        "Preview · Inspect · Tune",
+                        state.status.clone(),
                         Modifier::empty(),
                         style(palette.muted, 12.0, false),
                     );
-                    UiBox(
-                        Modifier::empty()
-                            .fill_max_width()
-                            .height(2.0)
-                            .graphics_layer(move || GraphicsLayer {
-                                render_effect: Some(cranpose_plugin_authoring_ui::accent_effect(
-                                    palette.accent,
-                                )),
-                                ..Default::default()
-                            }),
-                        BoxSpec::default(),
-                        || {},
-                    );
-                },
-            );
-            Row(
-                Modifier::empty(),
-                RowSpec::default()
-                    .horizontal_arrangement(LinearArrangement::spaced_by(6.0))
-                    .vertical_alignment(VerticalAlignment::CenterVertically),
-                move || {
-                    Action(palette, "Refresh", "refresh", "", !workspace.get().busy);
-                    Action(palette, "Docs", "docs", "", true);
-                },
-            );
-            let state = workspace.get();
-            Text(
-                state.status.clone(),
-                Modifier::empty(),
-                style(palette.muted, 12.0, false),
-            );
-            Section(palette, "Application", move || {
-                let state = workspace.get();
-                if state.targets.is_empty() {
-                    Text(
-                        "Open a Cargo workspace with a Cranpose application.",
-                        Modifier::empty(),
-                        style(palette.muted, 12.0, false),
-                    );
-                    Action(palette, "Create project", "create", "", !state.busy);
-                }
-                if !state.targets.is_empty() {
-                    cranpose_plugin_ui::choice::CompactChoice(
-                        palette,
-                        "target",
-                        state
+                    Section(palette, "Application", move || {
+                        let state = workspace.get();
+                        if state.targets.is_empty() {
+                            Text(
+                                "Open a Cargo workspace with a Cranpose application.",
+                                Modifier::empty(),
+                                style(palette.muted, 12.0, false),
+                            );
+                            Action(palette, "Create project", "create", "", !state.busy);
+                        }
+                        if !state.targets.is_empty() {
+                            cranpose_plugin_ui::choice::CompactChoice(
+                                palette,
+                                "target",
+                                state
+                                    .targets
+                                    .iter()
+                                    .map(|target| cranpose_plugin_ui::choice::ChoiceItem {
+                                        id: target.id.clone(),
+                                        label: target.name.clone(),
+                                        detail: format!("{} · {}", target.package, target.kind),
+                                    })
+                                    .collect(),
+                                state.selected,
+                                |id| request("select", id),
+                            );
+                        }
+                        if !workspace.get().targets.is_empty() {
+                            Row(
+                                Modifier::empty(),
+                                RowSpec::default()
+                                    .horizontal_arrangement(LinearArrangement::spaced_by(6.0))
+                                    .vertical_alignment(VerticalAlignment::CenterVertically),
+                                move || {
+                                    let enabled = !workspace.get().busy;
+                                    Action(palette, "Preview", "preview", "", enabled);
+                                    Action(palette, "Run", "run", "", enabled);
+                                    Action(palette, "Check", "check", "", enabled);
+                                },
+                            );
+                            Row(
+                                Modifier::empty(),
+                                RowSpec::default()
+                                    .horizontal_arrangement(LinearArrangement::spaced_by(6.0))
+                                    .vertical_alignment(VerticalAlignment::CenterVertically),
+                                move || {
+                                    Action(palette, "Test", "test", "", !workspace.get().busy);
+                                    Action(palette, "Run config", "configure", "", true);
+                                    if workspace.get().busy {
+                                        Action(palette, "Stop", "stop", "", true);
+                                    }
+                                },
+                            );
+                        }
+                    });
+                    Section(palette, "Build for a platform", move || {
+                        let workspace = workspace.get();
+                        let target = workspace
                             .targets
                             .iter()
-                            .map(|target| cranpose_plugin_ui::choice::ChoiceItem {
-                                id: target.id.clone(),
-                                label: target.name.clone(),
-                                detail: format!("{} · {}", target.package, target.kind),
-                            })
-                            .collect(),
-                        state.selected,
-                        |id| request("select", id),
-                    );
-                }
-                if !workspace.get().targets.is_empty() {
-                    Row(
-                        Modifier::empty(),
-                        RowSpec::default()
-                            .horizontal_arrangement(LinearArrangement::spaced_by(6.0))
-                            .vertical_alignment(VerticalAlignment::CenterVertically),
-                        move || {
-                            let enabled = !workspace.get().busy;
-                            Action(palette, "Preview", "preview", "", enabled);
-                            Action(palette, "Run", "run", "", enabled);
-                            Action(palette, "Check", "check", "", enabled);
-                        },
-                    );
-                    Row(
-                        Modifier::empty(),
-                        RowSpec::default()
-                            .horizontal_arrangement(LinearArrangement::spaced_by(6.0))
-                            .vertical_alignment(VerticalAlignment::CenterVertically),
-                        move || {
-                            Action(palette, "Test", "test", "", !workspace.get().busy);
-                            Action(palette, "Run config", "configure", "", true);
-                            if workspace.get().busy {
-                                Action(palette, "Stop", "stop", "", true);
-                            }
-                        },
-                    );
-                }
-            });
-            Section(palette, "Build for a platform", move || {
-                let workspace = workspace.get();
-                let target = workspace
-                    .targets
-                    .iter()
-                    .find(|t| t.id == workspace.selected);
-                crate::platform_builds::PlatformBuilds(
-                    target
-                        .and_then(|t| t.id.split_once("::").map(|(path, _)| path.to_owned()))
-                        .unwrap_or_default(),
-                    target.map(|t| t.package.clone()).unwrap_or_default(),
-                    target
-                        .filter(|t| t.kind == "bin")
-                        .map(|t| t.name.clone())
-                        .unwrap_or_default(),
-                );
-            });
-            Section(palette, "Components", move || {
-                let current = editor.get();
-                Text(
-                    if current.path.is_empty() {
-                        "Open a Rust source file".to_owned()
-                    } else {
-                        current.name
-                    },
-                    Modifier::empty(),
-                    style(palette.muted, 11.0, false),
-                );
-                for symbol in current.composables {
-                    Row(
-                        Modifier::empty().fill_max_width(),
-                        RowSpec::default()
-                            .horizontal_arrangement(LinearArrangement::SpaceBetween)
-                            .vertical_alignment(VerticalAlignment::CenterVertically),
-                        move || {
-                            let offset = symbol.offset.to_string();
-                            Text(
-                                format!("{}  :{}", symbol.name, symbol.line),
-                                Modifier::empty()
-                                    .padding(6.0)
-                                    .clickable(move |_| request("navigate", &offset)),
-                                style(palette.text, 13.0, false),
-                            );
-                            Action(palette, "›", "component", &symbol.name, true);
-                        },
-                    );
-                }
-            });
-            if !state.diagnostics.is_empty() {
-                Section(palette, "Build problems", move || {
-                    for (index, diagnostic) in workspace.get().diagnostics.into_iter().enumerate() {
-                        Column(
-                            Modifier::empty()
-                                .fill_max_width()
-                                .padding(6.0)
-                                .clickable(move |_| request("diagnostic", &index.to_string())),
-                            ColumnSpec::default(),
-                            move || {
-                                Text(
-                                    diagnostic.message.clone(),
-                                    Modifier::empty(),
-                                    style(palette.text, 12.0, false),
-                                );
-                                Text(
-                                    format!(
-                                        "{} · {}:{}",
-                                        diagnostic.level, diagnostic.file, diagnostic.line
-                                    ),
-                                    Modifier::empty(),
-                                    style(palette.muted, 11.0, false),
-                                );
-                            },
+                            .find(|t| t.id == workspace.selected);
+                        crate::platform_builds::PlatformBuilds(
+                            target
+                                .and_then(|t| {
+                                    t.id.split_once("::").map(|(path, _)| path.to_owned())
+                                })
+                                .unwrap_or_default(),
+                            target.map(|t| t.package.clone()).unwrap_or_default(),
+                            target
+                                .filter(|t| t.kind == "bin")
+                                .map(|t| t.name.clone())
+                                .unwrap_or_default(),
                         );
+                    });
+                    Section(palette, "Components", move || {
+                        let current = editor.get();
+                        Text(
+                            if current.path.is_empty() {
+                                "Open a Rust source file".to_owned()
+                            } else {
+                                current.name
+                            },
+                            Modifier::empty(),
+                            style(palette.muted, 11.0, false),
+                        );
+                        for symbol in current.composables {
+                            Row(
+                                Modifier::empty().fill_max_width(),
+                                RowSpec::default()
+                                    .horizontal_arrangement(LinearArrangement::SpaceBetween)
+                                    .vertical_alignment(VerticalAlignment::CenterVertically),
+                                move || {
+                                    let offset = symbol.offset.to_string();
+                                    Text(
+                                        format!("{}  :{}", symbol.name, symbol.line),
+                                        Modifier::empty()
+                                            .padding(6.0)
+                                            .clickable(move |_| request("navigate", &offset)),
+                                        style(palette.text, 13.0, false),
+                                    );
+                                    Action(palette, "›", "component", &symbol.name, true);
+                                },
+                            );
+                        }
+                    });
+                    if !state.diagnostics.is_empty() {
+                        Section(palette, "Build problems", move || {
+                            for (index, diagnostic) in
+                                workspace.get().diagnostics.into_iter().enumerate()
+                            {
+                                Column(
+                                    Modifier::empty().fill_max_width().padding(6.0).clickable(
+                                        move |_| request("diagnostic", &index.to_string()),
+                                    ),
+                                    ColumnSpec::default(),
+                                    move || {
+                                        Text(
+                                            diagnostic.message.clone(),
+                                            Modifier::empty(),
+                                            style(palette.text, 12.0, false),
+                                        );
+                                        Text(
+                                            format!(
+                                                "{} · {}:{}",
+                                                diagnostic.level, diagnostic.file, diagnostic.line
+                                            ),
+                                            Modifier::empty(),
+                                            style(palette.muted, 11.0, false),
+                                        );
+                                    },
+                                );
+                            }
+                        });
                     }
-                });
-            }
+                },
+            );
         },
     );
 }
