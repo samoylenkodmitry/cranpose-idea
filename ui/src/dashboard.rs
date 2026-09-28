@@ -221,6 +221,23 @@ pub fn Dashboard() {
                     );
                 }
             });
+            Section(palette, "Build for a platform", move || {
+                let workspace = workspace.get();
+                let target = workspace
+                    .targets
+                    .iter()
+                    .find(|t| t.id == workspace.selected);
+                crate::platform_builds::PlatformBuilds(
+                    target
+                        .and_then(|t| t.id.split_once("::").map(|(path, _)| path.to_owned()))
+                        .unwrap_or_default(),
+                    target.map(|t| t.package.clone()).unwrap_or_default(),
+                    target
+                        .filter(|t| t.kind == "bin")
+                        .map(|t| t.name.clone())
+                        .unwrap_or_default(),
+                );
+            });
             Section(palette, "Components", move || {
                 let current = editor.get();
                 Text(

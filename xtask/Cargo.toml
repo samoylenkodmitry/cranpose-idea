@@ -7,4 +7,6 @@ publish = false
 
 [dependencies]
 anyhow = "1"
-cranpose-ide-tools = { package = "cranpose-plugin-tools", git = "https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template", rev = "319caf09d2d4bf884b4f05924e246d9b7890f3ad" }
+# Build-time SDK includes the starter smoke-check version fix; runtime SDK and
+# Cranpose Build remain aligned on their validated process/cancellation types.
+cranpose-ide-tools = { package = "cranpose-plugin-tools", git = "https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template", rev = "ef2056e2dfd15edb48de7eedfc7f926dfcc1530d" }

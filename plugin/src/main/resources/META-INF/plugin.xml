@@ -7,6 +7,7 @@
         <ul>
             <li>Discover Cargo workspace binaries and examples that use Cranpose.</li>
             <li>Check, run and test targets with build output in the IDE.</li>
+            <li>Build and package desktop and mobile applications locally with Cranpose Build.</li>
             <li>Code / Split / Preview editors with compiled component fixtures, viewport controls and PNG export.</li>
             <li>Live layout trees, element picking, bounds, modifier properties and navigation to composable origins.</li>
             <li>Rust/Cranpose preview controls and inspector, with plugin-owned debug hot reload that preserves compatible live state.</li>
@@ -20,7 +21,7 @@
         offline without Git. The plugin owns preview instrumentation and leaves application release
         builds unchanged. JetBrains Rust support provides full Rust language editing.</p>
     ]]></description>
-    <change-notes><![CDATA[<p>0.12.0 — First Marketplace release.</p><ul><li>Cranpose 0.1.169 with the latest pinned Showcase starter, bundled for offline project creation.</li><li>Automatic desktop configuration and first preview from New Project, with Rust setup and retry controls.</li><li>Live strings, format text, numbers, colors and resolvable variables; seekbars, inline swatches and editor Undo.</li><li>Layout inspection, source navigation, stability badges and animated shader feedback.</li><li>Verified native hosts and Cranpose UI for macOS, Linux and Windows on x86-64 and ARM64.</li></ul>]]></change-notes>
+    <change-notes><![CDATA[<p>0.13.0 — Local platform builds.</p><ul><li>Build, package and launch desktop and mobile applications through the Rust Cranpose Build library.</li><li>Platform and profile selection, prerequisite checks, pinned backend setup, build plans, device discovery and cancellable jobs in the Cranpose panel.</li><li>Portable application packages with ZIP archives and SHA256 manifests.</li></ul><p>Platform SDKs are required. iOS requires macOS/Xcode; foreign desktop execution needs its matching runtime. Application release code is unchanged.</p>]]></change-notes>
     <depends>com.intellij.modules.platform</depends>
     <extensions defaultExtensionNs="com.intellij">
         <postStartupActivity implementation="dev.cranpose.rust.Startup"/>
