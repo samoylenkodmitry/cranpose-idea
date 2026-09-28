@@ -1,26 +1,16 @@
 use super::*;
 
 #[test]
-fn live_literal_width_changes_are_not_safe_compiler_call_sites() {
+fn live_literal_width_changes_compile_when_values_cannot_be_sent() {
     let initial = "#[composable] fn App() { Text(\"a\"); Text(12); }";
     let edited = initial.replace("\"a\"", "\"a much longer label\"");
     let initial_catalog = cranpose_plugin_authoring::Catalog::parse(initial).expect("initial");
     let edited_catalog = cranpose_plugin_authoring::Catalog::parse(&edited).expect("edited");
     assert_eq!(initial_catalog.schema, edited_catalog.schema);
-    assert!(matches!(
-        classify(initial, &edited),
-        ReloadDecision::Restart(_)
-    ));
-    assert!(matches!(
-        classify(&edited, &edited.replace("12", "13")),
-        ReloadDecision::Patch
-    ));
-    // After a value update, a compiler fallback must still compare with the
-    // original compiled positions, not the most recent editor text.
-    assert!(matches!(
-        classify(initial, &edited.replace("12", "13")),
-        ReloadDecision::Restart(_)
-    ));
+    // Moved call sites compile as a hot patch; only shared declarations rebuild.
+    for next in [edited.clone(), edited.replace("12", "13")] {
+        assert_eq!(classify(initial, &next), ReloadDecision::Patch);
+    }
 }
 
 #[test]
