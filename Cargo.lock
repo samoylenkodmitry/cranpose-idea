@@ -960,7 +960,7 @@ dependencies = [
  "anyhow",
  "cargo_metadata",
  "clap",
- "cranpose-plugin-process",
+ "cranpose-plugin-process 0.1.0 (git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=8a3247b8cb21b74e7ac4a96f1ba53967310091fe)",
  "ctrlc",
  "plist",
  "serde",
@@ -1007,8 +1007,8 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "cranpose-plugin-authoring 0.1.0 (git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=8a3247b8cb21b74e7ac4a96f1ba53967310091fe)",
- "cranpose-plugin-cache",
- "cranpose-plugin-process",
+ "cranpose-plugin-cache 0.1.0 (git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=8a3247b8cb21b74e7ac4a96f1ba53967310091fe)",
+ "cranpose-plugin-process 0.1.0 (git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=8a3247b8cb21b74e7ac4a96f1ba53967310091fe)",
  "cranpose-plugin-watch",
  "ctrlc",
  "notify",
@@ -1045,7 +1045,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "cranpose-build",
- "cranpose-plugin-host",
+ "cranpose-plugin-host 0.1.0 (git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=8a3247b8cb21b74e7ac4a96f1ba53967310091fe)",
  "jni 0.21.1",
  "serde",
  "serde_json",
@@ -1069,7 +1069,7 @@ dependencies = [
 [[package]]
 name = "cranpose-jvm-bridge"
 version = "0.1.0"
-source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=8a3247b8cb21b74e7ac4a96f1ba53967310091fe#8a3247b8cb21b74e7ac4a96f1ba53967310091fe"
+source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=4f654ea3b6dbe5486101d8467dc206223b162218#4f654ea3b6dbe5486101d8467dc206223b162218"
 
 [[package]]
 name = "cranpose-liquid"
@@ -1107,6 +1107,21 @@ dependencies = [
  "cranpose-foundation",
  "cranpose-ui-graphics",
  "winit",
+]
+
+[[package]]
+name = "cranpose-plugin-authoring"
+version = "0.1.0"
+source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=4f654ea3b6dbe5486101d8467dc206223b162218#4f654ea3b6dbe5486101d8467dc206223b162218"
+dependencies = [
+ "anyhow",
+ "proc-macro2",
+ "quote",
+ "rand 0.9.5",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "syn 2.0.119",
 ]
 
 [[package]]
@@ -1156,6 +1171,16 @@ dependencies = [
 [[package]]
 name = "cranpose-plugin-cache"
 version = "0.1.0"
+source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=4f654ea3b6dbe5486101d8467dc206223b162218#4f654ea3b6dbe5486101d8467dc206223b162218"
+dependencies = [
+ "anyhow",
+ "sha2 0.10.9",
+ "tempfile",
+]
+
+[[package]]
+name = "cranpose-plugin-cache"
+version = "0.1.0"
 source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=8a3247b8cb21b74e7ac4a96f1ba53967310091fe#8a3247b8cb21b74e7ac4a96f1ba53967310091fe"
 dependencies = [
  "anyhow",
@@ -1166,11 +1191,11 @@ dependencies = [
 [[package]]
 name = "cranpose-plugin-host"
 version = "0.1.0"
-source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=8a3247b8cb21b74e7ac4a96f1ba53967310091fe#8a3247b8cb21b74e7ac4a96f1ba53967310091fe"
+source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=4f654ea3b6dbe5486101d8467dc206223b162218#4f654ea3b6dbe5486101d8467dc206223b162218"
 dependencies = [
  "anyhow",
- "cranpose-plugin-authoring 0.1.0 (git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=8a3247b8cb21b74e7ac4a96f1ba53967310091fe)",
- "cranpose-plugin-process",
+ "cranpose-plugin-authoring 0.1.0 (git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=4f654ea3b6dbe5486101d8467dc206223b162218)",
+ "cranpose-plugin-process 0.1.0 (git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=4f654ea3b6dbe5486101d8467dc206223b162218)",
  "jni 0.21.1",
  "rand 0.9.5",
  "regex",
@@ -1179,6 +1204,35 @@ dependencies = [
  "sha2 0.10.9",
  "tempfile",
  "zip 4.6.1",
+]
+
+[[package]]
+name = "cranpose-plugin-host"
+version = "0.1.0"
+source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=8a3247b8cb21b74e7ac4a96f1ba53967310091fe#8a3247b8cb21b74e7ac4a96f1ba53967310091fe"
+dependencies = [
+ "anyhow",
+ "cranpose-plugin-authoring 0.1.0 (git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=8a3247b8cb21b74e7ac4a96f1ba53967310091fe)",
+ "cranpose-plugin-process 0.1.0 (git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=8a3247b8cb21b74e7ac4a96f1ba53967310091fe)",
+ "jni 0.21.1",
+ "rand 0.9.5",
+ "regex",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "tempfile",
+ "zip 4.6.1",
+]
+
+[[package]]
+name = "cranpose-plugin-process"
+version = "0.1.0"
+source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=4f654ea3b6dbe5486101d8467dc206223b162218#4f654ea3b6dbe5486101d8467dc206223b162218"
+dependencies = [
+ "anyhow",
+ "libproc",
+ "nix 0.30.1",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -1195,14 +1249,14 @@ dependencies = [
 [[package]]
 name = "cranpose-plugin-tools"
 version = "0.1.0"
-source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=8a3247b8cb21b74e7ac4a96f1ba53967310091fe#8a3247b8cb21b74e7ac4a96f1ba53967310091fe"
+source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=4f654ea3b6dbe5486101d8467dc206223b162218#4f654ea3b6dbe5486101d8467dc206223b162218"
 dependencies = [
  "anyhow",
  "clap",
  "cranpose-jvm-bridge",
- "cranpose-plugin-authoring 0.1.0 (git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=8a3247b8cb21b74e7ac4a96f1ba53967310091fe)",
- "cranpose-plugin-cache",
- "cranpose-plugin-host",
+ "cranpose-plugin-authoring 0.1.0 (git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=4f654ea3b6dbe5486101d8467dc206223b162218)",
+ "cranpose-plugin-cache 0.1.0 (git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=4f654ea3b6dbe5486101d8467dc206223b162218)",
+ "cranpose-plugin-host 0.1.0 (git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=4f654ea3b6dbe5486101d8467dc206223b162218)",
  "png",
  "rand 0.9.5",
  "reqwest",
