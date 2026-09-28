@@ -1,10 +1,13 @@
 //! Cargo run configuration editor rendered entirely by Cranpose.
-use crate::ide::{Palette, rememberPalette};
+use crate::{
+    ide::{Palette, rememberPalette},
+    kit::{self, Look, ToolButton, icons},
+};
 use cranpose::{
-    BasicTextField, Button, ButtonSpec, Column, ColumnSpec, LinearArrangement, Modifier, Row,
-    RowSpec, ScrollState, SpanStyle, Text, TextFieldState, TextStyle, VerticalAlignment,
-    composable, remember, rememberHostMessages, rememberMutableStateOf, send_to_host,
-    text::TextUnit,
+    BasicTextField, Column, ColumnSpec, LinearArrangement, Modifier, Row, RowSpec, ScrollState,
+    SpanStyle, Text, TextFieldState, TextStyle, VerticalAlignment, composable, remember,
+    rememberHostMessages, rememberMutableStateOf, send_to_host,
+    text::{FontWeight, TextUnit},
 };
 use cranpose_core::{CollectEvents, SideEffect};
 use serde_json::{Value, json};
@@ -91,33 +94,41 @@ pub fn RunSettings() {
             );
         },
     );
+    let look = Look::new(palette);
     Column(
         Modifier::empty()
             .fill_max_size()
             .background(palette.background)
             .vertical_scroll(scroll, false)
             .padding(20.0),
-        ColumnSpec::default().vertical_arrangement(LinearArrangement::spaced_by(14.0)),
+        ColumnSpec::default().vertical_arrangement(LinearArrangement::spaced_by(12.0)),
         move || {
             Text(
-                "Cranpose · Cargo configuration",
+                "Cargo configuration",
                 Modifier::empty(),
-                style(palette, 18.0, false),
+                kit::style(palette.text, 17.0, Some(FontWeight::SEMI_BOLD)),
             );
             Text(
-                "Choose a workspace target or edit its Cargo settings.",
+                "Start from a workspace target, then adjust its Cargo settings.",
                 Modifier::empty(),
                 style(palette, 12.0, true),
             );
-            for target in targets.get() {
+            let targets = targets.get();
+            if !targets.is_empty() {
+                Caption(palette, "Workspace targets");
+            }
+            for target in targets {
                 let label = target["label"].as_str().unwrap_or("Target").to_owned();
-                let target = target.clone();
-                let label_copy = label.clone();
                 let target_fields = fields.clone();
-                Button(
-                    Modifier::empty().fill_max_width().height(32.0),
-                    ButtonSpec::default(),
-                    move || {
+                ToolButton(
+                    look,
+                    icons::APP,
+                    label,
+                    false,
+                    false,
+                    true,
+                    ("", None),
+                    move |_| {
                         for ((key, _), field) in FIELDS.iter().zip(&target_fields) {
                             let value = match *key {
                                 "manifest" => {
@@ -150,105 +161,74 @@ pub fn RunSettings() {
                         }
                         kind.set(target["kind"].as_str().unwrap_or("bin").to_owned());
                     },
+                );
+            }
+            for (caption, options, state) in [
+                ("Command", &["run", "check", "test"][..], command),
+                ("Target kind", &["bin", "example"][..], kind),
+            ] {
+                Caption(palette, caption);
+                Row(
+                    Modifier::empty()
+                        .rounded_corners(8.0)
+                        .background(palette.surface)
+                        .padding(2.0),
+                    RowSpec::default()
+                        .horizontal_arrangement(LinearArrangement::spaced_by(2.0))
+                        .vertical_alignment(VerticalAlignment::CenterVertically),
                     move || {
-                        let _ = Text(
-                            label_copy.clone(),
-                            Modifier::empty().padding(6.0),
-                            style(palette, 12.0, false),
-                        );
+                        for option in options {
+                            ToolButton(
+                                look,
+                                "",
+                                (*option).into(),
+                                false,
+                                state.get() == *option,
+                                true,
+                                ("", None),
+                                move |_| state.set((*option).into()),
+                            );
+                        }
                     },
                 );
             }
-            Row(
-                Modifier::empty().height(36.0),
-                RowSpec::default()
-                    .horizontal_arrangement(LinearArrangement::spaced_by(8.0))
-                    .vertical_alignment(VerticalAlignment::CenterVertically),
-                move || {
-                    for option in ["run", "check", "test"] {
-                        let selected = command.get() == option;
-                        Button(
-                            Modifier::empty()
-                                .width(90.0)
-                                .height(32.0)
-                                .background(if selected {
-                                    palette.surface
-                                } else {
-                                    palette.background
-                                }),
-                            ButtonSpec::default(),
-                            move || command.set(option.into()),
-                            move || {
-                                let _ = Text(
-                                    option,
-                                    Modifier::empty().padding(6.0),
-                                    style(palette, 12.0, false),
-                                );
-                            },
-                        );
-                    }
-                },
-            );
-            Row(
-                Modifier::empty().height(36.0),
-                RowSpec::default()
-                    .horizontal_arrangement(LinearArrangement::spaced_by(8.0))
-                    .vertical_alignment(VerticalAlignment::CenterVertically),
-                move || {
-                    for option in ["bin", "example"] {
-                        let selected = kind.get() == option;
-                        Button(
-                            Modifier::empty()
-                                .width(110.0)
-                                .height(32.0)
-                                .background(if selected {
-                                    palette.surface
-                                } else {
-                                    palette.background
-                                }),
-                            ButtonSpec::default(),
-                            move || kind.set(option.into()),
-                            move || {
-                                let _ = Text(
-                                    option,
-                                    Modifier::empty().padding(6.0),
-                                    style(palette, 12.0, false),
-                                );
-                            },
-                        );
-                    }
-                },
-            );
             for ((key, label), field) in FIELDS.iter().zip(&fields) {
                 let field = *field;
-                Text(*label, Modifier::empty(), style(palette, 12.0, true));
+                Caption(palette, label);
                 BasicTextField(
                     field,
                     Modifier::empty()
                         .fill_max_width()
-                        .height(if *key == "environment" { 92.0 } else { 36.0 })
+                        .height(if *key == "environment" { 92.0 } else { 34.0 })
+                        .rounded_corners(7.0)
                         .background(palette.surface)
                         .padding(8.0),
                     style(palette, 13.0, false),
                 );
             }
-            let label = if no_defaults.get() {
-                "✓ Disable default features"
-            } else {
-                "Disable default features"
-            };
-            Button(
-                Modifier::empty().height(34.0),
-                ButtonSpec::default(),
-                move || no_defaults.set(!no_defaults.get()),
-                move || {
-                    let _ = Text(
-                        label,
-                        Modifier::empty().padding(6.0),
-                        style(palette, 12.0, false),
-                    );
+            ToolButton(
+                look,
+                if no_defaults.get() {
+                    icons::CHECK
+                } else {
+                    icons::ADD
                 },
+                "Disable default features".into(),
+                false,
+                no_defaults.get(),
+                true,
+                ("", None),
+                move |_| no_defaults.set(!no_defaults.get()),
             );
         },
+    );
+}
+
+#[composable]
+fn Caption(palette: Palette, text: &'static str) {
+    Text(
+        text,
+        Modifier::empty().padding_each(0.0, 4.0, 0.0, 0.0),
+        kit::style(palette.muted, 11.5, Some(FontWeight::MEDIUM)),
     );
 }
