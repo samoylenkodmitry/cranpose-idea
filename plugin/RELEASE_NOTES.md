@@ -1,4 +1,15 @@
-# Cranpose 0.13.3
+# Cranpose 0.13.4
+
+Closing Inspect now clears preview bounds and releases Pick, so you can interact
+with the application normally. Pausing retains captured details while removing
+bounds from the running preview. Reopening or resuming waits for a fresh snapshot
+before restoring selection bounds. Delayed replies cannot restore an old highlight.
+
+Uses the template's reusable Rust request fence. No new polling timer or
+application release change is added. This is a selection correctness fix;
+no speedup is claimed.
+
+## Included since 0.13.3
 
 Dense live-value marker replacement now uses the template's reusable Rust inlay
 batch API. Literal-only edits retain their anchors; sparse files and markers at

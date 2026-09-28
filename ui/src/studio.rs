@@ -154,8 +154,8 @@ pub fn PreviewStudio() {
                 } else {
                     studio.pan_y.clamp(stage_height - frame_height, 0.0)
                 };
-            let selected = studio.snapshot.nodes.iter().find(|node| node.id == studio.selected).map(|node| json!({"x": node.x, "y": node.y, "width": node.width, "height": node.height}));
-            let layout = json!({"action": "layout", "session": studio.session, "x": x, "y": y, "width": frame_width, "height": frame_height, "viewport": {"y": top, "width": stage_width, "height": stage_height}, "logicalWidth": studio.settings.width, "logicalHeight": studio.settings.height, "scale": scale, "dark": studio.settings.dark, "pick": studio.pick, "selected": selected});
+            let selected = studio.selected_bounds();
+            let layout = json!({"action": "layout", "session": studio.session, "x": x, "y": y, "width": frame_width, "height": frame_height, "viewport": {"y": top, "width": stage_width, "height": stage_height}, "logicalWidth": studio.settings.width, "logicalHeight": studio.settings.height, "scale": scale, "dark": studio.settings.dark, "pick": studio.picking(), "selected": selected});
             let initialized = studio.initialized;
             let connected = studio.connected;
             let checkpoint = serde_json::to_value(&studio).unwrap_or(Value::Null);
@@ -457,10 +457,7 @@ fn InspectionControls(state: MutableState<Studio>, palette: Palette) {
     let studio = state.get();
     Chip("Pick".into(), palette, studio.pick, move || {
         edit(state, |studio| {
-            studio.pick = !studio.pick;
-            if studio.pick {
-                studio.settings.inspect = true;
-            }
+            studio.set_picking(!studio.pick);
         });
         request_snapshot(&state.get());
     });
@@ -470,9 +467,11 @@ fn InspectionControls(state: MutableState<Studio>, palette: Palette) {
         studio.settings.inspect,
         move || {
             edit(state, |studio| {
-                studio.settings.inspect = !studio.settings.inspect
+                studio.set_inspecting(!studio.settings.inspect)
             });
-            request_snapshot(&state.get());
+            if state.get().settings.inspect {
+                request_snapshot(&state.get());
+            }
         },
     );
 }
@@ -744,7 +743,7 @@ fn Inspector(
                         palette,
                         !studio.live,
                         move || {
-                            edit(state, |s| s.live = !s.live);
+                            edit(state, |s| s.set_live_inspection(!s.live));
                             if state.get().live {
                                 request_snapshot(&state.get());
                             }

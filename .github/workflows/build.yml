@@ -111,7 +111,7 @@ jobs:
       - name: Inspector unchanged and changed layouts
         run: |
           cargo build --locked --no-default-features -p cranpose-intellij-ui
-          cargo run --locked -p xtask -- inspection-profile --binary target/debug/cranpose-intellij-ui --nodes 1000 --seconds 5 --settle-seconds 3 --require-quiet --change-rounds 3 --change-seconds 5 --exercise-tree --resize-rounds 3 --max-ui-nodes 200 --log inspector-hot-reload.log --report inspector-hot-reload.json
+          cargo run --locked -p xtask -- inspection-profile --binary target/debug/cranpose-intellij-ui --nodes 1000 --seconds 5 --settle-seconds 3 --require-quiet --change-rounds 3 --change-seconds 5 --exercise-tree --resize-rounds 3 --max-ui-nodes 200 --exercise-selection --log inspector-hot-reload.log --report inspector-hot-reload.json
       - name: Cranpose editor decorations
         run: cargo run --locked -p xtask -- authoring-smoke --binary target/debug/cranpose-intellij-ui --log authoring-hot-reload.log --report authoring-hot-reload.json
       - name: Compact target selection
