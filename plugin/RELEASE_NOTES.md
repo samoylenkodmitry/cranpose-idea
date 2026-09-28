@@ -1,4 +1,22 @@
-# Cranpose 0.13.2
+# Cranpose 0.13.3
+
+Dense live-value marker replacement now uses the template's reusable Rust inlay
+batch API. Literal-only edits retain their anchors; sparse files and markers at
+any caret keep ordinary insertion. Unicode positions, selections, multiple
+carets and callback cleanup have actual IDE regression coverage.
+
+In three optimized headless Linux IDEA sessions, replacing 1,024 dense markers
+took a pooled median 44.48 ms versus 52.99 ms with ordinary insertion (16.1% less).
+This measures marker replacement only, excluding parsing, preview transport and
+display. Small controls varied, and forced batching was slower on sparse files;
+the production size guard avoids that path. See the
+[measurement method and limits](https://github.com/samoylenkodmitry/cranpose-idea/blob/v0.13.3/docs/performance-0.13.3.md).
+
+Uses Cranpose Build 0.1.4 with the same process SDK as the host. Application release
+builds are unchanged. All six native targets, actual IDE integration, live-reload
+suites and both Plugin Verifier targets passed before signing and submission.
+
+## Included since 0.13.2
 
 Application targets now use a compact selected-target summary. Open it to search
 by target or package and choose from five results per page. Preview and build
