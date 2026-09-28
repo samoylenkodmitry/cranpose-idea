@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.13.3
+
+- Rebuilding live-value markers in dense source files uses a guarded editor layout
+  batch. Sparse files and markers at any caret keep ordinary insertion.
+- Shared Rust IDE regressions cover Unicode positions, selections, multiple carets,
+  callback cleanup and warmed comparisons across dense and sparse files.
+- Cranpose Build 0.1.4 and Studio share the same process SDK revision.
+
 ## 0.6.1
 
 - Live reload filters build and IDE noise before batching, coalesces repeated paths,

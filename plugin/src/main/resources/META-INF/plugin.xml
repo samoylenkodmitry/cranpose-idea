@@ -21,7 +21,7 @@
         offline without Git. The plugin owns preview instrumentation and leaves application release
         builds unchanged. JetBrains Rust support provides full Rust language editing.</p>
     ]]></description>
-    <change-notes><![CDATA[<p>0.13.2 — Compact target selection.</p><p>The Application card keeps a compact selected-target summary. Open it to search by target or package, with five choices per page and keyboard navigation. Preview and build controls stay within reach in larger workspaces. Built with reusable Rust/Cranpose template controls and Cranpose 0.1.172. Application release builds are unchanged.</p>]]></change-notes>
+    <change-notes><![CDATA[<p>0.13.3 — Lighter editor marker updates.</p><p>Live-value markers refresh with less editor layout work in large, dense source files. The update preserves caret and selection behavior and avoids extra work in sparse files. Shared Rust SDK tests cover Unicode placement, multiple carets and callback cleanup. Includes Cranpose Build 0.1.4. Application release builds are unchanged.</p>]]></change-notes>
     <depends>com.intellij.modules.platform</depends>
     <extensions defaultExtensionNs="com.intellij">
         <postStartupActivity implementation="dev.cranpose.rust.Startup"/>
