@@ -154,43 +154,21 @@ pub fn Dashboard() {
                     );
                     Action(palette, "Create project", "create", "", !state.busy);
                 }
-                for target in state.targets {
-                    let chosen = target.id == state.selected;
-                    let id = target.id.clone();
-                    Row(
-                        Modifier::empty()
-                            .fill_max_width()
-                            .background(if chosen {
-                                palette.selection()
-                            } else {
-                                Color::TRANSPARENT
+                if !state.targets.is_empty() {
+                    cranpose_plugin_ui::choice::CompactChoice(
+                        palette,
+                        "target",
+                        state
+                            .targets
+                            .iter()
+                            .map(|target| cranpose_plugin_ui::choice::ChoiceItem {
+                                id: target.id.clone(),
+                                label: target.name.clone(),
+                                detail: format!("{} · {}", target.package, target.kind),
                             })
-                            .rounded_corners(8.0)
-                            .padding(8.0)
-                            .clickable(move |_| request("select", &id)),
-                        RowSpec::default()
-                            .horizontal_arrangement(LinearArrangement::spaced_by(8.0))
-                            .vertical_alignment(VerticalAlignment::CenterVertically),
-                        move || {
-                            Text(
-                                if chosen { "●" } else { "○" },
-                                Modifier::empty(),
-                                style(palette.accent, 12.0, true),
-                            );
-                            let target = target.clone();
-                            Column(Modifier::empty(), ColumnSpec::default(), move || {
-                                Text(
-                                    target.name.clone(),
-                                    Modifier::empty(),
-                                    style(palette.text, 13.0, chosen),
-                                );
-                                Text(
-                                    format!("{} · {}", target.package, target.kind),
-                                    Modifier::empty(),
-                                    style(palette.muted, 11.0, false),
-                                );
-                            });
-                        },
+                            .collect(),
+                        state.selected,
+                        |id| request("select", id),
                     );
                 }
                 if !workspace.get().targets.is_empty() {

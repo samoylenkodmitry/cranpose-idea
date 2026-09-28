@@ -31,6 +31,7 @@ fn main() {
         match mode.as_str() {
             "overlay" => cranpose_plugin_authoring_ui::EditorDecorations,
             "value" => cranpose_plugin_authoring_ui::ValueControl,
+            "choices" => cranpose_plugin_ui::choice_demo::ChoiceDemo,
             _ => cranpose_plugin_authoring_ui::ShowcaseCard,
         }
     } else if std::env::var_os("CRANPOSE_RUN_SETTINGS").is_some() {
