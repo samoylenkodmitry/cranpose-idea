@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.14.0
+
+- Structural edits inside function bodies hot-patch the running preview; edits
+  that need a new process rebuild automatically with a specific reason.
+- Redesigned Studio panel, tool window, platform builds and run configuration,
+  with native IDE menus and tooltips.
+- Editor glyphs, stability badges and call underlines are painted natively by
+  the editor. Live-value controls apply edits as they are made.
+- Dependency-aware stability analysis removes unexplained unknown badges.
+
 ## 0.13.3
 
 - Rebuilding live-value markers in dense source files uses a guarded editor layout

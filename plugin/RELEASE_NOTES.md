@@ -1,4 +1,36 @@
-# Cranpose 0.13.6
+# Cranpose 0.14.0
+
+Code edits no longer wait for a Restart. Changes inside function and method
+bodies, including added, removed or reordered calls, statements, closures and
+control flow, new functions and `use` changes, are hot-patched into the
+running preview. Edits that need a new process (type definitions, signatures,
+statics, `main`, modules or manifests) rebuild automatically after a short quiet
+period and say why, for example "Rebuilding · Struct `Ink` fields changed".
+The previous preview stays visible until the new one connects, and a failed
+build recovers as soon as it is fixed. On a heavily loaded development machine,
+adding a view to a composable reached the screen in about 0.75–1.2 s instead of
+a 2.6–3.7 s manual restart. Adding a statement to a composable currently resets
+that composable's remembered state; other composables keep theirs.
+
+The Studio panel is redesigned: one compact toolbar, native IDE menus with
+speed search and checkmarks, native tooltips, a framed device on a quiet
+canvas, a status bar with live patch count and problems, a build-error drawer
+and a cleaner inspector. The tool window, platform builds and Cargo run
+configuration use the same visual language in light and dark themes.
+
+Value knobs, color swatches, stability badges and composable-call underlines
+are now painted by the editor itself, so they stay attached to the text while
+scrolling and follow the editor font and theme. Live-value popups apply every
+complete value as you edit: Apply, Reset, step and Toggle buttons are gone,
+booleans use a two-state switch, and Undo in the editor restores earlier values.
+
+Stability badges resolve primitives under glob imports, Cranpose and other
+dependency types from their offline sources, and manual `PartialEq`
+implementations. On five real Cranpose projects no parameter shows an
+unexplained "unknown" badge any more; remaining unknowns name the type and the
+reason. Tooltips show the resolved type.
+
+## Included since 0.13.6
 
 Clicking a live-value glyph now gives its already-open hover control keyboard
 focus. Tab enters the field; Apply and Undo work without closing and reopening
