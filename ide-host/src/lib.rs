@@ -1,4 +1,5 @@
 //! The plugin host is Rust. JVM extension adapters are generated during packaging.
+mod platform_builds;
 use jni::{
     JNIEnv,
     objects::{JClass, JObject, JObjectArray, JString},
@@ -18,6 +19,6 @@ pub extern "system" fn Java_dev_cranpose_rust_Native_call<'local>(
         cargo: true,
         stability: true,
     });
-    // Register custom channels here with cranpose_host::set_message_handler.
+    cranpose_host::set_message_handler(platform_builds::handle);
     cranpose_host::Java_dev_cranpose_rust_Native_call(env, class, operation, receiver, arguments)
 }

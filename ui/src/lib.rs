@@ -6,6 +6,7 @@
 
 pub mod dashboard;
 pub mod ide;
+pub mod platform_builds;
 pub mod run_settings;
 pub mod stability;
 pub mod studio;
