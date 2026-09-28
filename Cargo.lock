@@ -1293,7 +1293,7 @@ dependencies = [
 [[package]]
 name = "cranpose-stability"
 version = "0.1.0"
-source = "git+https://github.com/samoylenkodmitry/cranpose-stability?rev=a7109ad90e90e725b57a99d8bdf39146e048eed7#a7109ad90e90e725b57a99d8bdf39146e048eed7"
+source = "git+https://github.com/samoylenkodmitry/cranpose-stability?rev=16cdf362483f05649f05319d1191b21a6db813e0#16cdf362483f05649f05319d1191b21a6db813e0"
 dependencies = [
  "anyhow",
  "clap",
