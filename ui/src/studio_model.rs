@@ -260,6 +260,9 @@ pub struct Studio {
     pub connected: bool,
     pub busy: bool,
     pub restart_required: bool,
+    /// A replacement session is building after an edit the running preview cannot load.
+    pub rebuilding: bool,
+    pub rebuild_reason: String,
     pub root: String,
     pub cache: String,
     pub source: String,
@@ -297,6 +300,8 @@ impl Default for Studio {
             connected: false,
             busy: false,
             restart_required: false,
+            rebuilding: false,
+            rebuild_reason: String::new(),
             root: String::new(),
             cache: String::new(),
             source: String::new(),
@@ -443,6 +448,8 @@ impl Studio {
         self.session = self.next_session;
         self.busy = true;
         self.restart_required = false;
+        self.rebuilding = false;
+        self.rebuild_reason.clear();
         self.status = "Preparing preview…".into();
         self.setup.clear();
         self.diagnostics.clear();
@@ -453,6 +460,15 @@ impl Studio {
                 "cache": self.cache, "features": target.features, "hotReload": self.settings.hot_reload, "watch": self.settings.auto_build
             }}),
         )
+    }
+    /// Starts a replacement after an edit the running process cannot load. The host
+    /// keeps the current preview visible and interactive until the new one connects.
+    fn rebuild(&mut self, reason: &str) -> Option<Value> {
+        let request = self.start()?;
+        self.rebuilding = true;
+        self.rebuild_reason = reason.into();
+        self.status = format!("Rebuilding · {reason}");
+        Some(request)
     }
     pub fn select_preview(&mut self, id: String) -> Option<Value> {
         self.settings.preview = id;
@@ -510,6 +526,7 @@ impl Studio {
                     self.next_session = self.next_session.max(active).max(candidate);
                     self.connected = active > 0;
                     self.busy = candidate > 0;
+                    self.rebuilding &= self.busy;
                     self.pending_start = false;
                     self.menu.clear();
                     if self.session == 0 {
@@ -582,11 +599,17 @@ impl Studio {
                         self.generation = 0;
                         self.connected = true;
                         self.busy = false;
-                        self.status = "Preview running".into();
+                        self.status = if self.rebuilding {
+                            format!("Rebuilt · {}", self.rebuild_reason)
+                        } else {
+                            "Preview running".into()
+                        };
+                        self.rebuilding = false;
                     }
                     "stopped" => {
                         self.connected = false;
                         self.busy = false;
+                        self.rebuilding = false;
                         self.setup = value["setup"].as_str().unwrap_or_default().into();
                         if !self.setup.is_empty() {
                             self.session = 0;
@@ -600,12 +623,13 @@ impl Studio {
                         self.session = value["fallbackSession"].as_u64().unwrap_or_default();
                         self.connected = self.session > 0;
                         self.busy = false;
+                        self.rebuilding = false;
                         self.status = value["message"]
                             .as_str()
                             .unwrap_or("Preview build failed")
                             .into();
                     }
-                    "log" => self.log(value["line"].as_str().unwrap_or_default()),
+                    "log" => requests.extend(self.log(value["line"].as_str().unwrap_or_default())),
                     "pointer" => {
                         if self.picking() {
                             let picked = self
@@ -712,31 +736,38 @@ impl Studio {
             }
         }
     }
-    fn log(&mut self, line: &str) {
+    fn log(&mut self, line: &str) -> Option<Value> {
         let Ok(value) = serde_json::from_str::<Value>(line) else {
             if line.contains("error") {
                 self.status = line.chars().take(200).collect();
             }
-            return;
+            return None;
         };
         if let Some(kind) = value["cranposeDev"].as_str() {
             if kind == "sourceMap" {
                 if let (Some(private), Some(original)) =
                     (value["private"].as_str(), value["original"].as_str())
                 {
-                    self.source_maps.push((private.into(), original.into()));
+                    self.map_source(private.into(), original.into());
                 }
-                return;
+                return None;
             }
             if kind == "workspace" {
                 self.private_root = value["private"].as_str().unwrap_or_default().into();
-                self.source_maps
-                    .push((self.private_root.clone().into(), self.root.clone().into()));
-                return;
+                self.map_source(self.private_root.clone().into(), self.root.clone().into());
+                return None;
             }
-            self.status = value["message"].as_str().unwrap_or_default().into();
-            self.restart_required = kind == "restartRequired";
-            self.busy = matches!(kind, "preparing" | "toolchain" | "patching");
+            let message = value["message"].as_str().unwrap_or_default();
+            if kind == "rebuildRequired" && self.settings.auto_build {
+                return self.rebuild(message);
+            }
+            // The replacement's progress stays under its reason; problems still show.
+            if self.rebuilding && !matches!(kind, "error" | "restartRequired" | "rebuildRequired") {
+                return None;
+            }
+            self.status = message.into();
+            self.restart_required = matches!(kind, "restartRequired" | "rebuildRequired");
+            self.busy = self.rebuilding || matches!(kind, "preparing" | "toolchain" | "patching");
         } else if matches!(value["level"].as_str(), Some("ERROR" | "error"))
             || (value["reason"].as_str() == Some("compiler-message")
                 && value["message"]["level"].as_str() == Some("error"))
@@ -774,7 +805,18 @@ impl Studio {
                 self.diagnostics.remove(0);
             }
             self.busy = false;
+            self.rebuilding = false;
             self.status = "Build failed · previous preview remains available".into();
+        }
+        None
+    }
+    fn map_source(&mut self, private: PathBuf, original: PathBuf) {
+        // Every rebuild reports its private copy again; keep one entry per path.
+        if !self
+            .source_maps
+            .contains(&(private.clone(), original.clone()))
+        {
+            self.source_maps.push((private, original));
         }
     }
 }
