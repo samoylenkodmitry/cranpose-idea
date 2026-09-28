@@ -1,12 +1,10 @@
-# Cranpose 0.12.0
+# Cranpose 0.13.0
 
-First Marketplace release of the Rust and Cranpose development tools for IntelliJ IDEA and RustRover.
+Build application packages locally for desktop and mobile from the Cranpose panel.
 
-- Create a project from the bundled Showcase starter, with a saved desktop run configuration and an automatic first preview.
-- Preview applications beside source, inspect layouts, pick components and navigate to their source.
-- Edit live strings, format text, numbers and colors with inline swatches, floating Cranpose controls and Undo.
-- Use numeric seekbars, color controls and animated shader feedback while retaining compatible preview state.
-- See composable stability badges and compiler diagnostics in the editor.
-- Updated to Cranpose 0.1.169 and a freshly pinned Showcase starter. Project creation works offline without Git.
+- Choose macOS, Linux, Windows, Android or iOS and development or release packaging.
+- Check tools, set up pinned cross-compilation backends, inspect build plans, list devices and launch applications on compatible runtimes.
+- Builds run in a cancellable background job with bounded output. Stop or closing the project terminates owned build processes.
+- Uses the standalone Rust Cranpose Build library, also available from its public repository and native CLI releases.
 
-Rust and the platform build tools are needed to compile applications. Hot-reload instrumentation stays in the plugin's development workspace; application release builds are unchanged.
+Cross-compilation depends on the target SDKs and native libraries. Foreign desktop applications need their matching OS or VM to run; iOS packaging requires macOS and Xcode. Physical iOS deployment needs signing credentials. Application source and release profiles are unchanged.
