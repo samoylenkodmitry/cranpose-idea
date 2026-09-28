@@ -879,8 +879,8 @@ dependencies = [
 
 [[package]]
 name = "cranpose"
-version = "0.1.171"
-source = "git+https://github.com/samoylenkodmitry/Cranpose?rev=8fa9ba77b24506d4351ca1fcea255e0ac64099ef#8fa9ba77b24506d4351ca1fcea255e0ac64099ef"
+version = "0.1.172"
+source = "git+https://github.com/samoylenkodmitry/Cranpose?rev=29b1075da8fc4b8b15891061d13fe1b576843d59#29b1075da8fc4b8b15891061d13fe1b576843d59"
 dependencies = [
  "accesskit",
  "accesskit_macos",
@@ -928,8 +928,8 @@ dependencies = [
 
 [[package]]
 name = "cranpose-animation"
-version = "0.1.171"
-source = "git+https://github.com/samoylenkodmitry/Cranpose?rev=8fa9ba77b24506d4351ca1fcea255e0ac64099ef#8fa9ba77b24506d4351ca1fcea255e0ac64099ef"
+version = "0.1.172"
+source = "git+https://github.com/samoylenkodmitry/Cranpose?rev=29b1075da8fc4b8b15891061d13fe1b576843d59#29b1075da8fc4b8b15891061d13fe1b576843d59"
 dependencies = [
  "cranpose-core",
  "cranpose-services",
@@ -938,8 +938,8 @@ dependencies = [
 
 [[package]]
 name = "cranpose-app-shell"
-version = "0.1.171"
-source = "git+https://github.com/samoylenkodmitry/Cranpose?rev=8fa9ba77b24506d4351ca1fcea255e0ac64099ef#8fa9ba77b24506d4351ca1fcea255e0ac64099ef"
+version = "0.1.172"
+source = "git+https://github.com/samoylenkodmitry/Cranpose?rev=29b1075da8fc4b8b15891061d13fe1b576843d59#29b1075da8fc4b8b15891061d13fe1b576843d59"
 dependencies = [
  "arboard",
  "cranpose-core",
@@ -955,12 +955,12 @@ dependencies = [
 [[package]]
 name = "cranpose-build"
 version = "0.1.3"
-source = "git+https://github.com/samoylenkodmitry/cranpose-build?rev=d4b737740e7627962e8cff967e142a9add738b85#d4b737740e7627962e8cff967e142a9add738b85"
+source = "git+https://github.com/samoylenkodmitry/cranpose-build?rev=801caa0d8d274265a5a433176558015190e71f8a#801caa0d8d274265a5a433176558015190e71f8a"
 dependencies = [
  "anyhow",
  "cargo_metadata",
  "clap",
- "cranpose-plugin-process 0.1.0 (git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=5e0b8b8e514af83906e18b6c42c033eca3837589)",
+ "cranpose-plugin-process 0.1.0 (git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=d17c4714a6a97029bda20bb490c4c4dcc95675c6)",
  "ctrlc",
  "plist",
  "serde",
@@ -974,13 +974,13 @@ dependencies = [
 
 [[package]]
 name = "cranpose-capabilities"
-version = "0.1.171"
-source = "git+https://github.com/samoylenkodmitry/Cranpose?rev=8fa9ba77b24506d4351ca1fcea255e0ac64099ef#8fa9ba77b24506d4351ca1fcea255e0ac64099ef"
+version = "0.1.172"
+source = "git+https://github.com/samoylenkodmitry/Cranpose?rev=29b1075da8fc4b8b15891061d13fe1b576843d59#29b1075da8fc4b8b15891061d13fe1b576843d59"
 
 [[package]]
 name = "cranpose-core"
-version = "0.1.171"
-source = "git+https://github.com/samoylenkodmitry/Cranpose?rev=8fa9ba77b24506d4351ca1fcea255e0ac64099ef#8fa9ba77b24506d4351ca1fcea255e0ac64099ef"
+version = "0.1.172"
+source = "git+https://github.com/samoylenkodmitry/Cranpose?rev=29b1075da8fc4b8b15891061d13fe1b576843d59#29b1075da8fc4b8b15891061d13fe1b576843d59"
 dependencies = [
  "foldhash",
  "futures-task",
@@ -1006,9 +1006,9 @@ name = "cranpose-dev-runner"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "cranpose-plugin-authoring 0.1.0 (git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=5e0b8b8e514af83906e18b6c42c033eca3837589)",
- "cranpose-plugin-cache 0.1.0 (git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=5e0b8b8e514af83906e18b6c42c033eca3837589)",
- "cranpose-plugin-process 0.1.0 (git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=5e0b8b8e514af83906e18b6c42c033eca3837589)",
+ "cranpose-plugin-authoring 0.1.0 (git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=d17c4714a6a97029bda20bb490c4c4dcc95675c6)",
+ "cranpose-plugin-cache 0.1.0 (git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=d17c4714a6a97029bda20bb490c4c4dcc95675c6)",
+ "cranpose-plugin-process 0.1.0 (git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=d17c4714a6a97029bda20bb490c4c4dcc95675c6)",
  "cranpose-plugin-watch",
  "ctrlc",
  "notify",
@@ -1027,8 +1027,8 @@ dependencies = [
 
 [[package]]
 name = "cranpose-foundation"
-version = "0.1.171"
-source = "git+https://github.com/samoylenkodmitry/Cranpose?rev=8fa9ba77b24506d4351ca1fcea255e0ac64099ef#8fa9ba77b24506d4351ca1fcea255e0ac64099ef"
+version = "0.1.172"
+source = "git+https://github.com/samoylenkodmitry/Cranpose?rev=29b1075da8fc4b8b15891061d13fe1b576843d59#29b1075da8fc4b8b15891061d13fe1b576843d59"
 dependencies = [
  "cranpose-core",
  "cranpose-macros",
@@ -1045,7 +1045,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "cranpose-build",
- "cranpose-plugin-host 0.1.0 (git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=5e0b8b8e514af83906e18b6c42c033eca3837589)",
+ "cranpose-plugin-host 0.1.0 (git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=d17c4714a6a97029bda20bb490c4c4dcc95675c6)",
  "jni 0.21.1",
  "serde",
  "serde_json",
@@ -1073,8 +1073,8 @@ source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-templ
 
 [[package]]
 name = "cranpose-liquid"
-version = "0.1.171"
-source = "git+https://github.com/samoylenkodmitry/Cranpose?rev=8fa9ba77b24506d4351ca1fcea255e0ac64099ef#8fa9ba77b24506d4351ca1fcea255e0ac64099ef"
+version = "0.1.172"
+source = "git+https://github.com/samoylenkodmitry/Cranpose?rev=29b1075da8fc4b8b15891061d13fe1b576843d59#29b1075da8fc4b8b15891061d13fe1b576843d59"
 dependencies = [
  "cranpose-animation",
  "cranpose-core",
@@ -1090,8 +1090,8 @@ dependencies = [
 
 [[package]]
 name = "cranpose-macros"
-version = "0.1.171"
-source = "git+https://github.com/samoylenkodmitry/Cranpose?rev=8fa9ba77b24506d4351ca1fcea255e0ac64099ef#8fa9ba77b24506d4351ca1fcea255e0ac64099ef"
+version = "0.1.172"
+source = "git+https://github.com/samoylenkodmitry/Cranpose?rev=29b1075da8fc4b8b15891061d13fe1b576843d59#29b1075da8fc4b8b15891061d13fe1b576843d59"
 dependencies = [
  "proc-macro-crate",
  "proc-macro2",
@@ -1101,8 +1101,8 @@ dependencies = [
 
 [[package]]
 name = "cranpose-platform-desktop-winit"
-version = "0.1.171"
-source = "git+https://github.com/samoylenkodmitry/Cranpose?rev=8fa9ba77b24506d4351ca1fcea255e0ac64099ef#8fa9ba77b24506d4351ca1fcea255e0ac64099ef"
+version = "0.1.172"
+source = "git+https://github.com/samoylenkodmitry/Cranpose?rev=29b1075da8fc4b8b15891061d13fe1b576843d59#29b1075da8fc4b8b15891061d13fe1b576843d59"
 dependencies = [
  "cranpose-foundation",
  "cranpose-ui-graphics",
@@ -1112,7 +1112,7 @@ dependencies = [
 [[package]]
 name = "cranpose-plugin-authoring"
 version = "0.1.0"
-source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=5e0b8b8e514af83906e18b6c42c033eca3837589#5e0b8b8e514af83906e18b6c42c033eca3837589"
+source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=780f23b2de097c7955c8a952e2641f171af2ad11#780f23b2de097c7955c8a952e2641f171af2ad11"
 dependencies = [
  "anyhow",
  "proc-macro2",
@@ -1127,7 +1127,7 @@ dependencies = [
 [[package]]
 name = "cranpose-plugin-authoring"
 version = "0.1.0"
-source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=780f23b2de097c7955c8a952e2641f171af2ad11#780f23b2de097c7955c8a952e2641f171af2ad11"
+source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=d17c4714a6a97029bda20bb490c4c4dcc95675c6#d17c4714a6a97029bda20bb490c4c4dcc95675c6"
 dependencies = [
  "anyhow",
  "proc-macro2",
@@ -1142,25 +1142,15 @@ dependencies = [
 [[package]]
 name = "cranpose-plugin-authoring-ui"
 version = "0.1.0"
-source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=5e0b8b8e514af83906e18b6c42c033eca3837589#5e0b8b8e514af83906e18b6c42c033eca3837589"
+source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=d17c4714a6a97029bda20bb490c4c4dcc95675c6#d17c4714a6a97029bda20bb490c4c4dcc95675c6"
 dependencies = [
  "cranpose",
  "cranpose-animation",
  "cranpose-core",
- "cranpose-plugin-authoring 0.1.0 (git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=5e0b8b8e514af83906e18b6c42c033eca3837589)",
+ "cranpose-plugin-authoring 0.1.0 (git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=d17c4714a6a97029bda20bb490c4c4dcc95675c6)",
  "cranpose-plugin-ux",
  "cranpose-ui-graphics",
  "serde_json",
-]
-
-[[package]]
-name = "cranpose-plugin-cache"
-version = "0.1.0"
-source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=5e0b8b8e514af83906e18b6c42c033eca3837589#5e0b8b8e514af83906e18b6c42c033eca3837589"
-dependencies = [
- "anyhow",
- "sha2 0.10.9",
- "tempfile",
 ]
 
 [[package]]
@@ -1174,21 +1164,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "cranpose-plugin-host"
+name = "cranpose-plugin-cache"
 version = "0.1.0"
-source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=5e0b8b8e514af83906e18b6c42c033eca3837589#5e0b8b8e514af83906e18b6c42c033eca3837589"
+source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=d17c4714a6a97029bda20bb490c4c4dcc95675c6#d17c4714a6a97029bda20bb490c4c4dcc95675c6"
 dependencies = [
  "anyhow",
- "cranpose-plugin-authoring 0.1.0 (git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=5e0b8b8e514af83906e18b6c42c033eca3837589)",
- "cranpose-plugin-process 0.1.0 (git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=5e0b8b8e514af83906e18b6c42c033eca3837589)",
- "jni 0.21.1",
- "rand 0.9.5",
- "regex",
- "serde",
- "serde_json",
  "sha2 0.10.9",
  "tempfile",
- "zip 4.6.1",
 ]
 
 [[package]]
@@ -1210,9 +1192,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "cranpose-plugin-host"
+version = "0.1.0"
+source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=d17c4714a6a97029bda20bb490c4c4dcc95675c6#d17c4714a6a97029bda20bb490c4c4dcc95675c6"
+dependencies = [
+ "anyhow",
+ "cranpose-plugin-authoring 0.1.0 (git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=d17c4714a6a97029bda20bb490c4c4dcc95675c6)",
+ "cranpose-plugin-process 0.1.0 (git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=d17c4714a6a97029bda20bb490c4c4dcc95675c6)",
+ "jni 0.21.1",
+ "rand 0.9.5",
+ "regex",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "tempfile",
+ "zip 4.6.1",
+]
+
+[[package]]
 name = "cranpose-plugin-process"
 version = "0.1.0"
-source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=5e0b8b8e514af83906e18b6c42c033eca3837589#5e0b8b8e514af83906e18b6c42c033eca3837589"
+source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=780f23b2de097c7955c8a952e2641f171af2ad11#780f23b2de097c7955c8a952e2641f171af2ad11"
 dependencies = [
  "anyhow",
  "libproc",
@@ -1223,7 +1223,7 @@ dependencies = [
 [[package]]
 name = "cranpose-plugin-process"
 version = "0.1.0"
-source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=780f23b2de097c7955c8a952e2641f171af2ad11#780f23b2de097c7955c8a952e2641f171af2ad11"
+source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=d17c4714a6a97029bda20bb490c4c4dcc95675c6#d17c4714a6a97029bda20bb490c4c4dcc95675c6"
 dependencies = [
  "anyhow",
  "libproc",
@@ -1256,7 +1256,7 @@ dependencies = [
 [[package]]
 name = "cranpose-plugin-ui"
 version = "0.1.0"
-source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=5e0b8b8e514af83906e18b6c42c033eca3837589#5e0b8b8e514af83906e18b6c42c033eca3837589"
+source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=d17c4714a6a97029bda20bb490c4c4dcc95675c6#d17c4714a6a97029bda20bb490c4c4dcc95675c6"
 dependencies = [
  "cranpose",
  "cranpose-core",
@@ -1268,7 +1268,7 @@ dependencies = [
 [[package]]
 name = "cranpose-plugin-ux"
 version = "0.1.0"
-source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=5e0b8b8e514af83906e18b6c42c033eca3837589#5e0b8b8e514af83906e18b6c42c033eca3837589"
+source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=d17c4714a6a97029bda20bb490c4c4dcc95675c6#d17c4714a6a97029bda20bb490c4c4dcc95675c6"
 dependencies = [
  "serde",
  "serde_json",
@@ -1277,12 +1277,12 @@ dependencies = [
 [[package]]
 name = "cranpose-plugin-watch"
 version = "0.1.0"
-source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=5e0b8b8e514af83906e18b6c42c033eca3837589#5e0b8b8e514af83906e18b6c42c033eca3837589"
+source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=d17c4714a6a97029bda20bb490c4c4dcc95675c6#d17c4714a6a97029bda20bb490c4c4dcc95675c6"
 
 [[package]]
 name = "cranpose-render-common"
-version = "0.1.171"
-source = "git+https://github.com/samoylenkodmitry/Cranpose?rev=8fa9ba77b24506d4351ca1fcea255e0ac64099ef#8fa9ba77b24506d4351ca1fcea255e0ac64099ef"
+version = "0.1.172"
+source = "git+https://github.com/samoylenkodmitry/Cranpose?rev=29b1075da8fc4b8b15891061d13fe1b576843d59#29b1075da8fc4b8b15891061d13fe1b576843d59"
 dependencies = [
  "ab_glyph",
  "cranpose-core",
@@ -1298,8 +1298,8 @@ dependencies = [
 
 [[package]]
 name = "cranpose-render-wgpu"
-version = "0.1.171"
-source = "git+https://github.com/samoylenkodmitry/Cranpose?rev=8fa9ba77b24506d4351ca1fcea255e0ac64099ef#8fa9ba77b24506d4351ca1fcea255e0ac64099ef"
+version = "0.1.172"
+source = "git+https://github.com/samoylenkodmitry/Cranpose?rev=29b1075da8fc4b8b15891061d13fe1b576843d59#29b1075da8fc4b8b15891061d13fe1b576843d59"
 dependencies = [
  "bytemuck",
  "cranpose-core",
@@ -1318,8 +1318,8 @@ dependencies = [
 
 [[package]]
 name = "cranpose-runtime-std"
-version = "0.1.171"
-source = "git+https://github.com/samoylenkodmitry/Cranpose?rev=8fa9ba77b24506d4351ca1fcea255e0ac64099ef#8fa9ba77b24506d4351ca1fcea255e0ac64099ef"
+version = "0.1.172"
+source = "git+https://github.com/samoylenkodmitry/Cranpose?rev=29b1075da8fc4b8b15891061d13fe1b576843d59#29b1075da8fc4b8b15891061d13fe1b576843d59"
 dependencies = [
  "cranpose-core",
  "web-time",
@@ -1327,8 +1327,8 @@ dependencies = [
 
 [[package]]
 name = "cranpose-services"
-version = "0.1.171"
-source = "git+https://github.com/samoylenkodmitry/Cranpose?rev=8fa9ba77b24506d4351ca1fcea255e0ac64099ef#8fa9ba77b24506d4351ca1fcea255e0ac64099ef"
+version = "0.1.172"
+source = "git+https://github.com/samoylenkodmitry/Cranpose?rev=29b1075da8fc4b8b15891061d13fe1b576843d59#29b1075da8fc4b8b15891061d13fe1b576843d59"
 dependencies = [
  "cranpose-core",
  "cranpose-macros",
@@ -1347,7 +1347,7 @@ dependencies = [
 [[package]]
 name = "cranpose-stability"
 version = "0.1.0"
-source = "git+https://github.com/samoylenkodmitry/cranpose-stability?rev=16cdf362483f05649f05319d1191b21a6db813e0#16cdf362483f05649f05319d1191b21a6db813e0"
+source = "git+https://github.com/samoylenkodmitry/cranpose-stability?rev=83b885882c519cf2dc059de9dbd9ea62691be0f6#83b885882c519cf2dc059de9dbd9ea62691be0f6"
 dependencies = [
  "anyhow",
  "clap",
@@ -1363,8 +1363,8 @@ dependencies = [
 
 [[package]]
 name = "cranpose-ui"
-version = "0.1.171"
-source = "git+https://github.com/samoylenkodmitry/Cranpose?rev=8fa9ba77b24506d4351ca1fcea255e0ac64099ef#8fa9ba77b24506d4351ca1fcea255e0ac64099ef"
+version = "0.1.172"
+source = "git+https://github.com/samoylenkodmitry/Cranpose?rev=29b1075da8fc4b8b15891061d13fe1b576843d59#29b1075da8fc4b8b15891061d13fe1b576843d59"
 dependencies = [
  "cranpose-animation",
  "cranpose-core",
@@ -1381,8 +1381,8 @@ dependencies = [
 
 [[package]]
 name = "cranpose-ui-graphics"
-version = "0.1.171"
-source = "git+https://github.com/samoylenkodmitry/Cranpose?rev=8fa9ba77b24506d4351ca1fcea255e0ac64099ef#8fa9ba77b24506d4351ca1fcea255e0ac64099ef"
+version = "0.1.172"
+source = "git+https://github.com/samoylenkodmitry/Cranpose?rev=29b1075da8fc4b8b15891061d13fe1b576843d59#29b1075da8fc4b8b15891061d13fe1b576843d59"
 dependencies = [
  "arrayvec",
  "bytemuck",
@@ -1393,8 +1393,8 @@ dependencies = [
 
 [[package]]
 name = "cranpose-ui-layout"
-version = "0.1.171"
-source = "git+https://github.com/samoylenkodmitry/Cranpose?rev=8fa9ba77b24506d4351ca1fcea255e0ac64099ef#8fa9ba77b24506d4351ca1fcea255e0ac64099ef"
+version = "0.1.172"
+source = "git+https://github.com/samoylenkodmitry/Cranpose?rev=29b1075da8fc4b8b15891061d13fe1b576843d59#29b1075da8fc4b8b15891061d13fe1b576843d59"
 dependencies = [
  "cranpose-core",
  "cranpose-ui-graphics",
