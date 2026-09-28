@@ -11,6 +11,9 @@ https://github.com/user-attachments/assets/aede3fd5-b144-4eed-b13a-2a8b9b86cefd
 
 # Cranpose for IntelliJ IDEA
 
+[JetBrains Marketplace](https://plugins.jetbrains.com/plugin/34594-cranpose) ·
+[Signed releases](https://github.com/samoylenkodmitry/cranpose-idea/releases)
+
 Build Cranpose applications in IntelliJ IDEA and RustRover, with interactive previews
 beside Rust source. The Studio controls, inspector and tool window are written in Rust and rendered by Cranpose.
 
@@ -18,7 +21,7 @@ beside Rust source. The Studio controls, inspector and tool window are written i
 
 Choose **File → New Project → Cranpose** to start from
 [Cranpose Showcase](https://github.com/samoylenkodmitry/cranpose-showcase). The native
-Cranpose wizard uses a pinned starter with Cranpose 0.1.169. Choose an empty
+Cranpose wizard uses a pinned starter with Cranpose 0.1.171. Choose an empty
 location; the starter is bundled and project creation works offline without Git.
 Studio saves the desktop run configuration, opens source beside the preview,
 and starts the first build automatically. Rust and downloaded Cargo dependencies
@@ -192,8 +195,10 @@ Metal, Vulkan or DX12-capable system. Software Vulkan is supported.
 Install JetBrains Rust support in IDEA for full Rust parsing, completion and
 refactoring.
 
-Download the `plugin` artifact from a successful [Build](https://github.com/samoylenkodmitry/cranpose-idea/actions/workflows/build.yml)
-run. In **Settings → Plugins → gear → Install Plugin from Disk**, select its ZIP.
+Find the plugin on [JetBrains Marketplace](https://plugins.jetbrains.com/plugin/34594-cranpose).
+For versions awaiting Marketplace review, download the signed ZIP from
+[GitHub Releases](https://github.com/samoylenkodmitry/cranpose-idea/releases).
+In **Settings → Plugins → gear → Install Plugin from Disk**, select its ZIP.
 
 1. Open the directory containing the workspace's `Cargo.toml`.
 2. Open **View → Tool Windows → Cranpose** and select a target.
