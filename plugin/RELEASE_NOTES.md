@@ -1,4 +1,14 @@
-# Cranpose 0.13.1
+# Cranpose 0.13.2
+
+Application targets now use a compact selected-target summary. Open it to search
+by target or package and choose from five results per page. Preview and build
+controls stay near the top even in larger workspaces. Tab and Enter work in the
+chooser, and selection returns focus to its summary.
+
+Uses the reusable Rust/Cranpose choice control from the plugin template and
+Cranpose 0.1.172. Application release builds are unchanged.
+
+## Included since 0.13.1
 
 Desktop Build & run now shows **Application running** after the OS creates the
 process, instead of leaving **Launching application** visible until exit. Stop

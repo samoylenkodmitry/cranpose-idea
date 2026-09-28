@@ -39,6 +39,10 @@ jobs:
         run: target/debug/xtask.exe starter-smoke --output "${{ runner.temp }}/cranpose-starter" > starter-windows.json
       - if: matrix.platform == 'windows-x86_64'
         run: target/debug/xtask.exe authoring-smoke --binary target/x86_64-pc-windows-msvc/release/cranpose-intellij-ui.exe --log authoring-windows.log --report authoring-windows.json
+      - if: matrix.platform == 'windows-x86_64'
+        run: target/debug/xtask.exe choice-smoke --binary target/x86_64-pc-windows-msvc/release/cranpose-intellij-ui.exe --log choices-windows.log --report choices-windows.json
+      - if: matrix.platform == 'windows-x86_64'
+        run: target/debug/xtask.exe choice-smoke --dashboard --require-background --binary target/x86_64-pc-windows-msvc/release/cranpose-intellij-ui.exe --log dashboard-windows.log --report dashboard-windows.json
       - uses: actions/upload-artifact@v7
         if: always() && matrix.platform == 'windows-x86_64'
         with:
@@ -47,6 +51,8 @@ jobs:
             target/debug/xtask.exe
             starter-windows.json
             authoring-windows.*
+            choices-windows.*
+            dashboard-windows.*
             authoring-controls-*.png
             lightning-*.png
           if-no-files-found: error
@@ -108,6 +114,10 @@ jobs:
           cargo run --locked -p xtask -- inspection-profile --binary target/debug/cranpose-intellij-ui --nodes 1000 --seconds 5 --settle-seconds 3 --require-quiet --change-rounds 3 --change-seconds 5 --exercise-tree --resize-rounds 3 --max-ui-nodes 200 --log inspector-hot-reload.log --report inspector-hot-reload.json
       - name: Cranpose editor decorations
         run: cargo run --locked -p xtask -- authoring-smoke --binary target/debug/cranpose-intellij-ui --log authoring-hot-reload.log --report authoring-hot-reload.json
+      - name: Compact target selection
+        run: cargo run --locked -p xtask -- choice-smoke --binary target/debug/cranpose-intellij-ui --log choices-hot-reload.log --report choices-hot-reload.json
+      - name: Compact dashboard layout and background
+        run: cargo run --locked -p xtask -- choice-smoke --dashboard --require-background --binary target/debug/cranpose-intellij-ui --log dashboard-hot-reload.log --report dashboard-hot-reload.json
       - name: Library and binary application
         run: cargo run --locked -p xtask -- hot-smoke --runner target/debug/cranpose-dev-runner --fixture library --reuse-fixture --source src/lib.rs --cache "${{ runner.temp }}/cranpose-hot-cache" --log library-hot-reload.log --measure-rounds 2 --live-values-rounds 4 --profile-startup --report library-hot-reload.json
       - uses: actions/upload-artifact@v7
