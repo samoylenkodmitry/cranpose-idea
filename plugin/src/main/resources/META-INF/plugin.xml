@@ -21,7 +21,7 @@
         offline without Git. The plugin owns preview instrumentation and leaves application release
         builds unchanged. JetBrains Rust support provides full Rust language editing.</p>
     ]]></description>
-    <change-notes><![CDATA[<p>0.13.5 — Navigate from picked views to their source.</p><p>Picking a view or clicking its source link now opens the original source file for previews using generated launchers, including Showcase. Cargo workspace paths no longer duplicate the generated package directory. Application release builds are unchanged.</p>]]></change-notes>
+    <change-notes><![CDATA[<p>0.13.5 — Keep your preview while editing source.</p><p>Pick and source links open the correct file and carry the running preview across tabs. Pick works with Inspect closed. Live popups leave source clicks available for caret placement. RGB and byte-channel color constructors now have grouped controls and inline swatches. Application release builds are unchanged.</p>]]></change-notes>
     <depends>com.intellij.modules.platform</depends>
     <extensions defaultExtensionNs="com.intellij">
         <postStartupActivity implementation="dev.cranpose.rust.Startup"/>

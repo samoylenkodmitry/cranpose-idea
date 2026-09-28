@@ -469,7 +469,7 @@ fn InspectionControls(state: MutableState<Studio>, palette: Palette) {
             edit(state, |studio| {
                 studio.set_inspecting(!studio.settings.inspect)
             });
-            if state.get().settings.inspect {
+            if state.get().settings.inspect || state.get().pick {
                 request_snapshot(&state.get());
             }
         },

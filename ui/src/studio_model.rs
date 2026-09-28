@@ -323,9 +323,6 @@ impl Studio {
             self.settings.inspect = inspecting;
             self.invalidate_inspection();
         }
-        if !inspecting {
-            self.pick = false;
-        }
     }
 
     pub fn set_live_inspection(&mut self, live: bool) {
@@ -337,14 +334,16 @@ impl Studio {
 
     pub fn set_picking(&mut self, pick: bool) {
         if pick {
-            self.set_inspecting(true);
             self.set_live_inspection(true);
+        }
+        if self.pick != pick && !self.settings.inspect {
+            self.invalidate_inspection();
         }
         self.pick = pick;
     }
 
     fn has_current_inspection(&self) -> bool {
-        self.connected && self.settings.inspect && self.live && self.inspection_fresh
+        self.connected && (self.settings.inspect || self.pick) && self.live && self.inspection_fresh
     }
 
     pub fn picking(&self) -> bool {

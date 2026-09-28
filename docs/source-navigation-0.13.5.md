@@ -13,7 +13,7 @@ to the other duplicated the launcher directory before source mapping.
 Studio now uses the template's shared Rust source-path resolver. It handles
 workspace-relative, package-relative and absolute locations, with the most
 specific directory mapping taking precedence. It does not scan by filename or
-change source instrumentation, application dependencies or release builds.
+change application dependencies or release builds.
 
 ## Regression coverage
 
@@ -27,9 +27,23 @@ change source instrumentation, application dependencies or release builds.
   `list_screen.rs:223` from the source button and `detail_screen.rs:59` from Pick.
   The source-arrival shader runs and the application keeps the same process.
 
-The preview is still owned by its original source tab. Navigating to another
-tab shows that tab's idle preview; returning to the original tab restores the
-running preview. Keeping the active preview visible across source tabs is a
-separate UX follow-up, not fixed in this version.
+Source tabs now share the workspace that initiated navigation. Moving its native
+component into the destination tab preserves the application and controller.
+Returning to a linked tab mounts that same workspace. Closing the origin keeps it
+alive while another tab uses it; closing the last owner releases it. Existing
+destination sessions remain owned by their original tab.
+
+Pick and Inspect are independent. Closing Inspect expands the preview while Pick
+stays enabled. A fresh snapshot is required after reflow; delayed replies remain
+fenced. With both off, snapshot polling stops. The shared native fixture checks
+these transitions, and actual IDEA integration checks mounting and disposal.
+
+The same authoring correction disables IntelliJ's consuming outside-click popup
+dismissal and leaves source mouse presses to normal caret handling. Popup bounds
+avoid the source line. `Color::rgb`, `Color::from_rgb_u8` and
+`Color::from_rgba_u8` use grouped color controls and inline swatches. Byte edits
+round to valid channels and preserve numeric base, suffixes and comments. RGB
+constructors remain opaque; RGBA exposes opacity. Compiled Rust regressions verify
+generated development instrumentation and runtime updates.
 
 This is a navigation correctness fix, with no performance claim.
