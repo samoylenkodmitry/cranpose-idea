@@ -34,9 +34,10 @@ content rendered:
 The manual numbers exclude the time to notice the message and press Restart.
 With Cranpose 0.1.173, adding a statement or call inside a composable resets
 that composable's remembered state: branch group keys are numbered through the
-whole function, so the body's group key moves. Expression-only edits keep
-state, as do other composables. This is memory-safe; the slot table replaces
-mismatched payloads.
+whole function, so the body's group key moves. This is memory-safe; the slot
+table replaces mismatched payloads. From 0.14.1 the runner enables Cranpose's
+development-only `hot-reload` feature when the application's Cranpose offers
+it; composition keys then follow source structure and such edits keep state.
 
 ## Editor decorations
 

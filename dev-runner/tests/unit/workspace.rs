@@ -221,7 +221,10 @@ fn hot_reload_keys_follow_the_application_cranpose() {
         rename: None,
         path: None,
     };
-    assert!(!metadata.cranpose_hot_reload(&registry), "no lock file");
+    assert!(
+        !metadata.cranpose_hot_reload(&registry, None),
+        "no lock file"
+    );
     // Locked sources are read from Cargo's caches when present.
     let home = tempfile::tempdir().expect("cargo home");
     let checkout = home
@@ -274,7 +277,7 @@ fn hot_reload_keys_follow_the_application_cranpose() {
         )
         .expect("lock");
         assert_eq!(
-            metadata.cranpose_hot_reload(&registry),
+            metadata.cranpose_hot_reload(&registry, None),
             expected,
             "{version}"
         );
@@ -291,11 +294,34 @@ fn hot_reload_keys_follow_the_application_cranpose() {
         rename: None,
         path: Some(local.clone()),
     };
-    assert!(!metadata.cranpose_hot_reload(&path));
+    assert!(!metadata.cranpose_hot_reload(&path, None));
     fs::write(
         local.join("Cargo.toml"),
         "[package]\nname = \"cranpose\"\n[features]\nhot-reload = []\n",
     )
     .expect("manifest");
-    assert!(metadata.cranpose_hot_reload(&path));
+    assert!(metadata.cranpose_hot_reload(&path, None));
+}
+
+#[test]
+fn unresolved_graphs_ask_cargo_for_the_features() {
+    let root = tempfile::tempdir().expect("temporary workspace");
+    let framework = root.path().join("framework");
+    fs::create_dir_all(framework.join("src")).expect("framework");
+    fs::write(framework.join("src/lib.rs"), "").expect("library");
+    fs::write(
+        framework.join("Cargo.toml"),
+        "[package]\nname = \"cranpose\"\nversion = \"0.1.174\"\nedition = \"2024\"\n[features]\nhot-reload = []\n",
+    )
+    .expect("framework manifest");
+    let app = root.path().join("app");
+    fs::create_dir_all(app.join("src")).expect("app");
+    fs::write(app.join("src/main.rs"), "fn main() {}\n").expect("main");
+    fs::write(
+        app.join("Cargo.toml"),
+        "[package]\nname = \"app\"\nversion = \"0.1.0\"\nedition = \"2024\"\n[workspace]\n[dependencies]\ncranpose = { path = \"../framework\" }\n",
+    )
+    .expect("app manifest");
+    assert_eq!(resolved_feature(&app, "cranpose", "hot-reload"), Some(true));
+    assert_eq!(resolved_feature(&app, "cranpose", "missing"), Some(false));
 }

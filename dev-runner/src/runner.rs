@@ -91,9 +91,6 @@ pub fn run(options: RunOptions) -> Result<()> {
         .cloned()
         .collect();
     features.insert(format!("{alias}/preview"));
-    if options.hot_reload && metadata.cranpose_hot_reload(dependency) {
-        features.insert(format!("{alias}/hot-reload"));
-    }
     let sequence = SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis();
     let lease = if options.hot_reload {
         fs::create_dir_all(&options.cache)?;
@@ -134,6 +131,11 @@ pub fn run(options: RunOptions) -> Result<()> {
         &options.cache.join("support/dev-macros"),
         options.hot_reload,
     )?;
+    // Decided in the private copy, where resolving dependencies cannot touch
+    // the application's own lockfile.
+    if options.hot_reload && metadata.cranpose_hot_reload(dependency, Some(&workspace.directory)) {
+        features.insert(format!("{alias}/hot-reload"));
+    }
     let launcher = if options.hot_reload {
         crate::launcher::prepare(&mut workspace, package, target)?
     } else {

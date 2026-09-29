@@ -9,10 +9,10 @@ license = "Apache-2.0"
 workspace = true
 
 [dependencies]
-cranpose-plugin-authoring = { git = "https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template", rev = "9adf872093b3e7f9348967f59250d25043450cd4" }
-cranpose-plugin-cache = { git = "https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template", rev = "9adf872093b3e7f9348967f59250d25043450cd4" }
-cranpose-plugin-process = { git = "https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template", rev = "9adf872093b3e7f9348967f59250d25043450cd4" }
-cranpose-plugin-watch = { git = "https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template", rev = "9adf872093b3e7f9348967f59250d25043450cd4" }
+cranpose-plugin-authoring = { git = "https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template", rev = "877dfd7fe503ce0a4068f42e342be78f74704f2a" }
+cranpose-plugin-cache = { git = "https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template", rev = "877dfd7fe503ce0a4068f42e342be78f74704f2a" }
+cranpose-plugin-process = { git = "https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template", rev = "877dfd7fe503ce0a4068f42e342be78f74704f2a" }
+cranpose-plugin-watch = { git = "https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template", rev = "877dfd7fe503ce0a4068f42e342be78f74704f2a" }
 anyhow = "1.0.104"
 ctrlc = { version = "3.5.2", features = ["termination"] }
 notify = "8.2.0"
