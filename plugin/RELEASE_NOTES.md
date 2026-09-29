@@ -16,6 +16,8 @@ still applies without compiling.
 
 The panel, popups and the New Project wizard use plainer wording.
 
+Uses plugin template and SDK 0.8.1 and Cranpose Build 0.1.6.
+
 ## Included since 0.14.3
 
 Studio now builds on released versions of everything it uses: Cranpose 0.1.176,
