@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.14.1
+
+- With a Cranpose revision that offers the development-only `hot-reload`
+  feature, the preview runner enables it so structural hot patches keep
+  remembered state around an edit. Release builds are unchanged.
+
 ## 0.14.0
 
 - Structural edits inside function bodies hot-patch the running preview; edits

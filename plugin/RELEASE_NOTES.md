@@ -1,4 +1,20 @@
-# Cranpose 0.14.0
+# Cranpose 0.14.1
+
+Structural edits now keep remembered state. When an application uses a Cranpose
+revision with the development-only `hot-reload` feature (Cranpose main from
+this release's framework change, and released versions from 0.1.175), the
+preview runner enables it in its private debug build. Composition is then
+keyed by source structure rather than absolute lines, so adding a binding above
+remembered state, or views before or after it or in another composable, is
+hot-patched without resetting the count. Renaming a binding, changing a
+condition or reordering same-named siblings starts those groups fresh.
+Application release builds and the default feature set are unchanged.
+
+In a local check on the counter fixture, four such edits reset the count to 0
+with the previous Cranpose revision and kept it with the new one, in the same
+process. CI now requires a structural edit to keep the fixture's count.
+
+## Included since 0.14.0
 
 Code edits no longer wait for a Restart. Changes inside function and method
 bodies, including added, removed or reordered calls, statements, closures and
