@@ -21,7 +21,7 @@ beside Rust source. The Studio controls, inspector and tool window are written i
 
 Choose **File → New Project → Cranpose** to start from
 [Cranpose Showcase](https://github.com/samoylenkodmitry/cranpose-showcase). The native
-Cranpose wizard uses a pinned starter with Cranpose 0.1.171. Choose an empty
+Cranpose wizard uses a pinned starter with Cranpose 0.1.175. Choose an empty
 location; the starter is bundled and project creation works offline without Git.
 Studio saves the desktop run configuration, opens source beside the preview,
 and starts the first build automatically. Rust and downloaded Cargo dependencies
@@ -80,7 +80,7 @@ The [sample](samples/counter) pins the tested revision:
 
 ```toml
 [dependencies]
-cranpose = { git = "https://github.com/samoylenkodmitry/Cranpose", rev = "631bf7ca9159c14a123191b71d893b6cc92d357c", features = ["desktop", "preview"] }
+cranpose = { git = "https://github.com/samoylenkodmitry/Cranpose", rev = "a49e7a781bfbab626f4ea3f6aadbdc2c1eb3e06b", features = ["desktop", "preview"] }
 ```
 
 ```rust

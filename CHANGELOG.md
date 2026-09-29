@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.14.2
+
+- Cranpose 0.1.175 on crates.io offers the development-only `hot-reload`
+  feature. The bundled Showcase starter and Create Cranpose App use it.
+- Live values for a literal that has not run since its file was compiled are
+  compiled instead of accepted unchecked, so values that do not fit report a
+  compiler error.
+- Studio, the plugin template and the stability analyzer use Cranpose 0.1.175.
+
 ## 0.14.1
 
 - With a Cranpose revision that offers the development-only `hot-reload`

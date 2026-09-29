@@ -1,4 +1,21 @@
-# Cranpose 0.14.1
+# Cranpose 0.14.2
+
+Cranpose 0.1.175 is on crates.io with the development-only `hot-reload`
+feature. New projects from **File → New Project → Cranpose** and **Create
+Cranpose App** use it, so structural hot patches keep remembered state from the
+first edit. Existing applications get the same behavior by moving to Cranpose
+0.1.175. Application release builds are unchanged.
+
+Live values now go through the compiler for literals that have not run yet.
+Previously, after a hot patch, a click handler's number could be changed to a
+value its type cannot hold: the preview silently kept the old number and no
+error appeared. Now such values are compiled, so the compiler reports literals
+that don't fit. Values that fit every type of their kind, and any value for a
+literal that has already run, still apply without compilation.
+
+Studio, the plugin template and the stability analyzer use Cranpose 0.1.175.
+
+## Included since 0.14.1
 
 Structural edits now keep remembered state. When an application uses a Cranpose
 revision with the development-only `hot-reload` feature (Cranpose main from
