@@ -358,12 +358,12 @@ fn wide_inspection_preserves_preview_height_and_clips_before_the_sidebar() {
     assert_eq!(wide.inspector_width, 400.0);
     assert_eq!(wide.stage_width, 600.0);
     assert_eq!(wide.inspector_height, 0.0);
-    assert_eq!(wide.stage_height + wide.top + 28.0, 600.0);
+    assert_eq!(wide.stage_height + wide.top + STATUS_HEIGHT, 600.0);
     let small = StudioLayout::new(500.0, 240.0, true, 0.0, 0.0);
     assert_eq!(small.inspector_width, 0.0);
     assert!(small.stage_height > 0.0);
     assert_eq!(
-        small.stage_height + small.inspector_height + small.top + 28.0,
+        small.stage_height + small.inspector_height + small.top + STATUS_HEIGHT,
         240.0
     );
 }
@@ -538,4 +538,196 @@ fn inspector_requests_use_decimal_ids_and_advance_when_the_layout_does_not() {
         model.inspection_request().expect("new connection")["payload"],
         "1"
     );
+}
+
+#[test]
+fn native_menus_describe_and_apply_choices() {
+    let mut studio = studio();
+    let targets = studio.menu_items("target");
+    assert!(!targets.is_empty());
+    assert_eq!(targets.iter().filter(|i| i["checked"] == true).count(), 1);
+
+    studio.settings.width = 480;
+    studio.settings.height = 760;
+    let sizes = studio.menu_items("size");
+    assert!(
+        sizes
+            .iter()
+            .any(|i| i["id"] == "480x760" && i["checked"] == true)
+    );
+    assert!(
+        sizes
+            .iter()
+            .any(|i| i["id"] == "rotate" && i["separator"] == true)
+    );
+    studio.choose("size", "rotate");
+    assert_eq!((studio.settings.width, studio.settings.height), (760, 480));
+    studio.choose("size", "1280x800");
+    assert_eq!((studio.settings.width, studio.settings.height), (1280, 800));
+    studio.choose("size", "custom");
+    assert_eq!(studio.menu, "size");
+
+    studio.choose("zoom", "1.5");
+    assert!(!studio.settings.fit);
+    assert_eq!(studio.settings.zoom, 1.5);
+    assert!(
+        studio
+            .menu_items("zoom")
+            .iter()
+            .any(|i| i["label"] == "150%" && i["checked"] == true)
+    );
+    studio.choose("zoom", "0");
+    assert!(studio.settings.fit);
+
+    // Process-shaping settings restart a running preview instead of asking.
+    studio.session = 3;
+    let hot = studio.settings.hot_reload;
+    let requests = studio.choose("more", "hotReload");
+    assert_eq!(studio.settings.hot_reload, !hot);
+    assert!(requests.iter().any(|r| r["action"] == "start"));
+    assert!(!studio.restart_required);
+    let requests = studio.choose("more", "configure");
+    assert_eq!(requests[0]["action"], "configure");
+    assert!(studio.choose("target", "missing").is_empty());
+}
+
+fn runner(model: &mut Studio, session: u64, line: Value) -> Vec<Value> {
+    model.handle(
+        "studio.child",
+        &json!({"session":session,"event":"log","line":line.to_string()}).to_string(),
+    )
+}
+
+#[test]
+fn edits_needing_a_new_process_rebuild_while_the_preview_stays_live() {
+    let mut model = studio();
+    model.start();
+    model.handle("studio.child", r#"{"session":1,"event":"connected"}"#);
+    let reason = "Struct `Palette` fields changed";
+    assert!(
+        runner(
+            &mut model,
+            1,
+            json!({"cranposeDev":"restartRequired","message":reason})
+        )
+        .is_empty(),
+        "the runner debounces and asks separately"
+    );
+    assert!(model.restart_required);
+    let requests = runner(
+        &mut model,
+        1,
+        json!({"cranposeDev":"rebuildRequired","message":reason}),
+    );
+    assert_eq!(requests.len(), 1);
+    assert_eq!(requests[0]["action"], "start");
+    assert_eq!(requests[0]["session"], 2);
+    assert_eq!(requests[0]["options"]["watch"], true);
+    assert!(model.rebuilding && model.busy && model.connected && !model.restart_required);
+    assert_eq!(model.rebuild_reason, reason);
+    assert_eq!(model.status, "Rebuilding · Struct `Palette` fields changed");
+    // The previous runner keeps watching; its reports no longer steer the session.
+    assert!(
+        runner(
+            &mut model,
+            1,
+            json!({"cranposeDev":"rebuildRequired","message":reason})
+        )
+        .is_empty()
+    );
+    for kind in ["preparing", "toolchain", "patching"] {
+        runner(
+            &mut model,
+            2,
+            json!({"cranposeDev":kind,"message":"progress"}),
+        );
+        assert_eq!(model.status, "Rebuilding · Struct `Palette` fields changed");
+        assert!(model.busy);
+    }
+    runner(
+        &mut model,
+        2,
+        json!({"cranposeDev":"workspace","private":"/cache/slot-b"}),
+    );
+    runner(
+        &mut model,
+        2,
+        json!({"cranposeDev":"workspace","private":"/cache/slot-b"}),
+    );
+    assert_eq!(
+        model
+            .source_maps
+            .iter()
+            .filter(|(private, _)| private == Path::new("/cache/slot-b"))
+            .count(),
+        1
+    );
+    model.handle("studio.child", r#"{"session":2,"event":"connected"}"#);
+    assert!(!model.rebuilding && !model.busy);
+    assert_eq!(model.status, "Rebuilt · Struct `Palette` fields changed");
+    model.handle("studio.child", r#"{"session":2,"event":"message","channel":"cranpose.dev.applied","payload":"{\"generation\":0,\"pid\":7}"}"#);
+    assert_eq!(model.status, "Hot reload ready");
+}
+
+#[test]
+fn rebuild_waits_for_the_user_when_reload_on_save_is_off_or_the_build_fails() {
+    let mut model = studio();
+    model.settings.auto_build = false;
+    model.start();
+    model.handle("studio.child", r#"{"session":1,"event":"connected"}"#);
+    assert!(
+        runner(
+            &mut model,
+            1,
+            json!({"cranposeDev":"rebuildRequired","message":"`main` changed"})
+        )
+        .is_empty()
+    );
+    assert!(model.restart_required && !model.rebuilding);
+    assert_eq!(model.status, "`main` changed");
+
+    model.settings.auto_build = true;
+    assert_eq!(
+        runner(
+            &mut model,
+            1,
+            json!({"cranposeDev":"rebuildRequired","message":"`main` changed"})
+        )
+        .len(),
+        1
+    );
+    // Syntax errors reported by the replacement stay visible.
+    runner(
+        &mut model,
+        2,
+        json!({"cranposeDev":"error","message":"src/main.rs: line 3: expected `;`"}),
+    );
+    assert_eq!(model.status, "src/main.rs: line 3: expected `;`");
+    assert!(model.rebuilding && model.busy);
+    runner(
+        &mut model,
+        2,
+        json!({"$message_type":"diagnostic","level":"error","message":"mismatched types"}),
+    );
+    assert!(!model.rebuilding && !model.busy);
+    assert_eq!(
+        model.status,
+        "Build failed · previous preview remains available"
+    );
+    assert_eq!(
+        runner(
+            &mut model,
+            2,
+            json!({"cranposeDev":"rebuildRequired","message":"`main` changed"})
+        )
+        .len(),
+        1
+    );
+    model.handle(
+        "studio.child",
+        r#"{"session":3,"event":"failed","message":"Cranpose exited before connecting","fallbackSession":1}"#,
+    );
+    assert!(!model.rebuilding && model.connected);
+    assert_eq!(model.session, 1);
+    assert_eq!(model.status, "Cranpose exited before connecting");
 }

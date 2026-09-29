@@ -32,9 +32,13 @@ pub fn analyze_request(request: &ProjectRequest) -> Result<Value, String> {
                 },
             };
             let mut detail = format!(
-                "{} · {}\n{}\n\n{}",
-                function.name, parameter.name, parameter.reason, parameter.advice
+                "{} · {}\n{}",
+                function.name, parameter.name, parameter.reason
             );
+            if let Some(resolved) = &parameter.resolved_type {
+                detail.push_str(&format!("\nType: {resolved}"));
+            }
+            detail.push_str(&format!("\n\n{}", parameter.advice));
             if let Some(reason) = &parameter.suppressed {
                 detail.push_str(&format!("\n\nAllowed: {reason}"));
             }

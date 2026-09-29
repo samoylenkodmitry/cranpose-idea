@@ -260,6 +260,9 @@ pub struct Studio {
     pub connected: bool,
     pub busy: bool,
     pub restart_required: bool,
+    /// A replacement session is building after an edit the running preview cannot load.
+    pub rebuilding: bool,
+    pub rebuild_reason: String,
     pub root: String,
     pub cache: String,
     pub source: String,
@@ -297,6 +300,8 @@ impl Default for Studio {
             connected: false,
             busy: false,
             restart_required: false,
+            rebuilding: false,
+            rebuild_reason: String::new(),
             root: String::new(),
             cache: String::new(),
             source: String::new(),
@@ -443,6 +448,8 @@ impl Studio {
         self.session = self.next_session;
         self.busy = true;
         self.restart_required = false;
+        self.rebuilding = false;
+        self.rebuild_reason.clear();
         self.status = "Preparing preview…".into();
         self.setup.clear();
         self.diagnostics.clear();
@@ -453,6 +460,15 @@ impl Studio {
                 "cache": self.cache, "features": target.features, "hotReload": self.settings.hot_reload, "watch": self.settings.auto_build
             }}),
         )
+    }
+    /// Starts a replacement after an edit the running process cannot load. The host
+    /// keeps the current preview visible and interactive until the new one connects.
+    fn rebuild(&mut self, reason: &str) -> Option<Value> {
+        let request = self.start()?;
+        self.rebuilding = true;
+        self.rebuild_reason = reason.into();
+        self.status = format!("Rebuilding · {reason}");
+        Some(request)
     }
     pub fn select_preview(&mut self, id: String) -> Option<Value> {
         self.settings.preview = id;
@@ -510,6 +526,7 @@ impl Studio {
                     self.next_session = self.next_session.max(active).max(candidate);
                     self.connected = active > 0;
                     self.busy = candidate > 0;
+                    self.rebuilding &= self.busy;
                     self.pending_start = false;
                     self.menu.clear();
                     if self.session == 0 {
@@ -550,6 +567,10 @@ impl Studio {
             }
             "studio.command" => match value["action"].as_str().unwrap_or_default() {
                 "build" => requests.extend(self.start()),
+                "menu" => requests.extend(self.choose(
+                    value["menu"].as_str().unwrap_or_default(),
+                    value["item"].as_str().unwrap_or_default(),
+                )),
                 "showFunction" => {
                     self.requested_function = value["name"].as_str().unwrap_or_default().into();
                     if self.session == 0 {
@@ -582,11 +603,17 @@ impl Studio {
                         self.generation = 0;
                         self.connected = true;
                         self.busy = false;
-                        self.status = "Preview running".into();
+                        self.status = if self.rebuilding {
+                            format!("Rebuilt · {}", self.rebuild_reason)
+                        } else {
+                            "Preview running".into()
+                        };
+                        self.rebuilding = false;
                     }
                     "stopped" => {
                         self.connected = false;
                         self.busy = false;
+                        self.rebuilding = false;
                         self.setup = value["setup"].as_str().unwrap_or_default().into();
                         if !self.setup.is_empty() {
                             self.session = 0;
@@ -600,12 +627,13 @@ impl Studio {
                         self.session = value["fallbackSession"].as_u64().unwrap_or_default();
                         self.connected = self.session > 0;
                         self.busy = false;
+                        self.rebuilding = false;
                         self.status = value["message"]
                             .as_str()
                             .unwrap_or("Preview build failed")
                             .into();
                     }
-                    "log" => self.log(value["line"].as_str().unwrap_or_default()),
+                    "log" => requests.extend(self.log(value["line"].as_str().unwrap_or_default())),
                     "pointer" => {
                         if self.picking() {
                             let picked = self
@@ -690,6 +718,164 @@ impl Studio {
         }
         requests
     }
+    /// Items for a native IDE menu, in the host's `menu` request format.
+    pub fn menu_items(&self, menu: &str) -> Vec<Value> {
+        let item = |id: &str, label: &str, checked: bool| json!({"id": id, "label": label, "checked": checked});
+        let separated = |mut value: Value| {
+            value["separator"] = json!(true);
+            value
+        };
+        match menu {
+            "target" => self
+                .targets
+                .iter()
+                .map(|target| {
+                    let mut label = target.name.clone();
+                    if target.package_name != target.name {
+                        label.push_str(&format!(" · {}", target.package_name));
+                    }
+                    if target.kind == "example" {
+                        label.push_str(" · example");
+                    }
+                    let id = target.id();
+                    item(&id, &label, id == self.settings.target)
+                })
+                .collect(),
+            "preview" => std::iter::once(item("", "Application", self.settings.preview.is_empty()))
+                .chain(self.previews.iter().enumerate().map(|(index, preview)| {
+                    let label = if preview.group.is_empty() {
+                        preview.name.clone()
+                    } else {
+                        format!("{} › {}", preview.group, preview.name)
+                    };
+                    let entry = item(&preview.id, &label, preview.id == self.settings.preview);
+                    if index == 0 { separated(entry) } else { entry }
+                }))
+                .collect(),
+            "size" => {
+                let (width, height) = (self.settings.width, self.settings.height);
+                let mut items: Vec<_> = SIZES
+                    .iter()
+                    .map(|(name, w, h)| {
+                        item(
+                            &format!("{w}x{h}"),
+                            &format!("{name}  {w} × {h}"),
+                            (width, height) == (*w, *h),
+                        )
+                    })
+                    .collect();
+                items.push(separated(item("rotate", "Rotate", false)));
+                items.push(item("custom", "Custom size…", false));
+                items
+            }
+            "zoom" => ZOOMS
+                .iter()
+                .map(|(label, zoom)| {
+                    let checked = if *zoom == 0.0 {
+                        self.settings.fit
+                    } else {
+                        !self.settings.fit && (self.settings.zoom - zoom).abs() < 0.001
+                    };
+                    item(&zoom.to_string(), label, checked)
+                })
+                .collect(),
+            "more" => vec![
+                item("hotReload", "Hot code reload", self.settings.hot_reload),
+                item("autoBuild", "Rebuild on save", self.settings.auto_build),
+                item("live", "Live inspection", self.live),
+                separated(item("configure", "Run configuration…", false)),
+                item("export", "Export PNG…", false),
+                item("reveal", "Reveal source", false),
+            ],
+            _ => vec![],
+        }
+    }
+
+    /// Apply a native menu choice. Settings that shape the running process
+    /// restart the preview immediately rather than waiting for the user.
+    pub fn choose(&mut self, menu: &str, item: &str) -> Vec<Value> {
+        let mut requests = vec![];
+        match (menu, item) {
+            ("target", id) if self.targets.iter().any(|t| t.id() == id) => {
+                if self.settings.target != id {
+                    self.settings.target = id.into();
+                    self.settings.preview.clear();
+                    if self.session > 0 {
+                        requests.extend(self.start());
+                    }
+                }
+            }
+            ("preview", id) if id.is_empty() || self.previews.iter().any(|p| p.id == id) => {
+                requests.extend(self.select_preview(id.into()));
+            }
+            ("size", "rotate") => {
+                let settings = &mut self.settings;
+                (settings.width, settings.height) = (settings.height, settings.width);
+            }
+            ("size", "custom") => self.menu = "size".into(),
+            ("size", preset) => {
+                if let Some((w, h)) = preset.split_once('x')
+                    && let (Ok(w), Ok(h)) = (w.parse(), h.parse())
+                {
+                    self.settings.width = w;
+                    self.settings.height = h;
+                    self.settings.normalize();
+                }
+            }
+            ("zoom", zoom) => {
+                if let Ok(zoom) = zoom.parse::<f32>() {
+                    self.settings.fit = zoom == 0.0;
+                    if zoom > 0.0 {
+                        self.settings.zoom = zoom;
+                        self.settings.normalize();
+                    }
+                }
+            }
+            ("more", "hotReload" | "autoBuild") => {
+                if item == "hotReload" {
+                    self.settings.hot_reload = !self.settings.hot_reload;
+                } else {
+                    self.settings.auto_build = !self.settings.auto_build;
+                }
+                if self.session > 0 {
+                    requests.extend(self.start());
+                }
+            }
+            ("more", "live") => self.set_live_inspection(!self.live),
+            ("more", "configure") => {
+                requests.push(json!({"action":"configure","target":self.settings.target}))
+            }
+            ("more", "export") => requests.push(json!({"action":"export","session":self.session})),
+            ("more", "reveal") => requests.extend(self.reveal_request()),
+            _ => {}
+        }
+        requests
+    }
+
+    /// The selected node's application source, else the preview function.
+    pub fn reveal_request(&self) -> Option<Value> {
+        if let Some(request) = self.selected_source_request() {
+            return Some(request);
+        }
+        if let Some(source) = self
+            .snapshot
+            .nodes
+            .iter()
+            .find(|node| node.id == self.selected)
+            .and_then(|node| node.sources.last())
+        {
+            return Some(
+                json!({"action": "navigate", "file": self.resolve_source(source), "line": source.line}),
+            );
+        }
+        self.previews
+            .iter()
+            .find(|preview| preview.id == self.settings.preview)
+            .map(|preview| {
+                json!({"action": "navigate", "file": Path::new(&self.root).join(&preview.file), "line": preview.line})
+            })
+    }
+
     fn choose_requested(&mut self, requests: &mut Vec<Value>) {
         if self.requested_function.is_empty() {
             return;
@@ -712,31 +898,38 @@ impl Studio {
             }
         }
     }
-    fn log(&mut self, line: &str) {
+    fn log(&mut self, line: &str) -> Option<Value> {
         let Ok(value) = serde_json::from_str::<Value>(line) else {
             if line.contains("error") {
                 self.status = line.chars().take(200).collect();
             }
-            return;
+            return None;
         };
         if let Some(kind) = value["cranposeDev"].as_str() {
             if kind == "sourceMap" {
                 if let (Some(private), Some(original)) =
                     (value["private"].as_str(), value["original"].as_str())
                 {
-                    self.source_maps.push((private.into(), original.into()));
+                    self.map_source(private.into(), original.into());
                 }
-                return;
+                return None;
             }
             if kind == "workspace" {
                 self.private_root = value["private"].as_str().unwrap_or_default().into();
-                self.source_maps
-                    .push((self.private_root.clone().into(), self.root.clone().into()));
-                return;
+                self.map_source(self.private_root.clone().into(), self.root.clone().into());
+                return None;
             }
-            self.status = value["message"].as_str().unwrap_or_default().into();
-            self.restart_required = kind == "restartRequired";
-            self.busy = matches!(kind, "preparing" | "toolchain" | "patching");
+            let message = value["message"].as_str().unwrap_or_default();
+            if kind == "rebuildRequired" && self.settings.auto_build {
+                return self.rebuild(message);
+            }
+            // The replacement's progress stays under its reason; problems still show.
+            if self.rebuilding && !matches!(kind, "error" | "restartRequired" | "rebuildRequired") {
+                return None;
+            }
+            self.status = message.into();
+            self.restart_required = matches!(kind, "restartRequired" | "rebuildRequired");
+            self.busy = self.rebuilding || matches!(kind, "preparing" | "toolchain" | "patching");
         } else if matches!(value["level"].as_str(), Some("ERROR" | "error"))
             || (value["reason"].as_str() == Some("compiler-message")
                 && value["message"]["level"].as_str() == Some("error"))
@@ -774,7 +967,18 @@ impl Studio {
                 self.diagnostics.remove(0);
             }
             self.busy = false;
+            self.rebuilding = false;
             self.status = "Build failed · previous preview remains available".into();
+        }
+        None
+    }
+    fn map_source(&mut self, private: PathBuf, original: PathBuf) {
+        // Every rebuild reports its private copy again; keep one entry per path.
+        if !self
+            .source_maps
+            .contains(&(private.clone(), original.clone()))
+        {
+            self.source_maps.push((private, original));
         }
     }
 }
@@ -782,6 +986,25 @@ impl Studio {
 #[cfg(test)]
 #[path = "tests/studio_model_tests.rs"]
 mod tests;
+
+/// Toolbar height including its bottom hairline.
+pub const TOOLBAR_HEIGHT: f32 = 45.0;
+/// Status bar height below the stage.
+pub const STATUS_HEIGHT: f32 = 26.0;
+const SIZES: [(&str, u32, u32); 4] = [
+    ("Compact", 360, 640),
+    ("Phone", 480, 760),
+    ("Tablet", 800, 600),
+    ("Desktop", 1280, 800),
+];
+const ZOOMS: [(&str, f32); 6] = [
+    ("Fit", 0.0),
+    ("50%", 0.5),
+    ("75%", 0.75),
+    ("100%", 1.0),
+    ("150%", 1.5),
+    ("200%", 2.0),
+];
 
 /// Placement shared by the Cranpose layout and the native viewport clip.
 #[derive(Clone, Copy, Debug)]
@@ -795,8 +1018,8 @@ pub struct StudioLayout {
 impl StudioLayout {
     pub fn new(width: f32, height: f32, inspect: bool, menu: f32, problems: f32) -> Self {
         let wide = width >= 760.0;
-        let top = 84.0 + menu;
-        let body = (height - top - problems - 28.0).max(0.0);
+        let top = TOOLBAR_HEIGHT + menu;
+        let body = (height - top - problems - STATUS_HEIGHT).max(0.0);
         let inspector_width = if inspect && wide {
             (width * 0.4).clamp(320.0, 420.0)
         } else {

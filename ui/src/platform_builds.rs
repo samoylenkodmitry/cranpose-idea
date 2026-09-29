@@ -1,13 +1,16 @@
 //! Local platform packaging controls, rendered by Cranpose.
-use crate::ide::rememberPalette;
+use crate::{
+    ide::rememberPalette,
+    kit::{self, Look, PrimaryButton, ToolButton, icons},
+};
 use cranpose::{
-    BasicTextField, Column, ColumnSpec, LinearArrangement, Modifier, Row, RowSpec, Text,
-    TextFieldState, composable, remember, rememberHostMessages, rememberMutableStateOf,
-    send_to_host,
+    BasicTextField, Box as UiBox, BoxSpec, Column, ColumnSpec, LinearArrangement, Modifier, Row,
+    RowSpec, Text, TextFieldState, VerticalAlignment, composable, remember, rememberHostMessages,
+    rememberMutableStateOf, send_to_host,
 };
 use cranpose_core::CollectEvents;
 use cranpose_plugin_ui::{
-    controls::{ActionButton as Control, label_style as style},
+    controls::label_style as style,
     tasks::{TaskOutput, TaskState},
 };
 use serde_json::{Value, json};
@@ -102,6 +105,7 @@ pub fn PlatformBuilds(manifest: String, package: String, binary: String) {
             }
         },
     );
+    let look = Look::new(palette);
     Column(
         Modifier::empty().fill_max_width(),
         ColumnSpec::default().vertical_arrangement(LinearArrangement::spaced_by(8.0)),
@@ -111,27 +115,55 @@ pub fn PlatformBuilds(manifest: String, package: String, binary: String) {
                 .find(|(key, _)| *key == platform.get())
                 .map(|(_, label)| *label)
                 .unwrap_or("Platform");
-            Control(
-                palette,
-                &format!("{label} · Change"),
-                !state.get().busy,
-                true,
-                move || choosing.set(!choosing.get()),
+            let busy = state.get().busy;
+            Row(
+                Modifier::empty().fill_max_width(),
+                RowSpec::default()
+                    .horizontal_arrangement(LinearArrangement::spaced_by(4.0))
+                    .vertical_alignment(VerticalAlignment::CenterVertically),
+                move || {
+                    ToolButton(
+                        look,
+                        icons::PHONE,
+                        label.into(),
+                        true,
+                        choosing.get(),
+                        !busy,
+                        ("", None),
+                        move |_| choosing.set(!choosing.get()),
+                    );
+                    UiBox(Modifier::empty().weight(1.0), BoxSpec::default(), || {});
+                    for (mode, text) in [(false, "Development"), (true, "Release")] {
+                        ToolButton(
+                            look,
+                            "",
+                            text.into(),
+                            false,
+                            release.get() == mode,
+                            !busy,
+                            ("", None),
+                            move |_| release.set(mode),
+                        );
+                    }
+                },
             );
             if choosing.get() {
                 for choices in PLATFORMS.chunks(2) {
                     Row(
                         Modifier::empty().fill_max_width(),
                         RowSpec::default()
-                            .horizontal_arrangement(LinearArrangement::spaced_by(6.0)),
+                            .horizontal_arrangement(LinearArrangement::spaced_by(4.0)),
                         move || {
                             for &(key, label) in choices {
-                                Control(
-                                    palette,
-                                    label,
-                                    !state.get().busy,
+                                ToolButton(
+                                    look,
+                                    "",
+                                    label.into(),
+                                    false,
                                     platform.get() == key,
-                                    move || {
+                                    !state.get().busy,
+                                    ("", None),
+                                    move |_| {
                                         platform.set(key);
                                         choosing.set(false);
                                     },
@@ -146,75 +178,90 @@ pub fn PlatformBuilds(manifest: String, package: String, binary: String) {
                 Text(
                     "Device ID · from Devices",
                     Modifier::empty(),
-                    style(palette, true),
+                    kit::style(palette.muted, 11.5, None),
                 );
                 BasicTextField(
                     device,
                     Modifier::empty()
                         .fill_max_width()
-                        .height(34.0)
+                        .height(32.0)
                         .background(palette.background)
-                        .rounded_corners(6.0)
+                        .rounded_corners(7.0)
                         .padding(8.0),
                     style(palette, false),
                 );
             }
-            Control(
-                palette,
-                if release.get() {
-                    "Release build"
-                } else {
-                    "Development build"
-                },
-                !state.get().busy,
-                release.get(),
-                move || release.set(!release.get()),
-            );
-            Control(
-                palette,
-                if tools_open.get() {
-                    "Hide tools"
-                } else {
-                    "Tools & devices"
-                },
-                true,
-                false,
-                move || tools_open.set(!tools_open.get()),
-            );
-            for actions in [
-                [("doctor", "Check tools"), ("setup", "Set up tools")],
-                [("plan", "Build plan"), ("devices", "Devices")],
-                [("build", "Build package"), ("run", "Build & run")],
-            ] {
-                if actions[0].0 != "build" && !tools_open.get() {
-                    continue;
+            let run = |action: &'static str| {
+                let payload = json!({"action":action,"platform":platform.get(),"manifest":manifest,"package":package,"binary":binary,"release":release.get(),"device":device.text()}).to_string();
+                move || {
+                    let mut next = state.get();
+                    next.begin();
+                    state.set(next);
+                    if !send_to_host("cranpose.build", &payload) {
+                        let mut next = state.get();
+                        next.busy = false;
+                        next.status = "Open this panel inside the IDE to build".into();
+                        state.set(next);
+                    }
                 }
-                let manifest = manifest.clone();
-                let package = package.clone();
-                let binary = binary.clone();
+            };
+            let (build_run, build_package) = (run("run"), run("build"));
+            let tools = [
+                (icons::CHECK, "Check tools", run("doctor"), true),
+                (icons::SETTINGS, "Set up tools", run("setup"), true),
+                (icons::DOCS, "Build plan", run("plan"), true),
+                (icons::PHONE, "Devices", run("devices"), mobile),
+            ];
+            Row(
+                Modifier::empty().fill_max_width(),
+                RowSpec::default()
+                    .horizontal_arrangement(LinearArrangement::spaced_by(4.0))
+                    .vertical_alignment(VerticalAlignment::CenterVertically),
+                move || {
+                    let busy = state.get().busy;
+                    if !busy {
+                        let build_run = build_run.clone();
+                        PrimaryButton(look, icons::PLAY, "Build & run".into(), move || build_run());
+                    }
+                    let build_package = build_package.clone();
+                    ToolButton(
+                        look,
+                        icons::BUILD,
+                        "Build package".into(),
+                        false,
+                        false,
+                        !busy,
+                        ("", None),
+                        move |_| build_package(),
+                    );
+                    UiBox(Modifier::empty().weight(1.0), BoxSpec::default(), || {});
+                    ToolButton(
+                        look,
+                        icons::SETTINGS,
+                        "Tools".into(),
+                        true,
+                        tools_open.get(),
+                        true,
+                        ("", None),
+                        move |_| tools_open.set(!tools_open.get()),
+                    );
+                },
+            );
+            if tools_open.get() {
                 Row(
                     Modifier::empty().fill_max_width(),
-                    RowSpec::default().horizontal_arrangement(LinearArrangement::spaced_by(6.0)),
+                    RowSpec::default().horizontal_arrangement(LinearArrangement::spaced_by(4.0)),
                     move || {
-                        for (action, label) in actions {
-                            let payload = json!({"action":action,"platform":platform.get(),"manifest":manifest,"package":package,"binary":binary,"release":release.get(),"device":device.text()}).to_string();
-                            Control(
-                                palette,
-                                label,
-                                !state.get().busy && (action != "devices" || mobile),
-                                action == "build",
-                                move || {
-                                    let mut next = state.get();
-                                    next.begin();
-                                    state.set(next);
-                                    if !send_to_host("cranpose.build", &payload) {
-                                        let mut next = state.get();
-                                        next.busy = false;
-                                        next.status =
-                                            "Open this panel inside the IDE to build".into();
-                                        state.set(next);
-                                    }
-                                },
+                        for (icon, label, action, available) in tools.clone() {
+                            ToolButton(
+                                look,
+                                icon,
+                                label.into(),
+                                false,
+                                false,
+                                !state.get().busy && available,
+                                ("", None),
+                                move |_| action(),
                             );
                         }
                     },

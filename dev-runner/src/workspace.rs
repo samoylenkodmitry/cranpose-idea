@@ -1,6 +1,7 @@
 use crate::instrumentation::instrument_file;
 use anyhow::{Context, Result, bail};
 use serde::Deserialize;
+use sha2::Digest;
 use std::{
     collections::BTreeMap,
     fs,
@@ -65,6 +66,8 @@ pub struct DevWorkspace {
     pub original: PathBuf,
     pub directory: PathBuf,
     pub sources: BTreeMap<PathBuf, String>,
+    /// SHA-256 of other copied files up to 4 MiB, so identical rewrites never rebuild.
+    pub files: BTreeMap<PathBuf, Vec<u8>>,
     roots: BTreeMap<PathBuf, String>,
     packages: BTreeMap<PathBuf, bool>,
     copies: Vec<(PathBuf, PathBuf)>,
@@ -93,6 +96,7 @@ impl DevWorkspace {
             bail!("development cache resolves inside the application workspace");
         }
         let mut sources = BTreeMap::new();
+        let mut files = BTreeMap::new();
         let mut manifests = Vec::new();
         for entry in walkdir::WalkDir::new(&original)
             .into_iter()
@@ -120,6 +124,9 @@ impl DevWorkspace {
                     .is_some_and(|extension| extension == "rs")
                 {
                     sources.insert(relative.to_owned(), fs::read_to_string(entry.path())?);
+                } else if entry.metadata()?.len() <= 4 << 20 {
+                    let digest = sha2::Sha256::digest(fs::read(entry.path())?);
+                    files.insert(relative.to_owned(), digest.to_vec());
                 }
             }
         }
@@ -190,6 +197,7 @@ impl DevWorkspace {
             original,
             directory,
             sources,
+            files,
             roots,
             packages,
             copies: Vec::new(),

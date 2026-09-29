@@ -25,6 +25,6 @@ fn standalone_commands_have_no_host() {
 
 #[test]
 fn text_style_uses_theme_and_requested_weight() {
-    let text = style(Color::WHITE, 12.0, true);
+    let text = style(Color::WHITE, 12.0, Some(FontWeight::BOLD));
     assert_eq!(text.span_style.font_weight, Some(FontWeight::BOLD));
 }

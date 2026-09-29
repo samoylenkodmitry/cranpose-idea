@@ -13,8 +13,8 @@ crate-type = ["cdylib"]
 ide-tests = ["cranpose-host/ide-tests"]
 
 [dependencies]
-cranpose-host = { package = "cranpose-plugin-host", git = "https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template", rev = "a8d0cdf14cc2ab13fb593364cb0647fc52be1780", features = ["host-library"] }
-cranpose-build = { git = "https://github.com/samoylenkodmitry/cranpose-build", rev = "7bca6365ae2c93e3e6412890da8ff688495e4387" }
+cranpose-host = { package = "cranpose-plugin-host", git = "https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template", rev = "9adf872093b3e7f9348967f59250d25043450cd4", features = ["host-library"] }
+cranpose-build = { git = "https://github.com/samoylenkodmitry/cranpose-build", rev = "0bd2db5593140a3e4f20e9bdf4831541716a720c" }
 anyhow = "1"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
