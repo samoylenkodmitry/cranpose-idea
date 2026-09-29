@@ -24,7 +24,8 @@ Create the Marketplace listing manually using the verified plugin ZIP. Set the
 repository URL, Apache-2.0 license, description, screenshots and credits. Record the
 numeric Marketplace plugin ID in the repository variable `MARKETPLACE_PLUGIN_ID`
 for subsequent automatic updates. Leave it empty for the first tag: CI creates
-the signed GitHub release archive for the manual listing upload.
+the signed GitHub release archive for the manual listing upload. The listing's
+screenshots and demo video are kept in [marketplace](marketplace/README.md).
 
 Credits follow [Zeus Thunderbolt](https://github.com/samoylenkodmitry/Zeus-Thunderbolt-Idea-Plugin)
 and [DiffTrack](https://github.com/samoylenkodmitry/difftrack). Retain the Cranpose,
