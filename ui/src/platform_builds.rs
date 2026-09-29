@@ -91,7 +91,7 @@ pub fn PlatformBuilds(manifest: String, package: String, binary: String) {
     let tools_open = rememberMutableStateOf(|| false);
     let device = remember(|| TextFieldState::new("")).with(|s| *s);
     let state = rememberMutableStateOf(|| TaskState {
-        status: "Build here. Run on your OS or device.".into(),
+        status: "Build the application for a platform, then run it here or on a device.".into(),
         ..Default::default()
     });
     CollectEvents(
@@ -176,7 +176,7 @@ pub fn PlatformBuilds(manifest: String, package: String, binary: String) {
             let mobile = platform.get().starts_with("ios") || platform.get() == "android";
             if mobile {
                 Text(
-                    "Device ID · from Devices",
+                    "Device ID (listed under Devices)",
                     Modifier::empty(),
                     kit::style(palette.muted, 11.5, None),
                 );
@@ -267,7 +267,7 @@ pub fn PlatformBuilds(manifest: String, package: String, binary: String) {
                     },
                 );
             }
-            TaskOutput(palette, state.get(), "Stop build / app", || {
+            TaskOutput(palette, state.get(), "Stop", || {
                 let _ = send_to_host("cranpose.build", "{\"action\":\"cancel\"}");
             });
         },

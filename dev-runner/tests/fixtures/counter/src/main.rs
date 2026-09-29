@@ -3,6 +3,10 @@ use cranpose::{AppLauncher, Button, ButtonSpec, Column, ColumnSpec, Modifier, Te
 #[composable]
 fn Counter() {
     let count = rememberMutableStateOf(|| 0_i32);
+    // Never runs: live edits elsewhere must not wait for this literal's type.
+    if count.get() < 0 {
+        count.set(1000);
+    }
     Column(Modifier::empty().fill_max_size().background(palette()).padding(24.0), ColumnSpec::default(), move || {
         Text(format!("Count: {}", count.get()), Modifier::empty(), TextStyle::default());
         Button(Modifier::empty().width(160.0).height(48.0), ButtonSpec::default(), move || count.set(count.get() + 1), Label);

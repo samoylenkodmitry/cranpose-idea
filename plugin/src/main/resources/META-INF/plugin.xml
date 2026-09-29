@@ -3,25 +3,19 @@
     <name>Cranpose</name>
     <vendor url="https://github.com/samoylenkodmitry">Dmitry Samoylenko</vendor>
     <description><![CDATA[
-        <p>Cranpose development tools for IntelliJ IDEA and RustRover, with a tool window written in Cranpose.</p>
+        <p>Tools for developing Cranpose applications in RustRover and IntelliJ IDEA.</p>
         <ul>
-            <li>Discover Cargo workspace binaries and examples that use Cranpose.</li>
-            <li>Check, run and test targets with build output in the IDE.</li>
-            <li>Build and package desktop and mobile applications locally with Cranpose Build.</li>
-            <li>Code / Split / Preview editors with compiled component fixtures, viewport controls and PNG export.</li>
-            <li>Live layout trees, element picking, bounds, modifier properties and navigation to composable origins.</li>
-            <li>Rust/Cranpose preview controls and inspector, with plugin-owned debug hot reload that preserves compatible live state.</li>
-            <li>Persistent Cargo run configurations and source-linked compiler diagnostics.</li>
-            <li>Inline stability badges on Rust parameters, with explanations from the standalone Cranpose stability linter.</li>
-            <li>Composable gutter markers, source navigation and component completions.</li>
-            <li>File → New Project → Cranpose, using the Cranpose Showcase starter.</li>
-            <li>Live literal diamonds and Cranpose floating controls with editor Undo, plus shader editor accents.</li>
+            <li>Finds the applications and examples in the Cargo workspace that use Cranpose, and runs, checks and tests them.</li>
+            <li>Shows the running application in a panel next to the source. Changed values such as numbers, colors and text are applied without compiling. Other code changes are compiled and patched into the running application, which restarts only when the change requires it.</li>
+            <li>Layout inspector with the view tree, sizes, modifiers and source location of each view. Picking a view in the preview opens its source.</li>
+            <li>Controls for numbers, colors and booleans next to the literals in the editor.</li>
+            <li>Stability badges on composable parameters, from the Cranpose stability analyzer.</li>
+            <li>Builds and packages desktop and mobile applications with Cranpose Build.</li>
+            <li>File → New Project → Cranpose creates a project from the Showcase sample.</li>
         </ul>
-        <p>Install Rust and the platform build tools to compile applications. Project creation works
-        offline without Git. The plugin owns preview instrumentation and leaves application release
-        builds unchanged. JetBrains Rust support provides full Rust language editing.</p>
+        <p>Building applications requires Rust and the platform build tools. The preview uses a private debug copy of the project; release builds are not affected.</p>
     ]]></description>
-    <change-notes><![CDATA[<p>0.13.5 — Keep your preview while editing source.</p><p>Pick and source links open the correct file and carry the running preview across tabs. Pick works with Inspect closed. Live popups leave source clicks available for caret placement. RGB and byte-channel color constructors now have grouped controls and inline swatches. Application release builds are unchanged.</p>]]></change-notes>
+    <change-notes><![CDATA[<p>0.14.4</p><ul><li>Value edits apply without compiling again. In 0.14.2 and 0.14.3 they were compiled whenever the file had a literal that had not run yet.</li><li>The preview starts when the panel opens and shows its state: reading Cargo.toml, building (with the crate being compiled), or why it cannot start.</li><li>Strings and characters no longer open a popup; edit them in place.</li><li>Plainer wording in the panel, popups and project wizard.</li></ul>]]></change-notes>
     <depends>com.intellij.modules.platform</depends>
     <extensions defaultExtensionNs="com.intellij">
         <postStartupActivity implementation="dev.cranpose.rust.Startup"/>

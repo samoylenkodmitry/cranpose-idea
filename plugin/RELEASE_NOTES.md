@@ -1,4 +1,24 @@
-# Cranpose 0.14.3
+# Cranpose 0.14.4
+
+Value edits apply without compiling again. In 0.14.2 and 0.14.3, a change to a
+number, color or text was compiled instead whenever its file had a literal that
+had not run yet, such as an animation duration or a number in a click handler.
+Most files have one, so almost every edit waited for the compiler.
+
+The preview starts by itself when the panel opens. While Cargo reads the
+project the panel says so, and while the preview builds it shows the crate
+being compiled. If the project has no application to run, the panel says why.
+A preview you stop stays stopped; automatic start can be turned off in the
+panel's menu.
+
+Strings and characters no longer open a popup. Edit them in place; the change
+still applies without compiling.
+
+The panel, popups and the New Project wizard use plainer wording.
+
+Uses plugin template and SDK 0.8.2 and Cranpose Build 0.1.7.
+
+## Included since 0.14.3
 
 Studio now builds on released versions of everything it uses: Cranpose 0.1.176,
 plugin template and SDK 0.8.0, Cranpose Build 0.1.5 and the stability analyzer

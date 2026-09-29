@@ -18,7 +18,10 @@ const FIELDS: &[(&str, &str)] = &[
     ("arguments", "Application arguments"),
     ("features", "Cargo features"),
     ("directory", "Working directory"),
-    ("environment", "Environment · one NAME=value per line"),
+    (
+        "environment",
+        "Environment variables, one NAME=value per line",
+    ),
 ];
 fn style(palette: Palette, size: f32, muted: bool) -> TextStyle {
     TextStyle {
@@ -181,7 +184,7 @@ pub fn RunSettings() {
                             ToolButton(
                                 look,
                                 "",
-                                (*option).into(),
+                                option_label(option).into(),
                                 false,
                                 state.get() == *option,
                                 true,
@@ -231,4 +234,16 @@ fn Caption(palette: Palette, text: &'static str) {
         Modifier::empty().padding_each(0.0, 4.0, 0.0, 0.0),
         kit::style(palette.muted, 11.5, Some(FontWeight::MEDIUM)),
     );
+}
+
+/// Cargo's command and target-kind values, as button labels.
+fn option_label(option: &str) -> &str {
+    match option {
+        "run" => "Run",
+        "check" => "Check",
+        "test" => "Test",
+        "bin" => "Binary",
+        "example" => "Example",
+        other => other,
+    }
 }

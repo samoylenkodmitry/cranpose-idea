@@ -65,7 +65,10 @@ pub fn run(options: RunOptions) -> Result<()> {
         }
         phase = now;
     };
-    emit("preparing", "Preparing private development workspace");
+    emit(
+        "preparing",
+        "Copying the project to a private build directory",
+    );
     let metadata = Metadata::read(&options.root)?;
     measured("metadata");
     let package = metadata
@@ -176,7 +179,7 @@ pub fn run(options: RunOptions) -> Result<()> {
         serde_json::json!({"cranposeDev": "workspace", "private": workspace.directory, "original": workspace.original})
     );
     let mut command = if options.hot_reload {
-        emit("toolchain", "Preparing hot-patch compiler");
+        emit("toolchain", "Starting the compiler");
         let dx = toolchain::ensure(&options.cache.join("tools"))?;
         // Dioxus uses its executable as Cargo's workspace wrapper. A path per
         // lease separates application artifacts while dependencies remain shared.
@@ -363,7 +366,7 @@ pub fn run(options: RunOptions) -> Result<()> {
         if invalid {
             // Keep the syntax error visible; a rebuild waits for a parseable source.
             rebuild.cancel();
-            emit("restartRequired", "Fix the Rust syntax to reload");
+            emit("restartRequired", "Fix the syntax error to continue");
             continue;
         }
         if let Some(reason) = decisions.iter().find_map(|(_, change)| match change {
@@ -407,14 +410,11 @@ pub fn run(options: RunOptions) -> Result<()> {
                     .is_ok_and(|v| v["accepted"] == true)
                 {
                     workspace.sources.insert(relative, source);
-                    emit("valuesApplied", "Live values updated without compilation");
+                    emit("valuesApplied", "Values updated");
                     continue;
                 }
             }
-            emit(
-                "patching",
-                "Compiling changes; the running preview remains interactive",
-            );
+            emit("patching", "Compiling the change");
             workspace.write_source(&relative, &source)?;
             workspace.sources.insert(relative.clone(), source.clone());
             compiled.insert(relative, source);

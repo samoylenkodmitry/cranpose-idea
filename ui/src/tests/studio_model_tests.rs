@@ -4,7 +4,7 @@ fn studio() -> Studio {
     let mut studio = Studio::default();
     studio.handle(
         "studio.init",
-        r#"{"root":"/project","cache":"/cache","settings":{"width":480,"height":640}}"#,
+        r#"{"root":"/project","cache":"/cache","settings":{"width":480,"height":640,"autoStart":false}}"#,
     );
     studio.handle("cranpose.project", r#"{"targets":[{"packageName":"app","name":"desktop","kind":"bin","manifest":"/project/Cargo.toml","source":"/project/src/main.rs"}]}"#);
     studio
@@ -156,7 +156,7 @@ fn stale_session_events_cannot_replace_current_inspection() {
         "studio.child",
         r#"{"session":1,"event":"stopped","message":"stale"}"#,
     );
-    assert_eq!(studio.status, "Preparing preview…");
+    assert_eq!(studio.status, "Building desktop");
     studio.handle("studio.child", r#"{"session":2,"event":"connected"}"#);
     assert!(studio.connected);
 }
@@ -625,7 +625,7 @@ fn edits_needing_a_new_process_rebuild_while_the_preview_stays_live() {
     assert_eq!(requests[0]["options"]["watch"], true);
     assert!(model.rebuilding && model.busy && model.connected && !model.restart_required);
     assert_eq!(model.rebuild_reason, reason);
-    assert_eq!(model.status, "Rebuilding · Struct `Palette` fields changed");
+    assert_eq!(model.status, "Rebuilding: Struct `Palette` fields changed");
     // The previous runner keeps watching; its reports no longer steer the session.
     assert!(
         runner(
@@ -641,7 +641,7 @@ fn edits_needing_a_new_process_rebuild_while_the_preview_stays_live() {
             2,
             json!({"cranposeDev":kind,"message":"progress"}),
         );
-        assert_eq!(model.status, "Rebuilding · Struct `Palette` fields changed");
+        assert_eq!(model.status, "Rebuilding: Struct `Palette` fields changed");
         assert!(model.busy);
     }
     runner(
@@ -664,9 +664,9 @@ fn edits_needing_a_new_process_rebuild_while_the_preview_stays_live() {
     );
     model.handle("studio.child", r#"{"session":2,"event":"connected"}"#);
     assert!(!model.rebuilding && !model.busy);
-    assert_eq!(model.status, "Rebuilt · Struct `Palette` fields changed");
+    assert_eq!(model.status, "Rebuilt: Struct `Palette` fields changed");
     model.handle("studio.child", r#"{"session":2,"event":"message","channel":"cranpose.dev.applied","payload":"{\"generation\":0,\"pid\":7}"}"#);
-    assert_eq!(model.status, "Hot reload ready");
+    assert_eq!(model.status, "Running");
 }
 
 #[test]
@@ -712,7 +712,7 @@ fn rebuild_waits_for_the_user_when_reload_on_save_is_off_or_the_build_fails() {
     assert!(!model.rebuilding && !model.busy);
     assert_eq!(
         model.status,
-        "Build failed · previous preview remains available"
+        "Build failed. The previous preview is still running."
     );
     assert_eq!(
         runner(
@@ -730,4 +730,82 @@ fn rebuild_waits_for_the_user_when_reload_on_save_is_off_or_the_build_fails() {
     assert!(!model.rebuilding && model.connected);
     assert_eq!(model.session, 1);
     assert_eq!(model.status, "Cranpose exited before connecting");
+}
+
+const PROJECT: &str = r#"{"busy":false,"status":"","targets":[{"packageName":"app","name":"desktop","kind":"bin","manifest":"/project/Cargo.toml","source":"/project/src/main.rs"}]}"#;
+
+#[test]
+fn preview_starts_on_its_own_once_the_application_is_known() {
+    let mut studio = Studio::default();
+    let requests = studio.handle("studio.init", r#"{"root":"/project","cache":"/cache"}"#);
+    assert!(requests.is_empty());
+    assert!(studio.pending_start);
+    assert_eq!(studio.status, "Reading Cargo.toml");
+    let requests = studio.handle("cranpose.project", PROJECT);
+    assert_eq!(requests.len(), 1);
+    assert_eq!(requests[0]["action"], "start");
+    assert_eq!(studio.session, 1);
+    assert!(studio.busy);
+    // A build command while that start is still building does not start again.
+    assert!(
+        studio
+            .handle("studio.command", r#"{"action":"build"}"#)
+            .is_empty()
+    );
+    assert_eq!(studio.session, 1);
+}
+
+#[test]
+fn a_preview_the_user_stopped_does_not_start_again_by_itself() {
+    let mut studio = Studio::default();
+    studio.handle("studio.init", r#"{"root":"/project","cache":"/cache"}"#);
+    studio.handle("cranpose.project", PROJECT);
+    studio.stopped = true;
+    studio.session = 0;
+    studio.busy = false;
+    let checkpoint = serde_json::to_value(&studio).expect("checkpoint");
+    let mut reopened = Studio {
+        targets: studio.targets.clone(),
+        ..Studio::default()
+    };
+    let requests = reopened.handle(
+        "studio.init",
+        &json!({"checkpoint":checkpoint,"activeSession":0,"candidateSession":0}).to_string(),
+    );
+    assert!(requests.is_empty());
+    assert!(reopened.handle("cranpose.project", PROJECT).is_empty());
+    assert_eq!(reopened.session, 0);
+}
+
+#[test]
+fn a_project_without_an_application_says_so() {
+    let mut studio = Studio::default();
+    studio.handle("studio.init", r#"{"root":"/project","cache":"/cache"}"#);
+    studio.handle(
+        "cranpose.project",
+        r#"{"busy":false,"status":"No Cargo.toml at the project root.","targets":[]}"#,
+    );
+    assert!(studio.project_read && studio.pending_start);
+    assert_eq!(studio.project_status, "No Cargo.toml at the project root.");
+    assert_eq!(studio.session, 0);
+}
+
+#[test]
+fn build_progress_names_the_crate_being_compiled() {
+    let mut studio = studio();
+    studio.start();
+    for line in [
+        "\u{1b}[1m\u{1b}[32m   Compiling\u{1b}[0m wgpu v26.0.1",
+        "   Compiling cranpose-showcase v0.1.25 (/project)",
+        "       Fresh log v0.4.34",
+    ] {
+        studio.handle(
+            "studio.child",
+            &json!({"session":1,"event":"log","line":line}).to_string(),
+        );
+    }
+    assert_eq!(studio.built, 2);
+    assert_eq!(studio.build_step, "Compiling cranpose-showcase v0.1.25");
+    studio.handle("studio.child", r#"{"session":1,"event":"connected"}"#);
+    assert!(studio.build_step.is_empty());
 }
