@@ -47,6 +47,60 @@ pub struct Target {
 
 impl Metadata {
     /// Reads workspace members and their declared targets.
+    /// Whether the application's Cranpose offers the development-only
+    /// `hot-reload` feature, which keys composition by source structure so hot
+    /// patches keep state around an edit. The dependency's own manifest decides:
+    /// a path dependency, or the git checkout or registry source Cargo.lock
+    /// names under `CARGO_HOME`. Without a readable source, releases from
+    /// 0.1.175 are known to have it.
+    pub fn cranpose_hot_reload(&self, dependency: &Dependency) -> bool {
+        let offers = |manifest: &Path| {
+            fs::read_to_string(manifest)
+                .ok()
+                .and_then(|text| text.parse::<toml_edit::DocumentMut>().ok())
+                .map(|manifest| {
+                    manifest
+                        .get("features")
+                        .and_then(|features| features.get("hot-reload"))
+                        .is_some()
+                })
+        };
+        if let Some(path) = &dependency.path {
+            return offers(&path.join("Cargo.toml")).unwrap_or(false);
+        }
+        let Some(lock) = fs::read_to_string(self.workspace_root.join("Cargo.lock"))
+            .ok()
+            .and_then(|text| text.parse::<toml_edit::DocumentMut>().ok())
+        else {
+            return false;
+        };
+        let cargo_home = std::env::var_os("CARGO_HOME")
+            .map(PathBuf::from)
+            .or_else(|| std::env::var_os("HOME").map(|home| PathBuf::from(home).join(".cargo")));
+        lock.get("package")
+            .and_then(toml_edit::Item::as_array_of_tables)
+            .into_iter()
+            .flatten()
+            .filter(|package| {
+                package.get("name").and_then(toml_edit::Item::as_str) == Some(&dependency.name)
+            })
+            .any(|package| {
+                let text = |key| package.get(key).and_then(toml_edit::Item::as_str);
+                let version = text("version").unwrap_or_default();
+                let source = text("source").unwrap_or_default();
+                cargo_home
+                    .as_deref()
+                    .and_then(|home| locked_manifest(home, &dependency.name, version, source))
+                    .and_then(|manifest| offers(&manifest))
+                    .unwrap_or_else(|| {
+                        let mut parts = version
+                            .split(['.', '-', '+'])
+                            .map(|part| part.parse::<u64>().unwrap_or(0));
+                        [(); 3].map(|_| parts.next().unwrap_or(0)) >= [0, 1, 175]
+                    })
+            })
+    }
+
     pub fn read(root: &Path) -> Result<Self> {
         let output = Command::new("cargo")
             .args(["metadata", "--format-version=1", "--no-deps"])
@@ -58,6 +112,37 @@ impl Metadata {
         }
         serde_json::from_slice(&output.stdout).context("decode Cargo metadata")
     }
+}
+
+/// The manifest of a locked registry or git package in Cargo's source caches.
+fn locked_manifest(home: &Path, name: &str, version: &str, source: &str) -> Option<PathBuf> {
+    let entries = |dir: PathBuf| fs::read_dir(dir).into_iter().flatten().flatten();
+    if source.starts_with("registry+") || source.starts_with("sparse+") {
+        return entries(home.join("registry/src"))
+            .map(|index| index.path().join(format!("{name}-{version}/Cargo.toml")))
+            .find(|manifest| manifest.is_file());
+    }
+    let revision = source.strip_prefix("git+")?.rsplit_once('#')?.1;
+    let short = revision.get(..7)?;
+    entries(home.join("git/checkouts"))
+        .map(|repository| repository.path().join(short))
+        .filter(|checkout| checkout.is_dir())
+        .flat_map(|checkout| walkdir::WalkDir::new(checkout).max_depth(3))
+        .flatten()
+        .map(walkdir::DirEntry::into_path)
+        .filter(|path| path.file_name().is_some_and(|file| file == "Cargo.toml"))
+        .find(|manifest| {
+            fs::read_to_string(manifest)
+                .ok()
+                .and_then(|text| text.parse::<toml_edit::DocumentMut>().ok())
+                .is_some_and(|manifest| {
+                    manifest
+                        .get("package")
+                        .and_then(|package| package.get("name"))
+                        .and_then(toml_edit::Item::as_str)
+                        == Some(name)
+                })
+        })
 }
 
 /// A private copy used exclusively by the plugin's development compiler.

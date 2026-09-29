@@ -91,6 +91,9 @@ pub fn run(options: RunOptions) -> Result<()> {
         .cloned()
         .collect();
     features.insert(format!("{alias}/preview"));
+    if options.hot_reload && metadata.cranpose_hot_reload(dependency) {
+        features.insert(format!("{alias}/hot-reload"));
+    }
     let sequence = SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis();
     let lease = if options.hot_reload {
         fs::create_dir_all(&options.cache)?;

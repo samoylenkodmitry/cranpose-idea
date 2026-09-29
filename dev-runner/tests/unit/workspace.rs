@@ -211,3 +211,91 @@ fn repeated_launches_reuse_support_without_touching_compiler_inputs() {
             .is_file()
     );
 }
+
+#[test]
+fn hot_reload_keys_follow_the_application_cranpose() {
+    let root = tempfile::tempdir().expect("temporary workspace");
+    let metadata = metadata(root.path());
+    let registry = Dependency {
+        name: "cranpose".into(),
+        rename: None,
+        path: None,
+    };
+    assert!(!metadata.cranpose_hot_reload(&registry), "no lock file");
+    // Locked sources are read from Cargo's caches when present.
+    let home = tempfile::tempdir().expect("cargo home");
+    let checkout = home
+        .path()
+        .join("git/checkouts/cranpose-0123456789abcdef/abcdef1/crates/cranpose");
+    fs::create_dir_all(&checkout).expect("checkout");
+    fs::write(
+        checkout.join("Cargo.toml"),
+        "[package]\nname = \"cranpose\"\nversion = \"0.1.174\"\n[features]\nhot-reload = []\n",
+    )
+    .expect("manifest");
+    assert_eq!(
+        locked_manifest(
+            home.path(),
+            "cranpose",
+            "0.1.174",
+            "git+https://github.com/samoylenkodmitry/Cranpose?rev=abcdef1#abcdef1234567890",
+        ),
+        Some(checkout.join("Cargo.toml"))
+    );
+    let registry_source = home
+        .path()
+        .join("registry/src/index.crates.io-1/cranpose-0.1.174");
+    fs::create_dir_all(&registry_source).expect("registry source");
+    fs::write(
+        registry_source.join("Cargo.toml"),
+        "[package]\nname = \"cranpose\"\n",
+    )
+    .expect("manifest");
+    assert_eq!(
+        locked_manifest(
+            home.path(),
+            "cranpose",
+            "0.1.174",
+            "registry+https://github.com/rust-lang/crates.io-index",
+        ),
+        Some(registry_source.join("Cargo.toml"))
+    );
+    for (version, expected) in [
+        ("0.1.174", false),
+        ("0.1.175", true),
+        ("0.2.0", true),
+        ("0.1.176-dev", true),
+    ] {
+        fs::write(
+            root.path().join("Cargo.lock"),
+            format!(
+                "version = 4\n[[package]]\nname = \"cranpose\"\nversion = \"{version}\"\n\n[[package]]\nname = \"app\"\nversion = \"9.9.9\"\n"
+            ),
+        )
+        .expect("lock");
+        assert_eq!(
+            metadata.cranpose_hot_reload(&registry),
+            expected,
+            "{version}"
+        );
+    }
+    let local = root.path().join("cranpose");
+    fs::create_dir_all(&local).expect("local framework");
+    fs::write(
+        local.join("Cargo.toml"),
+        "[package]\nname = \"cranpose\"\n[features]\npreview = []\n",
+    )
+    .expect("manifest");
+    let path = Dependency {
+        name: "cranpose".into(),
+        rename: None,
+        path: Some(local.clone()),
+    };
+    assert!(!metadata.cranpose_hot_reload(&path));
+    fs::write(
+        local.join("Cargo.toml"),
+        "[package]\nname = \"cranpose\"\n[features]\nhot-reload = []\n",
+    )
+    .expect("manifest");
+    assert!(metadata.cranpose_hot_reload(&path));
+}
