@@ -55,6 +55,7 @@ fn stop(state: MutableState<Studio>) {
         studio.busy = false;
         studio.session = 0;
         studio.pid = 0;
+        studio.stopped = true;
         studio.status = "Preview stopped".into();
     });
 }
@@ -535,22 +536,58 @@ fn Stage(
 #[composable]
 fn Idle(state: MutableState<Studio>, look: Look, width: f32, height: f32) {
     let studio = state.get();
-    let (title, detail) = if studio.setup == "rust" {
+    let name = studio.target().map(|t| t.name.clone()).unwrap_or_default();
+    let waiting = studio.pending_start && studio.targets.is_empty();
+    let (icon, title, detail): (&'static str, String, String) = if studio.setup == "rust" {
         (
-            "Rust is needed to preview",
-            "Install Rust to build and run the preview. On Windows, include the C++ build tools when prompted.",
+            icons::BUILD,
+            "Rust is not installed".into(),
+            "The preview builds the application with Cargo. On Windows, also install the C++ build tools.".into(),
         )
     } else if studio.busy {
         (
-            "Building your application",
-            "The first build downloads and compiles dependencies. Later edits patch the running app in place.",
+            icons::BUILD,
+            format!("Building {name}"),
+            if studio.build_step.is_empty() {
+                "Starting the compiler".into()
+            } else {
+                format!("{}, {} crates so far", studio.build_step, studio.built)
+            },
+        )
+    } else if waiting && studio.project_read {
+        (
+            icons::WARNING,
+            "No application found".into(),
+            if studio.project_status.is_empty() {
+                "Cargo.toml has no binary target that uses Cranpose.".into()
+            } else {
+                studio.project_status.clone()
+            },
+        )
+    } else if waiting {
+        (
+            icons::APP,
+            "Reading Cargo.toml".into(),
+            "The preview starts when the application is found.".into(),
+        )
+    } else if !studio.diagnostics.is_empty() {
+        (
+            icons::WARNING,
+            format!("{name} did not build"),
+            "The errors are listed below.".into(),
         )
     } else {
         (
-            "Preview your app, live",
-            "Runs your Cranpose application right here. Edits to values apply instantly; code edits hot-patch.",
+            icons::PLAY,
+            "Preview stopped".into(),
+            if studio.status.is_empty() || studio.status == "Preview stopped" {
+                String::new()
+            } else {
+                studio.status.clone()
+            },
         )
     };
+    let first_build = studio.busy && studio.built > 20;
     let panel = (width - 48.0).clamp(220.0, 380.0);
     Column(
         Modifier::empty()
@@ -565,26 +602,29 @@ fn Idle(state: MutableState<Studio>, look: Look, width: f32, height: f32) {
                     .rounded_corners(11.0)
                     .background(look.accent(if look.dark { 0.18 } else { 0.12 })),
                 BoxSpec::default().content_alignment(cranpose::Alignment::CENTER),
-                move || {
-                    if state.get().busy {
-                        Glyph(icons::BUILD, 20.0, look.palette.accent);
-                    } else {
-                        Glyph(icons::PLAY, 22.0, look.palette.accent);
-                    }
-                },
+                move || Glyph(icon, 20.0, look.palette.accent),
             );
             Text(
-                title,
+                title.clone(),
                 Modifier::empty(),
                 style(look.palette.text, 16.0, Some(FontWeight::SEMI_BOLD)),
             );
-            Text(
-                detail,
-                Modifier::empty().fill_max_width(),
-                style(look.palette.muted, 12.0, None),
-            );
+            if !detail.is_empty() {
+                Text(
+                    detail.clone(),
+                    Modifier::empty().fill_max_width(),
+                    style(look.palette.muted, 12.0, None),
+                );
+            }
+            if first_build {
+                Text(
+                    "The first build compiles every dependency and can take a few minutes.",
+                    Modifier::empty().fill_max_width(),
+                    style(look.palette.muted, 12.0, None),
+                );
+            }
             let studio = state.get();
-            if !studio.busy {
+            if !studio.busy && !waiting {
                 Row(
                     Modifier::empty().padding_each(0.0, 6.0, 0.0, 0.0),
                     RowSpec::default()
@@ -592,7 +632,7 @@ fn Idle(state: MutableState<Studio>, look: Look, width: f32, height: f32) {
                         .vertical_alignment(VerticalAlignment::CenterVertically),
                     move || {
                         if state.get().setup == "rust" {
-                            PrimaryButton(look, icons::BUILD, "Set up Rust".into(), move || {
+                            PrimaryButton(look, icons::BUILD, "Install Rust".into(), move || {
                                 send(json!({"action":"setupRust"}));
                             });
                             ToolButton(
@@ -606,9 +646,7 @@ fn Idle(state: MutableState<Studio>, look: Look, width: f32, height: f32) {
                                 move |_| start(state),
                             );
                         } else {
-                            PrimaryButton(look, icons::PLAY, "Start preview".into(), move || {
-                                start(state)
-                            });
+                            PrimaryButton(look, icons::PLAY, "Run".into(), move || start(state));
                         }
                     },
                 );
@@ -689,11 +727,7 @@ fn StatusBar(state: MutableState<Studio>, look: Look) {
                     if studio.pid > 0 && studio.settings.hot_reload {
                         Glyph(icons::BOLT, 12.0, look.success);
                         Text(
-                            if studio.generation > 0 {
-                                format!("Live · patch {}", studio.generation)
-                            } else {
-                                "Live".into()
-                            },
+                            "Hot reload",
                             Modifier::empty(),
                             style(look.palette.muted, 11.0, None),
                         );
@@ -734,7 +768,7 @@ fn Problems(state: MutableState<Studio>, look: Look, height: f32) {
                 move || {
                     Glyph(icons::WARNING, 13.0, look.danger);
                     Text(
-                        "Build failed · the previous preview stays interactive",
+                        "Build failed. The previous preview is still running.",
                         Modifier::empty(),
                         style(look.palette.text, 11.5, Some(FontWeight::MEDIUM)),
                     );
@@ -1081,7 +1115,7 @@ fn LayoutTree(
                             } else if studio.connected {
                                 "Waiting for a layout snapshot…"
                             } else {
-                                "Start a preview to inspect its layout."
+                                "Run the preview to see its layout."
                             },
                             Modifier::empty().padding(8.0),
                             style(look.palette.muted, 12.0, None),

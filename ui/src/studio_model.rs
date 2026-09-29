@@ -32,6 +32,8 @@ pub struct Settings {
     pub inspect: bool,
     pub fit: bool,
     pub hot_reload: bool,
+    /// Start the preview when the panel opens and the application is known.
+    pub auto_start: bool,
 }
 impl Default for Settings {
     fn default() -> Self {
@@ -46,6 +48,7 @@ impl Default for Settings {
             inspect: false,
             fit: true,
             hot_reload: true,
+            auto_start: true,
         }
     }
 }
@@ -256,7 +259,20 @@ pub struct Studio {
     pub live: bool,
     pub session: u64,
     next_session: u64,
-    pending_start: bool,
+    pub pending_start: bool,
+    /// The user stopped the preview; it does not start again on its own.
+    pub stopped: bool,
+    /// The project's Cargo status while its applications are being read.
+    #[serde(skip)]
+    pub project_status: String,
+    /// The project's Cargo metadata has been read at least once.
+    #[serde(skip)]
+    pub project_read: bool,
+    /// The crate the preview build is compiling, and how many it has compiled.
+    #[serde(skip)]
+    pub build_step: String,
+    #[serde(skip)]
+    pub built: u32,
     pub connected: bool,
     pub busy: bool,
     pub restart_required: bool,
@@ -289,7 +305,7 @@ impl Default for Studio {
             selected: String::new(),
             collapsed: Default::default(),
             inspector_details: false,
-            status: "Choose an application to start a preview".into(),
+            status: String::new(),
             setup: String::new(),
             menu: String::new(),
             pick: false,
@@ -297,6 +313,11 @@ impl Default for Studio {
             session: 0,
             next_session: 0,
             pending_start: false,
+            stopped: false,
+            project_status: String::new(),
+            project_read: false,
+            build_step: String::new(),
+            built: 0,
             connected: false,
             busy: false,
             restart_required: false,
@@ -441,7 +462,15 @@ impl Studio {
     }
     pub fn start(&mut self) -> Option<Value> {
         self.pending_start = true;
-        let target = self.target()?.clone();
+        self.stopped = false;
+        let Some(target) = self.target().cloned() else {
+            self.status = if self.project_read && !self.project_status.is_empty() {
+                self.project_status.clone()
+            } else {
+                "Reading Cargo.toml".into()
+            };
+            return None;
+        };
         self.pending_start = false;
         self.settings.target = target.id();
         self.next_session += 1;
@@ -450,7 +479,9 @@ impl Studio {
         self.restart_required = false;
         self.rebuilding = false;
         self.rebuild_reason.clear();
-        self.status = "Preparing preview…".into();
+        self.status = format!("Building {}", target.name);
+        self.build_step.clear();
+        self.built = 0;
         self.setup.clear();
         self.diagnostics.clear();
         self.menu.clear();
@@ -461,13 +492,21 @@ impl Studio {
             }}),
         )
     }
+    /// Starts the preview on its own once the application is known, unless the
+    /// user stopped it or a session is already running or starting.
+    fn auto_start(&mut self) -> Option<Value> {
+        if !self.settings.auto_start || self.stopped || self.session > 0 || !self.setup.is_empty() {
+            return None;
+        }
+        self.start()
+    }
     /// Starts a replacement after an edit the running process cannot load. The host
     /// keeps the current preview visible and interactive until the new one connects.
     fn rebuild(&mut self, reason: &str) -> Option<Value> {
         let request = self.start()?;
         self.rebuilding = true;
         self.rebuild_reason = reason.into();
-        self.status = format!("Rebuilding · {reason}");
+        self.status = format!("Rebuilding: {reason}");
         Some(request)
     }
     pub fn select_preview(&mut self, id: String) -> Option<Value> {
@@ -531,9 +570,9 @@ impl Studio {
                     self.menu.clear();
                     if self.session == 0 {
                         self.pid = 0;
-                        self.status = "Choose an application to start a preview".into();
+                        self.status.clear();
                     } else if !self.busy {
-                        self.status = "Preview reconnected · application state preserved".into();
+                        self.status = "Reconnected to the running preview".into();
                     }
                 }
                 self.root = value["root"].as_str().unwrap_or_default().into();
@@ -543,11 +582,14 @@ impl Studio {
                     self.settings = settings;
                     self.settings.normalize();
                 }
+                requests.extend(self.auto_start());
             }
             "cranpose.project" => {
                 if let Ok(targets) = serde_json::from_value(value["targets"].clone()) {
                     self.targets = targets;
                 }
+                self.project_status = value["status"].as_str().unwrap_or_default().into();
+                self.project_read |= !value["busy"].as_bool().unwrap_or(false);
                 if self.root.is_empty() {
                     self.root = value["root"].as_str().unwrap_or_default().into();
                 }
@@ -563,10 +605,15 @@ impl Studio {
                 if self.pending_start || (!self.requested_function.is_empty() && self.session == 0)
                 {
                     requests.extend(self.start());
+                } else {
+                    requests.extend(self.auto_start());
                 }
             }
             "studio.command" => match value["action"].as_str().unwrap_or_default() {
-                "build" => requests.extend(self.start()),
+                // An automatic or earlier start may already be building this preview.
+                "build" if !(self.busy && !self.connected && self.session > 0) => {
+                    requests.extend(self.start())
+                }
                 "menu" => requests.extend(self.choose(
                     value["menu"].as_str().unwrap_or_default(),
                     value["item"].as_str().unwrap_or_default(),
@@ -603,10 +650,11 @@ impl Studio {
                         self.generation = 0;
                         self.connected = true;
                         self.busy = false;
+                        self.build_step.clear();
                         self.status = if self.rebuilding {
-                            format!("Rebuilt · {}", self.rebuild_reason)
+                            format!("Rebuilt: {}", self.rebuild_reason)
                         } else {
-                            "Preview running".into()
+                            "Running".into()
                         };
                         self.rebuilding = false;
                     }
@@ -628,10 +676,7 @@ impl Studio {
                         self.connected = self.session > 0;
                         self.busy = false;
                         self.rebuilding = false;
-                        self.status = value["message"]
-                            .as_str()
-                            .unwrap_or("Preview build failed")
-                            .into();
+                        self.status = value["message"].as_str().unwrap_or("Build failed").into();
                     }
                     "log" => requests.extend(self.log(value["line"].as_str().unwrap_or_default())),
                     "pointer" => {
@@ -700,12 +745,14 @@ impl Studio {
                                     applied["generation"].as_u64().unwrap_or_default();
                                 self.busy = false;
                                 self.diagnostics.clear();
-                                self.status = if !self.settings.hot_reload {
-                                    "Preview running".into()
-                                } else if self.generation == 0 {
-                                    "Hot reload ready".into()
+                                self.status = if !self.settings.hot_reload || self.generation == 0 {
+                                    "Running".into()
                                 } else {
-                                    format!("Updated · patch {} · state preserved", self.generation)
+                                    format!(
+                                        "Applied {} code change{}",
+                                        self.generation,
+                                        if self.generation == 1 { "" } else { "s" }
+                                    )
                                 };
                             }
                         }
@@ -780,6 +827,11 @@ impl Studio {
                 })
                 .collect(),
             "more" => vec![
+                item(
+                    "autoStart",
+                    "Start preview automatically",
+                    self.settings.auto_start,
+                ),
                 item("hotReload", "Hot code reload", self.settings.hot_reload),
                 item("autoBuild", "Rebuild on save", self.settings.auto_build),
                 item("live", "Live inspection", self.live),
@@ -841,6 +893,10 @@ impl Studio {
                     requests.extend(self.start());
                 }
             }
+            ("more", "autoStart") => {
+                self.settings.auto_start = !self.settings.auto_start;
+                requests.extend(self.auto_start());
+            }
             ("more", "live") => self.set_live_inspection(!self.live),
             ("more", "configure") => {
                 requests.push(json!({"action":"configure","target":self.settings.target}))
@@ -900,11 +956,22 @@ impl Studio {
     }
     fn log(&mut self, line: &str) -> Option<Value> {
         let Ok(value) = serde_json::from_str::<Value>(line) else {
-            if line.contains("error") {
-                self.status = line.chars().take(200).collect();
+            let text = strip_ansi(line);
+            if let Some(unit) = text.trim_start().strip_prefix("Compiling ") {
+                // "Compiling name v1.2.3 (/path)" becomes "Compiling name v1.2.3".
+                self.built += 1;
+                self.build_step = format!("Compiling {}", unit.split(" (").next().unwrap_or(unit));
+            } else if text.contains("error") {
+                self.status = text.chars().take(200).collect();
             }
             return None;
         };
+        if value["message"]
+            .as_str()
+            .is_some_and(|message| message.contains("launching app"))
+        {
+            self.build_step = "Starting the application".into();
+        }
         if let Some(kind) = value["cranposeDev"].as_str() {
             if kind == "sourceMap" {
                 if let (Some(private), Some(original)) =
@@ -968,7 +1035,7 @@ impl Studio {
             }
             self.busy = false;
             self.rebuilding = false;
-            self.status = "Build failed · previous preview remains available".into();
+            self.status = "Build failed. The previous preview is still running.".into();
         }
         None
     }
@@ -981,6 +1048,24 @@ impl Studio {
             self.source_maps.push((private, original));
         }
     }
+}
+
+/// Cargo and the hot-patch compiler color their output.
+fn strip_ansi(line: &str) -> String {
+    let mut text = String::with_capacity(line.len());
+    let mut chars = line.chars();
+    while let Some(c) = chars.next() {
+        if c == '\u{1b}' {
+            for c in chars.by_ref() {
+                if c.is_ascii_alphabetic() {
+                    break;
+                }
+            }
+        } else {
+            text.push(c);
+        }
+    }
+    text
 }
 
 #[cfg(test)]

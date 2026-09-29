@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.14.4
+
+- Value edits apply without compiling again; 0.14.2 and 0.14.3 compiled them
+  whenever the file had a literal that had not run yet.
+- The preview starts when the panel opens and shows what it is waiting for or
+  building. A stopped preview stays stopped.
+- No popups for strings and characters; they are edited in place.
+- Plainer wording in the panel, popups and New Project wizard.
+
 ## 0.14.3
 
 - Cranpose 0.1.176, plugin template and SDK 0.8.0, Cranpose Build 0.1.5 and
