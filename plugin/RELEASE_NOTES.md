@@ -1,4 +1,15 @@
-# Cranpose 0.14.2
+# Cranpose 0.14.3
+
+Studio now builds on released versions of everything it uses: Cranpose 0.1.176,
+plugin template and SDK 0.8.0, Cranpose Build 0.1.5 and the stability analyzer
+0.2.0. New projects start from the Showcase 0.1.25 release, which uses Cranpose
+0.1.176, so structural hot patches keep remembered state from the first edit.
+
+Cranpose 0.1.176 adds further text, glyph and frame-pacing performance work to
+0.1.175's development-only `hot-reload` feature. Application release builds are
+unchanged.
+
+## Included since 0.14.2
 
 Cranpose 0.1.175 is on crates.io with the development-only `hot-reload`
 feature. New projects from **File → New Project → Cranpose** and **Create

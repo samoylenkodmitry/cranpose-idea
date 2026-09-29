@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.14.3
+
+- Cranpose 0.1.176, plugin template and SDK 0.8.0, Cranpose Build 0.1.5 and
+  the stability analyzer 0.2.0, all tagged releases.
+- New projects use the Showcase 0.1.25 release on Cranpose 0.1.176.
+
 ## 0.14.2
 
 - Cranpose 0.1.175 on crates.io offers the development-only `hot-reload`
