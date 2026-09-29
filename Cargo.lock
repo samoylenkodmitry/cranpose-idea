@@ -955,12 +955,12 @@ dependencies = [
 [[package]]
 name = "cranpose-build"
 version = "0.1.5"
-source = "git+https://github.com/samoylenkodmitry/cranpose-build?rev=3b688b596af8a9a6a8084940c7c1e5b2b40e8f0f#3b688b596af8a9a6a8084940c7c1e5b2b40e8f0f"
+source = "git+https://github.com/samoylenkodmitry/cranpose-build?rev=9361b03fe58f5c1727a7637b3f5b045dbee42500#9361b03fe58f5c1727a7637b3f5b045dbee42500"
 dependencies = [
  "anyhow",
  "cargo_metadata",
  "clap",
- "cranpose-plugin-process 0.8.0 (git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=b8c1fc44af8269c2ed5b769167236f298456d055)",
+ "cranpose-plugin-process",
  "ctrlc",
  "plist",
  "serde",
@@ -1008,7 +1008,7 @@ dependencies = [
  "anyhow",
  "cranpose-plugin-authoring",
  "cranpose-plugin-cache",
- "cranpose-plugin-process 0.8.0 (git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=1b8b7b3c7858836917ecf8a19a59f350e7093988)",
+ "cranpose-plugin-process",
  "cranpose-plugin-watch",
  "ctrlc",
  "notify",
@@ -1155,7 +1155,7 @@ source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-templ
 dependencies = [
  "anyhow",
  "cranpose-plugin-authoring",
- "cranpose-plugin-process 0.8.0 (git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=1b8b7b3c7858836917ecf8a19a59f350e7093988)",
+ "cranpose-plugin-process",
  "jni 0.21.1",
  "rand 0.9.5",
  "regex",
@@ -1170,17 +1170,6 @@ dependencies = [
 name = "cranpose-plugin-process"
 version = "0.8.0"
 source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=1b8b7b3c7858836917ecf8a19a59f350e7093988#1b8b7b3c7858836917ecf8a19a59f350e7093988"
-dependencies = [
- "anyhow",
- "libproc",
- "nix 0.30.1",
- "windows-sys 0.61.2",
-]
-
-[[package]]
-name = "cranpose-plugin-process"
-version = "0.8.0"
-source = "git+https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template?rev=b8c1fc44af8269c2ed5b769167236f298456d055#b8c1fc44af8269c2ed5b769167236f298456d055"
 dependencies = [
  "anyhow",
  "libproc",

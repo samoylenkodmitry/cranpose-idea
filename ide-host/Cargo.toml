@@ -14,7 +14,7 @@ ide-tests = ["cranpose-host/ide-tests"]
 
 [dependencies]
 cranpose-host = { package = "cranpose-plugin-host", git = "https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template", rev = "1b8b7b3c7858836917ecf8a19a59f350e7093988", features = ["host-library"] }
-cranpose-build = { git = "https://github.com/samoylenkodmitry/cranpose-build", rev = "3b688b596af8a9a6a8084940c7c1e5b2b40e8f0f" }
+cranpose-build = { git = "https://github.com/samoylenkodmitry/cranpose-build", rev = "9361b03fe58f5c1727a7637b3f5b045dbee42500" }
 anyhow = "1"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
