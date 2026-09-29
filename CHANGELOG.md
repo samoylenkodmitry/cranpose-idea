@@ -8,7 +8,7 @@
   building. A stopped preview stays stopped.
 - No popups for strings and characters; they are edited in place.
 - Plainer wording in the panel, popups and New Project wizard.
-- Plugin template and SDK 0.8.1, Cranpose Build 0.1.6.
+- Plugin template and SDK 0.8.2, Cranpose Build 0.1.7.
 
 ## 0.14.3
 

@@ -16,7 +16,7 @@ still applies without compiling.
 
 The panel, popups and the New Project wizard use plainer wording.
 
-Uses plugin template and SDK 0.8.1 and Cranpose Build 0.1.6.
+Uses plugin template and SDK 0.8.2 and Cranpose Build 0.1.7.
 
 ## Included since 0.14.3
 
