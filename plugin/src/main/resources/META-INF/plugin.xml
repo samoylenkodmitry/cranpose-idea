@@ -15,7 +15,7 @@
         </ul>
         <p>Building applications requires Rust and the platform build tools. The preview uses a private debug copy of the project; release builds are not affected.</p>
     ]]></description>
-    <change-notes><![CDATA[<p>0.14.4</p><ul><li>Value edits apply without compiling again. In 0.14.2 and 0.14.3 they were compiled whenever the file had a literal that had not run yet.</li><li>The preview starts when the panel opens and shows its state: reading Cargo.toml, building (with the crate being compiled), or why it cannot start.</li><li>Strings and characters no longer open a popup; edit them in place.</li><li>Plainer wording in the panel, popups and project wizard.</li></ul>]]></change-notes>
+    <change-notes><![CDATA[<p>0.14.5</p><ul><li>Edits saved while a native UI patch is compiling are applied automatically when compilation finishes, including corrections after compiler errors.</li><li>Faster processing of text, number and color edits.</li></ul>]]></change-notes>
     <depends>com.intellij.modules.platform</depends>
     <extensions defaultExtensionNs="com.intellij">
         <postStartupActivity implementation="dev.cranpose.rust.Startup"/>

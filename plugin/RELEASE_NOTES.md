@@ -1,4 +1,14 @@
-# Cranpose 0.14.4
+# Cranpose 0.14.5
+
+Edits saved while a native UI patch is compiling are queued. When compilation
+finishes, the preview applies the latest saved source automatically, including
+corrections after compiler errors.
+
+Text, number and color edits take less processing work before reaching the
+preview. Native reload regression tests now cover modifier chains, composables,
+callbacks, retained state and compiler-error recovery on macOS and Linux.
+
+## Included since 0.14.4
 
 Value edits apply without compiling again. In 0.14.2 and 0.14.3, a change to a
 number, color or text was compiled instead whenever its file had a literal that
