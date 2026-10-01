@@ -133,12 +133,17 @@ and verifies its pinned SHA-256. It uses Subsecond 0.7.10 through the CLI's nati
 desktop compiler. A normal Rust toolchain and platform linker are required.
 Set `CRANPOSE_DX` to an existing 0.7.10 CLI for offline development.
 
-This release accepts literal changes inside function bodies when types, captures
-and source lines stay unchanged: labels, colors, dimensions and callback amounts
-are examples. String length may change on the fast path. Type changes, new hooks, changed captures, macro tokens,
-manifest edits and moved call sites require **Restart**, which resets live state.
-Invalid syntax and failed patches keep the last successful code running. The
-plugin never attempts to reinterpret existing Rust values under a new type.
+Compatible literal edits bypass compilation. Other compatible function-body
+edits, new functions and imports use native code patches. Ordinary
+`#[composable]`, native modifier chains and custom helper functions keep their
+normal Rust syntax. Edits saved during compilation are coalesced and applied
+after the current patch finishes.
+
+Type layouts, function signatures, statics, traits, macro definitions, modules,
+manifests and `main` require a rebuild, which resets live state. Invalid syntax
+and compiler errors keep the last successful preview running. Changing the type
+of a remembered value also requires a rebuild. See
+[native reload behavior and measurements](docs/native-authoring.md).
 
 Binary targets and binary-plus-library packages are supported. The latter get a
 private binary launcher to work around the compiler's library/binary reload boundary.

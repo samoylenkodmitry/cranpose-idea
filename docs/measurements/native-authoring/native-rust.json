@@ -1,0 +1,37 @@
+{
+  "frames": 7,
+  "patches": [
+    {
+      "edit": "modifier chain and conditional",
+      "saveToSnapshotMs": 812.087125
+    },
+    {
+      "edit": "new composable",
+      "saveToSnapshotMs": 890.997875
+    },
+    {
+      "edit": "callback body",
+      "saveToSnapshotMs": 777.407375
+    },
+    {
+      "edit": "compiler error recovery",
+      "saveToSnapshotMs": 644.432833
+    },
+    {
+      "edit": "revert",
+      "saveToSnapshotMs": 820.506417
+    },
+    {
+      "edit": "literal after structural patches",
+      "saveToSnapshotMs": 160.032667
+    }
+  ],
+  "restartRequired": "state type changed",
+  "result": "passed",
+  "snapshotPollMs": 25,
+  "state": 3,
+  "stoppedPids": [
+    11785,
+    11609
+  ]
+}

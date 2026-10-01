@@ -2,6 +2,34 @@ use super::*;
 
 const APP: &str = "#[composable]\nfn App() {\n    Text(\"a\");\n    Text(12);\n}\n\nstruct Palette { accent: f32 }\n\nfn main() {}\n";
 
+#[test]
+#[ignore = "local classification benchmark; run with --ignored --nocapture"]
+fn profile_saved_values() {
+    let (_temp, mut workspace) = project();
+    let sample = include_str!("../../../samples/counter/src/gallery.rs");
+    let next = sample.replace(".padding(28.0)", ".padding(30.0)");
+    assert_ne!(sample, next);
+    workspace
+        .sources
+        .insert("src/main.rs".into(), sample.into());
+    let compiled = compiled_sources(&workspace.sources);
+    fs::write(workspace.original.join("src/main.rs"), next).expect("save");
+    let started = Instant::now();
+    for _ in 0..200 {
+        let Change::Values { catalog, .. } =
+            change(&workspace, &compiled, Path::new("src/main.rs"), true)
+        else {
+            panic!("expected literal update");
+        };
+        std::hint::black_box(catalog);
+    }
+    println!(
+        "saved-value analysis: {:.3} ms/edit (200 edits, {} bytes)",
+        started.elapsed().as_secs_f64() * 5.0,
+        sample.len()
+    );
+}
+
 fn project() -> (tempfile::TempDir, DevWorkspace) {
     let temp = tempfile::tempdir().expect("temp");
     let root = temp.path().join("app");
@@ -38,21 +66,21 @@ fn saved_files_become_values_patches_or_rebuilds_with_reasons() {
     let (_temp, mut workspace) = project();
     let source = workspace.original.join("src/main.rs");
     let main = Path::new("src/main.rs");
-    let mut compiled = workspace.sources.clone();
+    let mut compiled = compiled_sources(&workspace.sources);
     let save = |text: &str| fs::write(&source, text).expect("save");
     // A wider literal moves later columns but keeps the compiled schema.
     let wider = APP.replace("\"a\"", "\"a much longer label\"");
     save(&wider);
     assert_eq!(
         change(&workspace, &compiled, main, true),
-        Change::Values(wider.clone())
+        values(wider.clone())
     );
     workspace.sources.insert(main.into(), wider.clone());
     // Returning to the compiled text restores its values; it is not unchanged.
     save(APP);
     assert_eq!(
         change(&workspace, &compiled, main, true),
-        Change::Values(APP.into())
+        values(APP.into())
     );
     // Structural body edits compile against the compiled source, not the edited text.
     let structural = wider.replace("    Text(12);\n", "    Text(12);\n    Text(\"added\");\n");
@@ -65,9 +93,15 @@ fn saved_files_become_values_patches_or_rebuilds_with_reasons() {
         change(&workspace, &compiled, main, false),
         Change::Restart("`src/main.rs` changed".into())
     );
-    compiled.insert(main.into(), structural.clone());
+    compiled.insert(main.into(), structural.clone().into());
     workspace.sources.insert(main.into(), structural.clone());
     assert_eq!(change(&workspace, &compiled, main, true), Change::Unchanged);
+    let changed_literal = structural.replace("\"added\"", "\"updated\"");
+    save(&changed_literal);
+    assert_eq!(
+        change(&workspace, &compiled, main, true),
+        values(changed_literal)
+    );
     save(&structural.replace("accent: f32", "accent: f64"));
     assert_eq!(
         change(&workspace, &compiled, main, true),
@@ -88,7 +122,7 @@ fn saved_files_become_values_patches_or_rebuilds_with_reasons() {
 #[test]
 fn other_files_rebuild_only_when_their_content_changes() {
     let (_temp, workspace) = project();
-    let compiled = workspace.sources.clone();
+    let compiled = compiled_sources(&workspace.sources);
     let manifest = workspace.original.join("Cargo.toml");
     let original = fs::read_to_string(&manifest).expect("manifest");
     fs::write(&manifest, &original).expect("identical rewrite");
@@ -326,4 +360,9 @@ fn filters_build_and_editor_noise_before_debounce_without_losing_atomic_save_pat
         relevant_path(&root, &target, root.join("src/main.rs")),
         Some("src/main.rs".into())
     );
+}
+
+fn values(source: String) -> Change {
+    let catalog = Catalog::parse(&source).expect("catalog");
+    Change::Values { source, catalog }
 }

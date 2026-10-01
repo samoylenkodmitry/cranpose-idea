@@ -4,11 +4,13 @@ use crate::{
     workspace::{DevWorkspace, Metadata},
 };
 use anyhow::{Context, Result, bail};
+use cranpose_plugin_authoring::Catalog;
 use cranpose_plugin_watch::{BatchPolicy, ChangeQueue};
 use notify::Watcher;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::{
+    cell::OnceCell,
     collections::{BTreeMap, BTreeSet},
     fs,
     io::{BufRead, BufReader},
@@ -302,7 +304,7 @@ pub fn run(options: RunOptions) -> Result<()> {
     }
     let mut dirty = BTreeSet::new();
     // Value updates change `workspace.sources` only; interfaces compare with compiled code.
-    let mut compiled = workspace.sources.clone();
+    let mut compiled = compiled_sources(&workspace.sources);
     let mut rebuild = Rebuild::default();
     // Once the running process cannot follow its sources, only a rebuild helps.
     let mut stale: Option<String> = None;
@@ -317,8 +319,12 @@ pub fn run(options: RunOptions) -> Result<()> {
             }
             break;
         }
+        let mut patch_finished = false;
         while let Ok(report) = compiler.try_recv() {
-            let Some(outcome) = patches.report(report) else {
+            let building = patches.building;
+            let outcome = patches.report(report);
+            patch_finished |= building && !patches.building;
+            let Some(outcome) = outcome else {
                 continue;
             };
             if stale.is_none() {
@@ -333,11 +339,23 @@ pub fn run(options: RunOptions) -> Result<()> {
         if let Some(reason) = rebuild.due(Instant::now()) {
             emit("rebuildRequired", &reason);
         }
-        let Some(batch) = changes.take(Duration::from_millis(100)) else {
-            continue;
+        let wait = if patch_finished && !dirty.is_empty() {
+            Duration::ZERO
+        } else {
+            Duration::from_millis(100)
         };
-        dirty.extend(batch.items);
-        if stale.is_none() && batch.invalidated {
+        let batch = changes.take(wait);
+        if batch.is_none() && !patch_finished {
+            continue;
+        }
+        let invalidated = batch.as_ref().is_some_and(|batch| batch.invalidated);
+        if let Some(batch) = batch {
+            dirty.extend(batch.items);
+        }
+        if dirty.is_empty() && !invalidated {
+            continue;
+        }
+        if stale.is_none() && invalidated {
             stale = Some("File watcher lost changes".into());
         }
         if stale.is_none() && dirty.len() > 4096 {
@@ -347,6 +365,9 @@ pub fn run(options: RunOptions) -> Result<()> {
             dirty.clear();
             emit("restartRequired", reason);
             rebuild.request(reason, Instant::now() + REBUILD_DELAY);
+            continue;
+        }
+        if patches.building {
             continue;
         }
         let decisions: Vec<_> = dirty
@@ -380,14 +401,13 @@ pub fn run(options: RunOptions) -> Result<()> {
         rebuild.cancel();
         dirty.clear();
         for (relative, change) in decisions {
-            let (source, values) = match change {
-                Change::Values(source) => (source, true),
-                Change::Compile(source) => (source, false),
+            let (source, catalog) = match change {
+                Change::Values { source, catalog } => (source, Some(catalog)),
+                Change::Compile(source) => (source, None),
                 _ => continue,
             };
-            if values
+            if let Some(catalog) = catalog
                 && let Some(bridge) = &mut live_values
-                && let Ok(catalog) = cranpose_plugin_authoring::Catalog::parse(&source)
             {
                 let request = cranpose_plugin_authoring::runtime::Update {
                     file: relative.to_string_lossy().replace('\\', "/"),
@@ -417,7 +437,7 @@ pub fn run(options: RunOptions) -> Result<()> {
             emit("patching", "Compiling the change");
             workspace.write_source(&relative, &source)?;
             workspace.sources.insert(relative.clone(), source.clone());
-            compiled.insert(relative, source);
+            compiled.insert(relative, source.into());
             patches.started();
         }
     }
@@ -622,10 +642,43 @@ impl Rebuild {
 #[derive(Debug, PartialEq)]
 pub(crate) enum Change {
     Unchanged,
-    Values(String),
+    Values { source: String, catalog: Catalog },
     Compile(String),
     Restart(String),
     Invalid(String),
+}
+
+pub(crate) struct CompiledSource {
+    source: String,
+    schema: OnceCell<Option<String>>,
+}
+
+impl From<String> for CompiledSource {
+    fn from(source: String) -> Self {
+        Self {
+            source,
+            schema: OnceCell::new(),
+        }
+    }
+}
+
+impl CompiledSource {
+    fn schema(&self) -> Option<&str> {
+        self.schema
+            .get_or_init(|| {
+                Catalog::parse(&self.source)
+                    .ok()
+                    .map(|catalog| catalog.schema)
+            })
+            .as_deref()
+    }
+}
+
+fn compiled_sources(sources: &BTreeMap<PathBuf, String>) -> BTreeMap<PathBuf, CompiledSource> {
+    sources
+        .iter()
+        .map(|(path, source)| (path.clone(), source.clone().into()))
+        .collect()
 }
 
 /// Decides how one saved file reaches the running process. `compiled` holds the
@@ -633,7 +686,7 @@ pub(crate) enum Change {
 /// follows value updates, which never change the compiled program.
 pub(crate) fn change(
     workspace: &DevWorkspace,
-    compiled: &BTreeMap<PathBuf, String>,
+    compiled: &BTreeMap<PathBuf, CompiledSource>,
     relative: &Path,
     hot_reload: bool,
 ) -> Change {
@@ -675,14 +728,16 @@ pub(crate) fn change(
     };
     // Literal edits keep the compiled schema, even when they move later columns.
     if hot_reload
-        && matches!(
-            (cranpose_plugin_authoring::Catalog::parse(previous), cranpose_plugin_authoring::Catalog::parse(&next)),
-            (Ok(old), Ok(new)) if old.schema == new.schema && !new.literals.is_empty()
-        )
+        && let Ok(catalog) = Catalog::parse(&next)
+        && previous.schema() == Some(catalog.schema.as_str())
+        && !catalog.literals.is_empty()
     {
-        return Change::Values(next);
+        return Change::Values {
+            source: next,
+            catalog,
+        };
     }
-    match classify(previous, &next) {
+    match classify(&previous.source, &next) {
         ReloadDecision::Unchanged => Change::Unchanged,
         ReloadDecision::Patch if hot_reload => Change::Compile(next),
         ReloadDecision::Patch => Change::Restart(format!("`{name}` changed")),

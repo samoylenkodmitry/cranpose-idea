@@ -120,6 +120,10 @@ jobs:
         run: cargo run --locked -p xtask -- choice-smoke --dashboard --require-background --binary target/debug/cranpose-intellij-ui --log dashboard-hot-reload.log --report dashboard-hot-reload.json
       - name: Library and binary application
         run: cargo run --locked -p xtask -- hot-smoke --runner target/debug/cranpose-dev-runner --fixture library --reuse-fixture --source src/lib.rs --cache "${{ runner.temp }}/cranpose-hot-cache" --log library-hot-reload.log --measure-rounds 2 --live-values-rounds 4 --profile-startup --report library-hot-reload.json
+      - name: Native Rust modifiers, composables and callback edits
+        env:
+          CRANPOSE_NATIVE_SMOKE_CACHE: ${{ runner.temp }}/cranpose-hot-cache
+        run: cargo test --locked -p cranpose-dev-runner --test native_rust -- --ignored --nocapture
       - uses: actions/upload-artifact@v7
         if: always()
         with:
@@ -130,6 +134,8 @@ jobs:
             *-hot-reload.json
             authoring-controls-*.png
             lightning-*.png
+            ${{ runner.temp }}/cranpose-hot-cache/native-rust.log
+            ${{ runner.temp }}/cranpose-hot-cache/native-rust.json
   stability:
     name: Composable stability (sample)
     runs-on: ubuntu-latest
