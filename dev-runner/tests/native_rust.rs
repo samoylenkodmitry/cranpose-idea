@@ -65,7 +65,7 @@ impl Preview {
         let mut next = Instant::now();
         let mut last = Vec::new();
         while Instant::now() < deadline {
-            if Instant::now() >= next {
+            if !self.runtime.is_null() && Instant::now() >= next {
                 self.session.send(Packet::message(
                     "cranpose.inspector.v2.request",
                     &self.request.to_string(),
