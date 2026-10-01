@@ -1008,6 +1008,7 @@ dependencies = [
  "anyhow",
  "cranpose-plugin-authoring",
  "cranpose-plugin-cache",
+ "cranpose-plugin-host",
  "cranpose-plugin-process",
  "cranpose-plugin-watch",
  "ctrlc",
