@@ -25,7 +25,7 @@ sha2 = "0.11.0"
 syn = { version = "3", features = ["full", "visit", "visit-mut"] }
 toml_edit = "0.25.15"
 walkdir = "2.5.0"
-zip = { version = "2", default-features = false, features = ["deflate"] }
+zip = { version = "4", default-features = false, features = ["deflate"] }
 
 [dev-dependencies]
 cranpose-plugin-host = { git = "https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template", rev = "b2dc6d17af8451c9dc001bd680a91bd402c4c5c3", default-features = false }
