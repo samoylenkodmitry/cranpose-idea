@@ -59,6 +59,8 @@ and event handlers.
 - **Component previews:** register parameterless fixtures with `#[cranpose::preview]`.
   Choose named variants with their own dimensions and light or dark theme.
 - **Layout inspector:** pick an element on the canvas to select its layout node.
+  When elements overlap, choose from a popup beside the cursor showing their type,
+  text, size and source location. A single hit jumps to source immediately.
   Inspect bounds, text, modifier values and composable origins, then jump to source.
   Search by text, component, source file or modifier. Matching nodes keep their ancestor
   context. Fold branches, follow the hierarchy, or pause and refresh a captured layout.

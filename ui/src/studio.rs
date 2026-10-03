@@ -130,46 +130,21 @@ pub fn PreviewStudio() {
                 });
             let width = width.max(300.0);
             let height = height.max(240.0);
-            let custom_height = if studio.menu == "size" { 40.0 } else { 0.0 };
-            let problems_height = if studio.diagnostics.is_empty() {
-                0.0
-            } else {
-                (30.0 + 26.0 * studio.diagnostics.len().min(4) as f32).min(height * 0.3)
-            };
-            let geometry = crate::studio_model::StudioLayout::new(
-                width,
-                height,
-                studio.settings.inspect,
-                custom_height,
-                problems_height,
-            );
+            let geometry = studio.layout(width, height);
+            let custom_height = geometry.custom_height;
+            let problems_height = geometry.problems_height;
             let top = geometry.top;
             let stage_height = geometry.stage_height;
             let stage_width = geometry.stage_width;
             let inspector_height = geometry.inspector_height;
             let inspector_width = geometry.inspector_width;
-            // Room for the frame caption above and breathing space around it.
-            let scale = if studio.settings.fit {
-                ((stage_width - 48.0) / studio.settings.width as f32)
-                    .min((stage_height - 64.0) / studio.settings.height as f32)
-                    .clamp(0.05, 1.0)
-            } else {
-                studio.settings.zoom
-            };
-            let frame_width = studio.settings.width as f32 * scale;
-            let frame_height = studio.settings.height as f32 * scale;
-            let x = if frame_width <= stage_width {
-                (stage_width - frame_width) * 0.5
-            } else {
-                studio.pan_x.clamp(stage_width - frame_width, 0.0)
-            };
-            let y = top
-                + if frame_height <= stage_height {
-                    ((stage_height - frame_height) * 0.5)
-                        .max(28.0f32.min(stage_height - frame_height))
-                } else {
-                    studio.pan_y.clamp(stage_height - frame_height, 0.0)
-                };
+            let crate::studio_model::PreviewFrame {
+                x,
+                y,
+                width: frame_width,
+                height: frame_height,
+                scale,
+            } = studio.preview_frame(&geometry);
             let selected = studio.selected_bounds();
             let layout = json!({"action": "layout", "session": studio.session, "x": x, "y": y, "width": frame_width, "height": frame_height, "viewport": {"y": top, "width": stage_width, "height": stage_height}, "logicalWidth": studio.settings.width, "logicalHeight": studio.settings.height, "scale": scale, "dark": studio.settings.dark, "pick": studio.picking(), "selected": selected});
             let initialized = studio.initialized;
@@ -325,7 +300,7 @@ fn Toolbar(state: MutableState<Studio>, look: Look, width: f32) {
                         false,
                         studio.pick,
                         true,
-                        ("Pick a view in the preview to reveal its source", TIP),
+                        ("Pick a view; choose from a list when views overlap", TIP),
                         move |_| {
                             edit(state, |studio| studio.set_picking(!studio.pick));
                             request_snapshot(&state.get());
