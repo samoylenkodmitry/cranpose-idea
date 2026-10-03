@@ -97,6 +97,32 @@ pub struct Source {
     pub file: String,
     pub line: usize,
     pub manifest_dir: String,
+    pub recompositions: Option<u64>,
+}
+impl Source {
+    fn same_origin(&self, other: &Self) -> bool {
+        self.name == other.name
+            && self.file == other.file
+            && self.line == other.line
+            && self.manifest_dir == other.manifest_dir
+    }
+
+    pub fn label(&self) -> String {
+        let name = self
+            .name
+            .strip_prefix("__cranpose_call:")
+            .unwrap_or(&self.name);
+        let mut label = format!("{name} :{}", self.line);
+        if let Some(count) = self.recompositions {
+            let unit = if count == 1 {
+                "recomposition"
+            } else {
+                "recompositions"
+            };
+            label.push_str(&format!(" · {count} {unit}"));
+        }
+        label
+    }
 }
 #[derive(Clone, Debug, Default, PartialEq, Deserialize)]
 #[serde(default)]
@@ -113,6 +139,13 @@ pub struct Node {
     pub sources: Vec<Source>,
 }
 impl Node {
+    pub fn recompositions(&self) -> Option<u64> {
+        self.sources
+            .iter()
+            .rev()
+            .find_map(|source| source.recompositions)
+    }
+
     pub fn label(&self) -> String {
         self.text
             .as_ref()
@@ -146,6 +179,22 @@ pub struct Snapshot {
     pub capture_micros: u64,
     pub truncated: bool,
     pub nodes: Vec<Node>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct RecompositionInstance {
+    instance_id: u64,
+    #[serde(flatten)]
+    source: Source,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct Recompositions {
+    schema: u32,
+    request_id: u64,
+    instances: Vec<RecompositionInstance>,
 }
 impl Snapshot {
     pub fn rows(
@@ -257,6 +306,8 @@ pub struct Studio {
     #[serde(skip)]
     inspection_sequence: cranpose_plugin_ux::delivery::SequenceGate,
     #[serde(skip)]
+    recomposition_sequence: cranpose_plugin_ux::delivery::SequenceGate,
+    #[serde(skip)]
     inspection_fresh: bool,
     #[serde(skip)]
     pub initialized: bool,
@@ -315,6 +366,7 @@ impl Default for Studio {
             previews: vec![],
             snapshot: Snapshot::default().into(),
             inspection_sequence: Default::default(),
+            recomposition_sequence: Default::default(),
             inspection_fresh: false,
             initialized: false,
             selected: String::new(),
@@ -465,6 +517,45 @@ impl Studio {
         })
     }
 
+    pub fn recomposition_request(&self) -> Option<Value> {
+        self.connected.then(|| {
+            json!({"action":"message", "session":self.session,
+            "channel":"cranpose.recompositions.v1.request",
+            "payload":self.recomposition_sequence.next_request().to_string()})
+        })
+    }
+
+    fn editor_recompositions(&self, payload: &str) -> Option<Value> {
+        let snapshot: Recompositions = serde_json::from_str(payload).ok()?;
+        if !self.connected
+            || snapshot.schema != 1
+            || !self.recomposition_sequence.accept(snapshot.request_id)
+        {
+            return None;
+        }
+        let mut seen = std::collections::HashSet::new();
+        let mut totals = std::collections::BTreeMap::new();
+        for instance in snapshot.instances {
+            let source = instance.source;
+            let Some(count) = source.recompositions else {
+                continue;
+            };
+            if !seen.insert(instance.instance_id) || source.line == 0 {
+                continue;
+            }
+            let file = self.resolve_source(&source);
+            let total = totals
+                .entry((file, source.name, source.line))
+                .or_insert((0u64, 0u64));
+            total.0 = total.0.saturating_add(count);
+            total.1 = total.1.saturating_add(1);
+        }
+        let rows: Vec<_> = totals.into_iter().map(|((file, name, line), (count, instances))| {
+            json!({"file":file,"name":name,"line":line,"recompositions":count,"instances":instances})
+        }).collect();
+        Some(json!({"action":"recompositions", "session":self.session,"rows":rows}))
+    }
+
     /// Picking or navigating a node reveals its ancestors without losing other folds.
     pub fn select_node(&mut self, id: String) {
         let mut current = self.snapshot.nodes.iter().find(|node| node.id == id);
@@ -572,7 +663,14 @@ impl Studio {
         }
         let original = pending.snapshot.nodes.iter().find(|node| node.id == id)?;
         let current = self.snapshot.nodes.iter().find(|node| node.id == id)?;
-        if original.kind != current.kind || original.sources != current.sources {
+        if original.kind != current.kind
+            || original.sources.len() != current.sources.len()
+            || !original
+                .sources
+                .iter()
+                .zip(&current.sources)
+                .all(|(a, b)| a.same_origin(b))
+        {
             return None;
         }
         self.select_node(id.to_owned());
@@ -601,7 +699,31 @@ impl Studio {
         self.targets
             .iter()
             .find(|target| target.id() == self.settings.target)
+            .or_else(|| {
+                self.targets
+                    .iter()
+                    .find(|target| target.source == self.source)
+            })
+            .or_else(|| {
+                self.targets
+                    .iter()
+                    .filter(|target| {
+                        Path::new(&target.manifest)
+                            .parent()
+                            .is_some_and(|root| Path::new(&self.source).starts_with(root))
+                    })
+                    .min_by_key(|target| {
+                        usize::MAX - Path::new(&target.manifest).components().count()
+                    })
+            })
             .or_else(|| self.targets.first())
+    }
+    pub fn build_failure_message(&self) -> &'static str {
+        if self.connected {
+            "Build failed. The previous preview is still running."
+        } else {
+            "Build failed. Fix the errors below, then retry."
+        }
     }
     pub fn start(&mut self) -> Option<Value> {
         self.pending_start = true;
@@ -639,7 +761,11 @@ impl Studio {
     /// Starts the preview on its own once the application is known, unless the
     /// user stopped it or a session is already running or starting.
     fn auto_start(&mut self) -> Option<Value> {
-        if !self.settings.auto_start || self.stopped || self.session > 0 || !self.setup.is_empty() {
+        if !self.settings.auto_start
+            || self.stopped
+            || self.next_session > 0
+            || !self.setup.is_empty()
+        {
             return None;
         }
         self.start()
@@ -738,13 +864,7 @@ impl Studio {
                     self.root = value["root"].as_str().unwrap_or_default().into();
                 }
                 if self.settings.target.is_empty() {
-                    self.settings.target = self
-                        .targets
-                        .iter()
-                        .find(|target| target.source == self.source)
-                        .or_else(|| self.targets.first())
-                        .map(Target::id)
-                        .unwrap_or_default();
+                    self.settings.target = self.target().map(Target::id).unwrap_or_default();
                 }
                 if self.pending_start || (!self.requested_function.is_empty() && self.session == 0)
                 {
@@ -772,6 +892,9 @@ impl Studio {
                 }
                 "showBuilt" | "showTarget" => {
                     if let Ok(target) = serde_json::from_value::<Target>(value["target"].clone()) {
+                        if target.id() == self.settings.target && (self.busy || self.connected) {
+                            return requests;
+                        }
                         self.settings.target = target.id();
                     }
                     requests.extend(self.start());
@@ -787,6 +910,7 @@ impl Studio {
                         self.pick_menu = None;
                         self.snapshot = Snapshot::default().into();
                         self.inspection_sequence = Default::default();
+                        self.recomposition_sequence = Default::default();
                         self.inspection_fresh = false;
                         self.selected.clear();
                         self.collapsed.clear();
@@ -838,6 +962,11 @@ impl Studio {
                             .clamp(-16384.0, 0.0);
                     }
                     "message" => match value["channel"].as_str().unwrap_or_default() {
+                        "cranpose.recompositions.v1.snapshot" => {
+                            requests.extend(self.editor_recompositions(
+                                value["payload"].as_str().unwrap_or_default(),
+                            ));
+                        }
                         "cranpose.previews.v1" => {
                             if let Ok(previews) =
                                 serde_json::from_str(value["payload"].as_str().unwrap_or_default())
@@ -991,9 +1120,7 @@ impl Studio {
                 if self.settings.target != id {
                     self.settings.target = id.into();
                     self.settings.preview.clear();
-                    if self.session > 0 {
-                        requests.extend(self.start());
-                    }
+                    requests.extend(self.start());
                 }
             }
             ("preview", id) if id.is_empty() || self.previews.iter().any(|p| p.id == id) => {
@@ -1165,7 +1292,7 @@ impl Studio {
                 .and_then(|span| span["line_start"].as_u64())
                 .unwrap_or(1);
             self.diagnostics.push(Diagnostic {
-                message: message.chars().take(300).collect(),
+                message: strip_ansi(message).chars().take(300).collect(),
                 file,
                 line,
             });
@@ -1174,7 +1301,7 @@ impl Studio {
             }
             self.busy = false;
             self.rebuilding = false;
-            self.status = "Build failed. The previous preview is still running.".into();
+            self.status = self.build_failure_message().into();
         }
         None
     }

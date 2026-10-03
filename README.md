@@ -52,9 +52,10 @@ structural source change rebuilds them. See the
 
 ## Preview and inspect
 
-Open a Rust source file and choose **Split**. Select a Cargo binary or example, then
-**Run**. The preview runs your compiled application, including its state
-and event handlers.
+Open a Rust source file and choose **Split**. The preview starts with the package's
+default or main binary. Select another Cargo binary or example to run it instead.
+Source tabs share the running preview, selected target and application state.
+The preview runs your compiled application, including its state and event handlers.
 
 - **Component previews:** register parameterless fixtures with `#[cranpose::preview]`.
   Choose named variants with their own dimensions and light or dark theme.
@@ -62,6 +63,12 @@ and event handlers.
   When elements overlap, choose from a popup beside the cursor showing their type,
   text, size and source location. A single hit jumps to source immediately.
   Inspect bounds, text, modifier values and composable origins, then jump to source.
+  With a framework that reports recomposition counts, the tree and source stack
+  show executions after each composable instance's initial composition.
+  Live counters also appear above composable definitions in open code editors,
+  even with the Inspector closed or paused. Multiple live instances are summed
+  and show their instance count. Counters disappear when the preview stops.
+  Tracking runs only in the plugin's debug preview process; release builds omit it.
   Search by text, component, source file or modifier. Matching nodes keep their ancestor
   context. Fold branches, follow the hierarchy, or pause and refresh a captured layout.
   Wide workspaces dock inspection beside the preview and use a compact toolbar.

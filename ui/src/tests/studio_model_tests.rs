@@ -389,9 +389,90 @@ fn pick_chooser_survives_live_geometry_updates_without_persisting_its_snapshot()
     let snapshot = std::rc::Rc::make_mut(&mut model.snapshot);
     snapshot.nodes[1].x = 80.0;
     snapshot.nodes[1].text = Some("Updated text".into());
+    snapshot.nodes[1].sources[0].recompositions = Some(8);
     let requests = model.choose(&menu, "label");
     assert_eq!(requests[0]["line"], 30);
     assert_eq!(model.selected_bounds().expect("current bounds")["x"], 80.0);
+}
+
+#[test]
+fn recomposition_counts_refresh_without_layout_changes_and_preserve_selection() {
+    let mut model = studio();
+    model.start();
+    model.handle("studio.child", r#"{"session":1,"event":"connected"}"#);
+    let message = |request, count| {
+        json!({"session":1,"event":"message","channel":"cranpose.inspector.v2.snapshot",
+            "payload":json!({"schema":2,"requestId":request,"nodes":[{"id":"counter",
+                "kind":"Text","sources":[
+                    {"name":"Counter","file":"src/main.rs","manifestDir":"/project","line":12,"recompositions":count},
+                    {"name":"__cranpose_call:Text","file":"src/main.rs","manifestDir":"/project","line":14}
+                ]}]}).to_string()})
+        .to_string()
+    };
+    model.handle("studio.child", &message(1, 0));
+    model.select_node("counter".into());
+    let old = model.clone();
+    assert_eq!(old.snapshot.nodes[0].recompositions(), Some(0));
+    model.handle("studio.child", &message(2, 7));
+    assert_ne!(model, old);
+    let node = &model.snapshot.nodes[0];
+    assert_eq!(node.recompositions(), Some(7));
+    assert_eq!(node.sources[0].label(), "Counter :12 · 7 recompositions");
+    assert_eq!(node.sources[1].label(), "Text :14");
+    assert_eq!(model.selected, "counter");
+    assert_eq!(
+        model.selected_source_request().expect("navigate")["line"],
+        14
+    );
+    model.handle("studio.child", &message(1, 0));
+    assert_eq!(model.snapshot.nodes[0].recompositions(), Some(7));
+    assert_eq!(old.snapshot.nodes[0].recompositions(), Some(0));
+    let untracked =
+        Snapshot::parse(r#"{"schema":2,"nodes":[{"id":"old","sources":[{"name":"Counter"}]}]}"#)
+            .expect("untracked snapshot");
+    assert_eq!(untracked.nodes[0].recompositions(), None);
+}
+
+#[test]
+fn editor_counters_aggregate_instances_with_inspector_closed_and_reject_stale_sessions() {
+    let mut model = studio();
+    model.start();
+    model.handle("studio.child", r#"{"session":1,"event":"connected"}"#);
+    model.private_root = "/cache/session".into();
+    model.live = false;
+    assert!(!model.settings.inspect);
+    assert_eq!(
+        model.recomposition_request().expect("running")["payload"],
+        "1"
+    );
+    let reply = |session, request| {
+        json!({"session":session,"event":"message",
+        "channel":"cranpose.recompositions.v1.snapshot","payload":json!({"schema":1,
+        "requestId":request,"instances":[
+            {"instanceId":1,"name":"Counter","file":"src/main.rs","manifestDir":"/cache/session","line":12,"recompositions":2},
+            {"instanceId":2,"name":"Counter","file":"src/main.rs","manifestDir":"/cache/session","line":12,"recompositions":3},
+            {"instanceId":1,"name":"Counter","file":"src/main.rs","manifestDir":"/cache/session","line":12,"recompositions":2},
+            {"instanceId":3,"name":"Silent","file":"src/main.rs","manifestDir":"/cache/session","line":30,"recompositions":0}
+        ]}).to_string()}).to_string()
+    };
+    let requests = model.handle("studio.child", &reply(1, 2));
+    assert_eq!(requests.len(), 1);
+    assert_eq!(requests[0]["action"], "recompositions");
+    assert_eq!(
+        requests[0]["rows"],
+        json!([
+            {"file":"/project/src/main.rs","name":"Counter","line":12,"recompositions":5,"instances":2},
+            {"file":"/project/src/main.rs","name":"Silent","line":30,"recompositions":0,"instances":1}
+        ])
+    );
+    assert!(model.snapshot.nodes.is_empty());
+    assert!(model.handle("studio.child", &reply(1, 1)).is_empty());
+    assert!(model.handle("studio.child", &reply(2, 3)).is_empty());
+    model.handle("studio.child", r#"{"session":1,"event":"stopped"}"#);
+    assert!(model.recomposition_request().is_none());
+    assert!(model.handle("studio.child", &reply(1, 3)).is_empty());
+    model.handle("studio.child", r#"{"session":1,"event":"connected"}"#);
+    assert!(!model.handle("studio.child", &reply(1, 1)).is_empty());
 }
 
 #[test]
@@ -918,6 +999,74 @@ fn rebuild_waits_for_the_user_when_reload_on_save_is_off_or_the_build_fails() {
 }
 
 const PROJECT: &str = r#"{"busy":false,"status":"","targets":[{"packageName":"app","name":"desktop","kind":"bin","manifest":"/project/Cargo.toml","source":"/project/src/main.rs"}]}"#;
+
+#[test]
+fn preview_uses_nearest_package_and_keeps_a_running_target() {
+    let mut model = Studio::default();
+    model.handle(
+        "studio.init",
+        r#"{"root":"/project","source":"/project/app/src/components/card.rs"}"#,
+    );
+    let requests = model.handle("cranpose.project", &json!({"targets":[
+        {"packageName":"other","name":"other","kind":"bin","manifest":"/project/other/Cargo.toml","source":"/project/other/src/main.rs"},
+        {"packageName":"app","name":"desktop","kind":"bin","manifest":"/project/app/Cargo.toml","source":"/project/app/src/main.rs"},
+        {"packageName":"app","name":"ios","kind":"bin","manifest":"/project/app/Cargo.toml","source":"/project/app/src/ios.rs"}
+    ]}).to_string());
+    assert_eq!(requests[0]["options"]["target"], "desktop");
+    let target = model.target().expect("desktop").clone();
+    assert!(
+        model
+            .handle(
+                "studio.command",
+                &json!({"action":"showTarget","target":target}).to_string()
+            )
+            .is_empty()
+    );
+    model.handle("studio.child", r#"{"session":1,"event":"connected"}"#);
+    assert!(
+        model
+            .handle(
+                "studio.command",
+                &json!({"action":"showTarget","target":target}).to_string()
+            )
+            .is_empty()
+    );
+    assert_eq!(model.session, 1);
+}
+
+#[test]
+fn first_build_failure_is_honest_and_selecting_another_target_retries() {
+    let mut model = Studio::default();
+    model.handle("studio.init", r#"{"root":"/project"}"#);
+    model.handle("cranpose.project", PROJECT);
+    runner(
+        &mut model,
+        1,
+        json!({"level":"ERROR","message":"\u{1b}[31mBuild failed\u{1b}[0m: missing desktop feature"}),
+    );
+    assert_eq!(
+        model.diagnostics[0].message,
+        "Build failed: missing desktop feature"
+    );
+    assert_eq!(
+        model.status,
+        "Build failed. Fix the errors below, then retry."
+    );
+    model.handle(
+        "studio.child",
+        r#"{"session":1,"event":"failed","message":"compile error","fallbackSession":0}"#,
+    );
+    assert!(
+        model.handle("cranpose.project", PROJECT).is_empty(),
+        "Metadata must not trigger a retry loop"
+    );
+    let mut other = model.targets[0].clone();
+    other.name = "other".into();
+    let id = other.id();
+    model.targets.push(other);
+    assert_eq!(model.choose("target", &id)[0]["options"]["target"], "other");
+    assert!(model.busy);
+}
 
 #[test]
 fn preview_starts_on_its_own_once_the_application_is_known() {

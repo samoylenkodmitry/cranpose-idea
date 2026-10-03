@@ -237,7 +237,8 @@ pub fn run(options: RunOptions) -> Result<()> {
     ]);
     command
         .current_dir(&workspace.directory)
-        .env("CARGO_TARGET_DIR", options.cache.join("target"));
+        .env("CARGO_TARGET_DIR", options.cache.join("target"))
+        .env("CRANPOSE_PREVIEW_RECOMPOSITIONS", "1");
     let mut live_values = options
         .hot_reload
         .then(cranpose_plugin_authoring::transport::Bridge::new)
