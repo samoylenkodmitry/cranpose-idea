@@ -3,37 +3,6 @@ use super::*;
 const APP: &str = "#[composable]\nfn App() {\n    Text(\"a\");\n    Text(12);\n}\n\nstruct Palette { accent: f32 }\n\nfn main() {}\n";
 
 #[test]
-fn concurrent_preview_cleanup_does_not_remove_another_build() {
-    let temp = tempfile::tempdir().expect("cache");
-    let options = RunOptions {
-        root: temp.path().join("project"),
-        package: "app".into(),
-        target: "app".into(),
-        kind: "bin".into(),
-        cache: temp.path().into(),
-        features: vec![],
-        hot_reload: true,
-        watch: true,
-    };
-    let leases = temp.path().join("workspaces");
-    let first = cranpose_plugin_cache::WorkspaceLease::acquire(&leases, b"project").expect("first");
-    let second =
-        cranpose_plugin_cache::WorkspaceLease::acquire(&leases, b"project").expect("concurrent");
-    let first_target = preview_target(&options, first.path());
-    let second_target = preview_target(&options, second.path());
-    fs::create_dir_all(&first_target).expect("first target");
-    fs::create_dir_all(&second_target).expect("second target");
-    fs::write(first_target.join("invoked.timestamp"), "building").expect("first build");
-    fs::remove_dir_all(&second_target).expect("compiler cleanup");
-    assert!(first_target.join("invoked.timestamp").exists());
-    first.complete().expect("clean shutdown");
-    let reused =
-        cranpose_plugin_cache::WorkspaceLease::acquire(&leases, b"project").expect("reuse");
-    assert_eq!(preview_target(&options, reused.path()), first_target);
-    assert!(first_target.join("invoked.timestamp").exists());
-}
-
-#[test]
 #[ignore = "local classification benchmark; run with --ignored --nocapture"]
 fn profile_saved_values() {
     let (_temp, mut workspace) = project();

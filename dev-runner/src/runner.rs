@@ -47,15 +47,13 @@ fn watch_by_default() -> bool {
     true
 }
 
-fn preview_target(options: &RunOptions, session: &Path) -> PathBuf {
+fn preview_target(
+    options: &RunOptions,
+    session: &Path,
+    lease: Option<&cranpose_plugin_cache::WorkspaceLease>,
+) -> PathBuf {
     if options.hot_reload {
-        // WorkspaceLease clears the copied sources when reused. Keep compiled
-        // artifacts outside that directory while retaining its exclusive key.
-        let key: String = Sha256::digest(session.as_os_str().as_encoded_bytes())
-            .iter()
-            .map(|byte| format!("{byte:02x}"))
-            .collect();
-        options.cache.join("targets").join(key)
+        lease.map_or_else(|| session.join("target"), |lease| lease.artifacts_path())
     } else {
         options.cache.join("target")
     }
@@ -253,7 +251,10 @@ pub fn run(options: RunOptions) -> Result<()> {
         // Dioxus also cleans application fingerprints outside Cargo's build
         // lock. A separate target per leased session prevents one preview from
         // deleting another preview's build output during simultaneous startup.
-        .env("CARGO_TARGET_DIR", preview_target(&options, &directory))
+        .env(
+            "CARGO_TARGET_DIR",
+            preview_target(&options, &directory, lease.as_ref()),
+        )
         .env("CRANPOSE_PREVIEW_RECOMPOSITIONS", "1");
     let mut live_values = options
         .hot_reload
