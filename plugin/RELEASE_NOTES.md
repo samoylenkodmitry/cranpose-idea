@@ -5,7 +5,7 @@ edit-to-preview lightning share native GPU rendering on macOS, Windows and
 Linux. They follow editor scrolling and folding, animate briefly when changed,
 and stop drawing when settled. Unsupported graphics setups retain static counter
 text. Tracking is enabled only for plugin previews; application release builds
-are unaffected. Counter data requires Cranpose 0.9.2 or a framework revision
+are unaffected. Counter data requires Cranpose 0.9.3 or a framework revision
 containing preview recomposition tracking.
 
 Pick offers a compact chooser when several views overlap under the pointer.

@@ -15,7 +15,7 @@
         </ul>
         <p>Building applications requires Rust and the platform build tools. The preview uses a private debug copy of the project; release builds are not affected.</p>
     ]]></description>
-    <change-notes><![CDATA[<p>0.15.0</p><ul><li>Preview recomposition counters above composable definitions, using Cranpose 0.9.2 or newer.</li><li>Shared GPU rendering for animated counters and edit-to-preview lightning on macOS, Windows and Linux. Decorations follow scrolling and stop drawing when idle.</li><li>A chooser for overlapping Pick targets.</li><li>Library previews, clearer build progress and isolated build caches for concurrent previews.</li></ul>]]></change-notes>
+    <change-notes><![CDATA[<p>0.15.0</p><ul><li>Preview recomposition counters above composable definitions, using Cranpose 0.9.3 or newer.</li><li>Shared GPU rendering for animated counters and edit-to-preview lightning on macOS, Windows and Linux. Decorations follow scrolling and stop drawing when idle.</li><li>A chooser for overlapping Pick targets.</li><li>Library previews, clearer build progress and isolated build caches for concurrent previews.</li></ul>]]></change-notes>
     <depends>com.intellij.modules.platform</depends>
     <extensions defaultExtensionNs="com.intellij">
         <postStartupActivity implementation="dev.cranpose.rust.Startup"/>
