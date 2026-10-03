@@ -45,6 +45,17 @@ pub struct Target {
     pub required_features: Vec<String>,
 }
 
+impl Target {
+    pub(crate) fn is_library(&self) -> bool {
+        self.kind.iter().any(|kind| {
+            matches!(
+                kind.as_str(),
+                "lib" | "rlib" | "dylib" | "cdylib" | "staticlib"
+            )
+        })
+    }
+}
+
 impl Metadata {
     /// Reads workspace members and their declared targets.
     /// Whether the application's Cranpose offers the development-only
@@ -311,10 +322,11 @@ impl DevWorkspace {
                 .unwrap_or("cranpose")
                 .replace('-', "_");
             for target in &package.targets {
-                if !target
-                    .kind
-                    .iter()
-                    .any(|kind| matches!(kind.as_str(), "bin" | "lib" | "example"))
+                if !target.is_library()
+                    && !target
+                        .kind
+                        .iter()
+                        .any(|kind| matches!(kind.as_str(), "bin" | "example"))
                 {
                     continue;
                 }

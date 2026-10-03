@@ -9,12 +9,7 @@ pub fn prepare(
     package: &Package,
     target: &Target,
 ) -> Result<Option<String>> {
-    let Some(library) = package.targets.iter().find(|target| {
-        target
-            .kind
-            .iter()
-            .any(|kind| matches!(kind.as_str(), "lib" | "rlib"))
-    }) else {
+    let Some(library) = package.targets.iter().find(|target| target.is_library()) else {
         return Ok(None);
     };
     let original_package = package

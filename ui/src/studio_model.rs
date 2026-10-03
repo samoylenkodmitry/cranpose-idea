@@ -220,9 +220,20 @@ impl Snapshot {
         }
         Ok(snapshot)
     }
-    pub fn pick(&self, x: f32, y: f32) -> Option<&Node> {
-        self.nodes.iter().rev().find(|node| node.contains(x, y))
+    pub fn hits(&self, x: f32, y: f32) -> impl Iterator<Item = &Node> {
+        self.nodes
+            .iter()
+            .rev()
+            .filter(move |node| node.contains(x, y))
     }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+struct PickMenu {
+    id: String,
+    session: u64,
+    snapshot: std::rc::Rc<Snapshot>,
+    nodes: Vec<String>,
 }
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
@@ -256,6 +267,10 @@ pub struct Studio {
     pub setup: String,
     pub menu: String,
     pub pick: bool,
+    #[serde(skip)]
+    pick_sequence: u64,
+    #[serde(skip)]
+    pick_menu: Option<PickMenu>,
     pub live: bool,
     pub session: u64,
     next_session: u64,
@@ -309,6 +324,8 @@ impl Default for Studio {
             setup: String::new(),
             menu: String::new(),
             pick: false,
+            pick_sequence: 0,
+            pick_menu: None,
             live: true,
             session: 0,
             next_session: 0,
@@ -342,6 +359,7 @@ impl Studio {
     fn invalidate_inspection(&mut self) {
         self.inspection_fresh = false;
         self.inspection_sequence.discard_pending();
+        self.pick_menu = None;
     }
 
     pub fn set_inspecting(&mut self, inspecting: bool) {
@@ -359,6 +377,9 @@ impl Studio {
     }
 
     pub fn set_picking(&mut self, pick: bool) {
+        if !pick {
+            self.pick_menu = None;
+        }
         if pick {
             self.set_live_inspection(true);
         }
@@ -385,6 +406,54 @@ impl Studio {
             .iter()
             .find(|node| node.id == self.selected)
             .map(|node| json!({"x":node.x,"y":node.y,"width":node.width,"height":node.height}))
+    }
+
+    pub fn layout(&self, width: f32, height: f32) -> StudioLayout {
+        let height = height.max(240.0);
+        let custom_height = if self.menu == "size" { 40.0 } else { 0.0 };
+        let problems_height = if self.diagnostics.is_empty() {
+            0.0
+        } else {
+            (30.0 + 26.0 * self.diagnostics.len().min(4) as f32).min(height * 0.3)
+        };
+        StudioLayout::new(
+            width.max(300.0),
+            height,
+            self.settings.inspect,
+            custom_height,
+            problems_height,
+        )
+    }
+
+    pub fn preview_frame(&self, layout: &StudioLayout) -> PreviewFrame {
+        let scale = if self.settings.fit {
+            ((layout.stage_width - 48.0) / self.settings.width as f32)
+                .min((layout.stage_height - 64.0) / self.settings.height as f32)
+                .clamp(0.05, 1.0)
+        } else {
+            self.settings.zoom
+        };
+        let width = self.settings.width as f32 * scale;
+        let height = self.settings.height as f32 * scale;
+        let x = if width <= layout.stage_width {
+            (layout.stage_width - width) * 0.5
+        } else {
+            self.pan_x.clamp(layout.stage_width - width, 0.0)
+        };
+        let y = layout.top
+            + if height <= layout.stage_height {
+                ((layout.stage_height - height) * 0.5)
+                    .max(28.0f32.min(layout.stage_height - height))
+            } else {
+                self.pan_y.clamp(layout.stage_height - height, 0.0)
+            };
+        PreviewFrame {
+            x,
+            y,
+            width,
+            height,
+            scale,
+        }
     }
 
     pub fn inspection_request(&self) -> Option<Value> {
@@ -419,21 +488,95 @@ impl Studio {
             .nodes
             .iter()
             .find(|node| node.id == self.selected)?;
+        let source = self.node_source(node)?;
+        Some(
+            json!({"action":"navigate","file":self.resolve_source(source),"line":source.line,"reveal":true}),
+        )
+    }
+
+    fn node_source<'a>(&self, node: &'a Node) -> Option<&'a Source> {
         if self.root.is_empty() {
             return None;
         }
         let local = |source: &&Source| {
             std::path::Path::new(&self.resolve_source(source)).starts_with(&self.root)
         };
-        let source = node
-            .sources
+        node.sources
             .iter()
             .rev()
             .find(|source| source.name.starts_with("__cranpose_call:") && local(source))
-            .or_else(|| node.sources.iter().rev().find(local))?;
-        Some(
-            json!({"action":"navigate","file":self.resolve_source(source),"line":source.line,"reveal":true}),
-        )
+            .or_else(|| node.sources.iter().rev().find(local))
+    }
+
+    fn pick_at(&mut self, x: f32, y: f32) -> Option<Value> {
+        self.pick_menu = None;
+        if !self.picking() || !x.is_finite() || !y.is_finite() {
+            return None;
+        }
+        let hits: Vec<_> = self.snapshot.hits(x, y).collect();
+        match hits.as_slice() {
+            [] => None,
+            [node] => {
+                let id = node.id.clone();
+                self.select_node(id);
+                self.selected_source_request()
+            }
+            _ => {
+                let items: Vec<_> = hits
+                    .iter()
+                    .map(|node| {
+                        let mut label = format!(
+                            "{}  ·  {} × {}",
+                            node.label().replace(['\r', '\n', '\t'], " "),
+                            node.width.round(),
+                            node.height.round()
+                        );
+                        if let Some(source) = self.node_source(node) {
+                            let file = Path::new(&source.file)
+                                .file_name()
+                                .unwrap_or_default()
+                                .to_string_lossy();
+                            label.push_str(&format!("  ·  {file}:{}", source.line));
+                        }
+                        json!({"id":node.id,"label":label,"checked":node.id == self.selected})
+                    })
+                    .collect();
+                self.pick_sequence += 1;
+                let id = format!("pick:{}:{}", self.session, self.pick_sequence);
+                let (width, height) = self
+                    .viewport
+                    .unwrap_or((self.settings.width, self.settings.height));
+                let layout = self.layout(width as f32, height as f32);
+                let frame = self.preview_frame(&layout);
+                self.pick_menu = Some(PickMenu {
+                    id: id.clone(),
+                    session: self.session,
+                    snapshot: self.snapshot.clone(),
+                    nodes: hits.iter().map(|node| node.id.clone()).collect(),
+                });
+                Some(json!({"action":"menu","menu":id,"items":items,
+                    "x":frame.x.trunc() + x * frame.scale,
+                    "y":frame.y.trunc() + y * frame.scale + 6.0,"width":240}))
+            }
+        }
+    }
+
+    fn choose_pick(&mut self, menu: &str, id: &str) -> Option<Value> {
+        let pending = self.pick_menu.as_ref()?;
+        if pending.id != menu || pending.session != self.session || !self.picking() {
+            return None;
+        }
+        let pending = self.pick_menu.take()?;
+        if !pending.nodes.iter().any(|node| node == id) {
+            return None;
+        }
+        let original = pending.snapshot.nodes.iter().find(|node| node.id == id)?;
+        let current = self.snapshot.nodes.iter().find(|node| node.id == id)?;
+        if original.kind != current.kind || original.sources != current.sources {
+            return None;
+        }
+        self.select_node(id.to_owned());
+        self.selected_source_request()
     }
 
     pub fn selection_path(&self) -> Vec<&Node> {
@@ -485,6 +628,7 @@ impl Studio {
         self.setup.clear();
         self.diagnostics.clear();
         self.menu.clear();
+        self.pick_menu = None;
         Some(
             json!({"action": "start", "session": self.session, "preview": self.settings.preview, "options": {
                 "root": self.root, "package": target.package_name, "target": target.name, "kind": target.kind,
@@ -640,6 +784,7 @@ impl Studio {
                 }
                 match value["event"].as_str().unwrap_or_default() {
                     "connected" => {
+                        self.pick_menu = None;
                         self.snapshot = Snapshot::default().into();
                         self.inspection_sequence = Default::default();
                         self.inspection_fresh = false;
@@ -659,6 +804,7 @@ impl Studio {
                         self.rebuilding = false;
                     }
                     "stopped" => {
+                        self.pick_menu = None;
                         self.connected = false;
                         self.busy = false;
                         self.rebuilding = false;
@@ -672,6 +818,7 @@ impl Studio {
                             .into();
                     }
                     "failed" => {
+                        self.pick_menu = None;
                         self.session = value["fallbackSession"].as_u64().unwrap_or_default();
                         self.connected = self.session > 0;
                         self.busy = false;
@@ -680,17 +827,8 @@ impl Studio {
                     }
                     "log" => requests.extend(self.log(value["line"].as_str().unwrap_or_default())),
                     "pointer" => {
-                        if self.picking() {
-                            let picked = self
-                                .snapshot
-                                .pick(
-                                    value["x"].as_f64().unwrap_or_default() as f32,
-                                    value["y"].as_f64().unwrap_or_default() as f32,
-                                )
-                                .map(|node| node.id.clone())
-                                .unwrap_or_default();
-                            self.select_node(picked);
-                            requests.extend(self.selected_source_request());
+                        if let (Some(x), Some(y)) = (value["x"].as_f64(), value["y"].as_f64()) {
+                            requests.extend(self.pick_at(x as f32, y as f32));
                         }
                     }
                     "pan" => {
@@ -848,6 +986,7 @@ impl Studio {
     pub fn choose(&mut self, menu: &str, item: &str) -> Vec<Value> {
         let mut requests = vec![];
         match (menu, item) {
+            (menu, id) if menu.starts_with("pick:") => requests.extend(self.choose_pick(menu, id)),
             ("target", id) if self.targets.iter().any(|t| t.id() == id) => {
                 if self.settings.target != id {
                     self.settings.target = id.into();
@@ -1099,7 +1238,19 @@ pub struct StudioLayout {
     pub stage_height: f32,
     pub inspector_width: f32,
     pub inspector_height: f32,
+    pub custom_height: f32,
+    pub problems_height: f32,
 }
+
+/// Application placement in Studio coordinates, shared with cursor-anchored picking.
+pub struct PreviewFrame {
+    pub x: f32,
+    pub y: f32,
+    pub width: f32,
+    pub height: f32,
+    pub scale: f32,
+}
+
 impl StudioLayout {
     pub fn new(width: f32, height: f32, inspect: bool, menu: f32, problems: f32) -> Self {
         let wide = width >= 760.0;
@@ -1121,6 +1272,8 @@ impl StudioLayout {
             stage_height: body - inspector_height,
             inspector_width,
             inspector_height,
+            custom_height: menu,
+            problems_height: problems,
         }
     }
 }

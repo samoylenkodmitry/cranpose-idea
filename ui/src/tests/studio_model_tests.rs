@@ -194,19 +194,204 @@ fn maps_private_compilation_paths_back_to_real_sources() {
 }
 
 #[test]
-fn inspector_validates_parent_order_and_picks_deepest_node() {
+fn inspector_validates_parent_order_and_lists_all_hits_from_front_to_back() {
     let snapshot = Snapshot::parse(r#"{"schema":2,"nodes":[{"id":"root","width":100,"height":100},{"id":"child","parent":"root","x":10,"y":10,"width":30,"height":30}]}"#).expect("valid snapshot");
     assert_eq!(
-        snapshot.pick(20.0, 20.0).map(|node| node.id.as_str()),
-        Some("child")
+        snapshot
+            .hits(20.0, 20.0)
+            .map(|node| node.id.as_str())
+            .collect::<Vec<_>>(),
+        ["child", "root"]
     );
     assert_eq!(
-        snapshot.pick(90.0, 90.0).map(|node| node.id.as_str()),
-        Some("root")
+        snapshot
+            .hits(90.0, 90.0)
+            .map(|node| node.id.as_str())
+            .collect::<Vec<_>>(),
+        ["root"]
     );
     assert!(
         Snapshot::parse(r#"{"schema":2,"nodes":[{"id":"child","parent":"missing"}]}"#).is_err()
     );
+}
+
+fn overlapping_pick_studio() -> Studio {
+    let mut model = studio();
+    model.start();
+    model.handle("studio.child", r#"{"session":1,"event":"connected"}"#);
+    model.viewport = Some((1000, 800));
+    model.set_picking(true);
+    let request = model.inspection_request().expect("inspection")["payload"]
+        .as_str()
+        .expect("request")
+        .parse::<u64>()
+        .expect("number");
+    model.handle("studio.child", &json!({"session":1,"event":"message",
+        "channel":"cranpose.inspector.v2.snapshot", "payload":json!({"schema":2,"requestId":request,
+        "nodes":[
+            {"id":"root","kind":"Column","width":480,"height":640},
+            {"id":"label","parent":"root","kind":"Text","text":"Behind the overlay","x":20,"y":20,"width":200,"height":40,
+                "sources":[{"name":"__cranpose_call:Text","manifestDir":"/project","file":"src/card.rs","line":30}]},
+            {"id":"overlay","parent":"root","kind":"Box","width":480,"height":640,
+                "sources":[{"name":"__cranpose_call:Box","manifestDir":"/project","file":"src/card.rs","line":40}]}
+        ]}).to_string()}).to_string());
+    model
+}
+
+fn pick_at(model: &mut Studio, x: f32, y: f32) -> Vec<Value> {
+    model.handle(
+        "studio.child",
+        &json!({"session":model.session,"event":"pointer","x":x,"y":y}).to_string(),
+    )
+}
+
+#[test]
+fn overlapping_pick_waits_for_a_choice_and_can_reach_covered_content() {
+    let mut model = overlapping_pick_studio();
+    model.collapsed.insert("root".into());
+    let requests = pick_at(&mut model, 40.0, 40.0);
+    assert_eq!(requests.len(), 1);
+    let menu = &requests[0];
+    assert_eq!(menu["action"], "menu", "must not navigate before choosing");
+    assert!(model.selected.is_empty());
+    let items = menu["items"].as_array().expect("choices");
+    assert_eq!(
+        items
+            .iter()
+            .map(|item| item["id"].as_str().expect("id"))
+            .collect::<Vec<_>>(),
+        ["overlay", "label", "root"]
+    );
+    assert!(
+        items[1]["label"]
+            .as_str()
+            .expect("label")
+            .contains("Behind the overlay")
+    );
+    assert!(
+        items[1]["label"]
+            .as_str()
+            .expect("label")
+            .contains("card.rs:30")
+    );
+    let selected = model.choose(menu["menu"].as_str().expect("menu"), "label");
+    assert_eq!(model.selected, "label");
+    assert!(!model.collapsed.contains("root"));
+    assert_eq!(selected.len(), 1);
+    assert_eq!(selected[0]["action"], "navigate");
+    assert_eq!(selected[0]["file"], "/project/src/card.rs");
+    assert_eq!(selected[0]["line"], 30);
+    assert!(
+        model
+            .choose(menu["menu"].as_str().expect("menu"), "overlay")
+            .is_empty()
+    );
+}
+
+#[test]
+fn single_pick_jumps_immediately_and_empty_pick_keeps_selection() {
+    let mut model = overlapping_pick_studio();
+    let snapshot = std::rc::Rc::make_mut(&mut model.snapshot);
+    snapshot.nodes.retain(|node| node.id == "label");
+    snapshot.nodes[0].parent = None;
+    let requests = pick_at(&mut model, 40.0, 40.0);
+    assert_eq!(requests.len(), 1);
+    assert_eq!(requests[0]["action"], "navigate");
+    assert_eq!(requests[0]["line"], 30);
+    assert_eq!(model.selected, "label");
+    assert!(pick_at(&mut model, 400.0, 400.0).is_empty());
+    assert_eq!(model.selected, "label");
+    assert!(
+        model
+            .handle("studio.child", r#"{"session":1,"event":"pointer"}"#)
+            .is_empty()
+    );
+}
+
+#[test]
+fn pick_chooser_rejects_stale_choices_after_another_pick_or_session_change() {
+    let mut model = overlapping_pick_studio();
+    let first = pick_at(&mut model, 40.0, 40.0)[0]["menu"]
+        .as_str()
+        .expect("menu")
+        .to_owned();
+    let second = pick_at(&mut model, 45.0, 45.0)[0]["menu"]
+        .as_str()
+        .expect("menu")
+        .to_owned();
+    assert_ne!(first, second);
+    assert!(model.choose(&first, "label").is_empty());
+    assert!(model.selected.is_empty());
+    model.set_picking(false);
+    assert!(model.choose(&second, "label").is_empty());
+
+    let mut model = overlapping_pick_studio();
+    let menu = pick_at(&mut model, 40.0, 40.0)[0]["menu"]
+        .as_str()
+        .expect("menu")
+        .to_owned();
+    model.start();
+    assert!(model.choose(&menu, "label").is_empty());
+    assert!(model.selected.is_empty());
+}
+
+#[test]
+fn pick_chooser_does_not_navigate_to_removed_or_reused_nodes() {
+    for remove in [false, true] {
+        let mut model = overlapping_pick_studio();
+        let menu = pick_at(&mut model, 40.0, 40.0)[0]["menu"]
+            .as_str()
+            .expect("menu")
+            .to_owned();
+        let snapshot = std::rc::Rc::make_mut(&mut model.snapshot);
+        if remove {
+            snapshot.nodes.retain(|node| node.id != "label");
+        } else {
+            snapshot.nodes[1].sources[0].line = 99;
+        }
+        assert!(model.choose(&menu, "label").is_empty());
+        assert!(model.selected.is_empty());
+    }
+}
+
+#[test]
+fn pick_chooser_tracks_cursor_position_in_fit_and_panned_zoom() {
+    let mut model = overlapping_pick_studio();
+    let menu = &pick_at(&mut model, 40.0, 40.0)[0];
+    assert_eq!(menu["x"], 300.0);
+    assert_eq!(menu["y"], 135.0);
+
+    model.settings.fit = false;
+    model.settings.zoom = 2.0;
+    model.settings.inspect = true;
+    model.pan_x = -100.0;
+    model.pan_y = -200.0;
+    let menu = &pick_at(&mut model, 200.0, 200.0)[0];
+    assert_eq!(menu["x"], 300.0);
+    assert_eq!(menu["y"], 251.0);
+
+    model.settings.fit = true;
+    model.viewport = Some((500, 400));
+    let menu = &pick_at(&mut model, 40.0, 40.0)[0];
+    assert_eq!(menu["x"], 223.3125);
+    assert_eq!(menu["y"], 88.3125);
+}
+
+#[test]
+fn pick_chooser_survives_live_geometry_updates_without_persisting_its_snapshot() {
+    let mut model = overlapping_pick_studio();
+    let menu = pick_at(&mut model, 40.0, 40.0)[0]["menu"]
+        .as_str()
+        .expect("menu")
+        .to_owned();
+    let checkpoint = serde_json::to_string(&model).expect("checkpoint");
+    assert!(!checkpoint.contains("Behind the overlay"));
+    let snapshot = std::rc::Rc::make_mut(&mut model.snapshot);
+    snapshot.nodes[1].x = 80.0;
+    snapshot.nodes[1].text = Some("Updated text".into());
+    let requests = model.choose(&menu, "label");
+    assert_eq!(requests[0]["line"], 30);
+    assert_eq!(model.selected_bounds().expect("current bounds")["x"], 80.0);
 }
 
 #[test]

@@ -117,6 +117,81 @@ fn plain_preview_has_no_reload_runtime_and_external_dependencies_still_resolve()
 }
 
 #[test]
+fn explicit_library_types_receive_preview_helpers() {
+    for kinds in [
+        vec!["lib"],
+        vec!["rlib"],
+        vec!["dylib"],
+        vec!["cdylib"],
+        vec!["staticlib"],
+        vec!["rlib", "cdylib", "staticlib"],
+    ] {
+        let temp = tempfile::tempdir().expect("temp");
+        let root = temp.path().join("app");
+        fs::create_dir_all(root.join("src")).expect("src");
+        fs::create_dir_all(root.join("framework/src")).expect("framework");
+        let manifest = format!(
+            "[package]\nname='app'\nversion='0.1.0'\n[workspace]\n[lib]\ncrate-type={kinds:?}\n[dependencies]\nui={{package='cranpose',path='framework'}}\n"
+        );
+        fs::write(root.join("Cargo.toml"), &manifest).expect("manifest");
+        fs::write(
+            root.join("framework/Cargo.toml"),
+            "[package]\nname='cranpose'\nversion='0.1.0'\n",
+        )
+        .expect("framework manifest");
+        fs::write(root.join("framework/src/lib.rs"), "").expect("framework source");
+        let source =
+            "#![forbid(unsafe_code)]\n#[ui::composable] pub fn App() { Text(\"Hello\"); }\n";
+        fs::write(root.join("src/lib.rs"), source).expect("library");
+        fs::write(root.join("src/main.rs"), "fn main() {}\n").expect("binary");
+        let metadata = Metadata::read(&root).expect("Cargo metadata");
+        let mut workspace = DevWorkspace::prepare(
+            &metadata,
+            &temp.path().join("cache"),
+            &temp.path().join("support"),
+        )
+        .expect("private workspace");
+        let copied =
+            fs::read_to_string(workspace.directory.join("src/lib.rs")).expect("private library");
+        assert!(
+            copied.contains("crate::__cranpose_dev::literal"),
+            "{copied}"
+        );
+        assert!(
+            copied.contains("extern crate ui as __cranpose_api;"),
+            "{kinds:?}: {copied}"
+        );
+        assert!(copied.contains("mod __cranpose_dev"), "{kinds:?}: {copied}");
+        assert_eq!(copied.lines().count(), source.lines().count());
+        assert!(copied.starts_with("#![forbid(unsafe_code)]\n"));
+        assert!(syn::parse_file(&copied).is_ok());
+        let package = metadata
+            .packages
+            .iter()
+            .find(|package| package.name == "app")
+            .expect("app");
+        let binary = package
+            .targets
+            .iter()
+            .find(|target| target.kind == ["bin"])
+            .expect("binary");
+        assert!(
+            crate::launcher::prepare(&mut workspace, package, binary)
+                .expect("launcher")
+                .is_some()
+        );
+        assert_eq!(
+            fs::read_to_string(root.join("src/lib.rs")).expect("original"),
+            source
+        );
+        assert_eq!(
+            fs::read_to_string(root.join("Cargo.toml")).expect("original manifest"),
+            manifest
+        );
+    }
+}
+
+#[test]
 fn private_example_launcher_preserves_dev_dependencies_and_library_features() {
     let temp = tempfile::tempdir().expect("temp");
     let root = temp.path().join("app");
