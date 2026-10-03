@@ -47,6 +47,20 @@ fn watch_by_default() -> bool {
     true
 }
 
+fn preview_target(options: &RunOptions, session: &Path) -> PathBuf {
+    if options.hot_reload {
+        // WorkspaceLease clears the copied sources when reused. Keep compiled
+        // artifacts outside that directory while retaining its exclusive key.
+        let key: String = Sha256::digest(session.as_os_str().as_encoded_bytes())
+            .iter()
+            .map(|byte| format!("{byte:02x}"))
+            .collect();
+        options.cache.join("targets").join(key)
+    } else {
+        options.cache.join("target")
+    }
+}
+
 /// Runs an isolated debug preview and watches only compatible source edits.
 pub fn run(options: RunOptions) -> Result<()> {
     if !matches!(options.kind.as_str(), "bin" | "example") {
@@ -183,8 +197,7 @@ pub fn run(options: RunOptions) -> Result<()> {
     let mut command = if options.hot_reload {
         emit("toolchain", "Starting the compiler");
         let dx = toolchain::ensure(&options.cache.join("tools"))?;
-        // Dioxus uses its executable as Cargo's workspace wrapper. A path per
-        // lease separates application artifacts while dependencies remain shared.
+        // Keep the workspace wrapper path stable when a lease is reused.
         let dx = match &lease {
             Some(lease) => lease.stage_executable(&dx)?,
             None => dx,
@@ -237,7 +250,10 @@ pub fn run(options: RunOptions) -> Result<()> {
     ]);
     command
         .current_dir(&workspace.directory)
-        .env("CARGO_TARGET_DIR", options.cache.join("target"))
+        // Dioxus also cleans application fingerprints outside Cargo's build
+        // lock. A separate target per leased session prevents one preview from
+        // deleting another preview's build output during simultaneous startup.
+        .env("CARGO_TARGET_DIR", preview_target(&options, &directory))
         .env("CRANPOSE_PREVIEW_RECOMPOSITIONS", "1");
     let mut live_values = options
         .hot_reload
