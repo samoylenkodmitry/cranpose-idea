@@ -1,4 +1,26 @@
-# Cranpose 0.14.5
+# Cranpose 0.15.0
+
+Preview recomposition counts appear above composable definitions. Counters and
+edit-to-preview lightning share native GPU rendering on macOS, Windows and
+Linux. They follow editor scrolling and folding, animate briefly when changed,
+and stop drawing when settled. Unsupported graphics setups retain static counter
+text. Tracking is enabled only for plugin previews; application release builds
+are unaffected. Counter data requires Cranpose 0.9.3 or a framework revision
+containing preview recomposition tracking.
+
+Pick offers a compact chooser when several views overlap under the pointer.
+A single hit still opens its source immediately.
+
+Preview startup supports library targets and shows build progress and actionable
+failures. Concurrent previews use separate build output directories so restarting
+one project cannot remove another project's compiler files. Cleanly stopped
+preview slots keep their dependency caches.
+
+Uses plugin template and SDK 0.9.0 and Cranpose Build 0.1.8. The native GPU bridge
+was tested on Apple M5/Metal, Windows RTX 2070/DX12 and Linux Intel UHD 730/Vulkan,
+including Wayland at 125% scaling. X11 passed with Mesa software Vulkan.
+
+## Included since 0.14.5
 
 Edits saved while a native UI patch is compiling are queued. When compilation
 finishes, the preview applies the latest saved source automatically, including

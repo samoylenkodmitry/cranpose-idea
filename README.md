@@ -46,6 +46,14 @@ Badges redraw when content, theme or geometry changes. Finite shader animations
 mark source navigation and supported live updates without an idle animation loop.
 Document-based preview gutters appear alongside Rust's macro-expansion markers.
 
+Recomposition counters and edit-to-preview lightning share a native GPU surface:
+Metal on macOS, DirectComposition/DX12 on Windows, and Vulkan on Linux X11 and
+JetBrains Runtime Wayland. Labels follow editor scrolling and folding. Rendering
+sleeps after each finite effect; rendered frame pixels never cross JNI. X11 needs
+a compositor. Unsupported environments keep static counter text and report the
+native backend failure. See the SDK's
+[GPU bridge and validation](https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template/blob/3aadbb2bfb6018695b4a12ca798a37b5ae461e7f/docs/gpu-decorations.md).
+
 Large, dense sets of live-value markers use fewer editor layout updates when a
 structural source change rebuilds them. See the
 [editor placement measurements and limits](docs/performance-0.13.3.md).
@@ -141,6 +149,11 @@ The first hot preview downloads the official Dioxus CLI 0.7.10 for your platform
 and verifies its pinned SHA-256. It uses Subsecond 0.7.10 through the CLI's native
 desktop compiler. A normal Rust toolchain and platform linker are required.
 Set `CRANPOSE_DX` to an existing 0.7.10 CLI for offline development.
+
+Concurrent hot previews use separate build output directories, so one compiler's
+cleanup cannot remove another preview's artifacts. A cleanly stopped preview
+reuses its directory and build cache. The first run in each slot compiles its own
+dependencies and uses additional disk space.
 
 Compatible literal edits bypass compilation. Other compatible function-body
 edits, new functions and imports use native code patches. Ordinary
