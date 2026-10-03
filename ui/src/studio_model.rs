@@ -97,6 +97,32 @@ pub struct Source {
     pub file: String,
     pub line: usize,
     pub manifest_dir: String,
+    pub recompositions: Option<u64>,
+}
+impl Source {
+    fn same_origin(&self, other: &Self) -> bool {
+        self.name == other.name
+            && self.file == other.file
+            && self.line == other.line
+            && self.manifest_dir == other.manifest_dir
+    }
+
+    pub fn label(&self) -> String {
+        let name = self
+            .name
+            .strip_prefix("__cranpose_call:")
+            .unwrap_or(&self.name);
+        let mut label = format!("{name} :{}", self.line);
+        if let Some(count) = self.recompositions {
+            let unit = if count == 1 {
+                "recomposition"
+            } else {
+                "recompositions"
+            };
+            label.push_str(&format!(" · {count} {unit}"));
+        }
+        label
+    }
 }
 #[derive(Clone, Debug, Default, PartialEq, Deserialize)]
 #[serde(default)]
@@ -113,6 +139,13 @@ pub struct Node {
     pub sources: Vec<Source>,
 }
 impl Node {
+    pub fn recompositions(&self) -> Option<u64> {
+        self.sources
+            .iter()
+            .rev()
+            .find_map(|source| source.recompositions)
+    }
+
     pub fn label(&self) -> String {
         self.text
             .as_ref()
@@ -572,7 +605,14 @@ impl Studio {
         }
         let original = pending.snapshot.nodes.iter().find(|node| node.id == id)?;
         let current = self.snapshot.nodes.iter().find(|node| node.id == id)?;
-        if original.kind != current.kind || original.sources != current.sources {
+        if original.kind != current.kind
+            || original.sources.len() != current.sources.len()
+            || !original
+                .sources
+                .iter()
+                .zip(&current.sources)
+                .all(|(a, b)| a.same_origin(b))
+        {
             return None;
         }
         self.select_node(id.to_owned());

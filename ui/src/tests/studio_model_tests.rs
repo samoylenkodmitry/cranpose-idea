@@ -389,9 +389,48 @@ fn pick_chooser_survives_live_geometry_updates_without_persisting_its_snapshot()
     let snapshot = std::rc::Rc::make_mut(&mut model.snapshot);
     snapshot.nodes[1].x = 80.0;
     snapshot.nodes[1].text = Some("Updated text".into());
+    snapshot.nodes[1].sources[0].recompositions = Some(8);
     let requests = model.choose(&menu, "label");
     assert_eq!(requests[0]["line"], 30);
     assert_eq!(model.selected_bounds().expect("current bounds")["x"], 80.0);
+}
+
+#[test]
+fn recomposition_counts_refresh_without_layout_changes_and_preserve_selection() {
+    let mut model = studio();
+    model.start();
+    model.handle("studio.child", r#"{"session":1,"event":"connected"}"#);
+    let message = |request, count| {
+        json!({"session":1,"event":"message","channel":"cranpose.inspector.v2.snapshot",
+            "payload":json!({"schema":2,"requestId":request,"nodes":[{"id":"counter",
+                "kind":"Text","sources":[
+                    {"name":"Counter","file":"src/main.rs","manifestDir":"/project","line":12,"recompositions":count},
+                    {"name":"__cranpose_call:Text","file":"src/main.rs","manifestDir":"/project","line":14}
+                ]}]}).to_string()})
+        .to_string()
+    };
+    model.handle("studio.child", &message(1, 0));
+    model.select_node("counter".into());
+    let old = model.clone();
+    assert_eq!(old.snapshot.nodes[0].recompositions(), Some(0));
+    model.handle("studio.child", &message(2, 7));
+    assert_ne!(model, old);
+    let node = &model.snapshot.nodes[0];
+    assert_eq!(node.recompositions(), Some(7));
+    assert_eq!(node.sources[0].label(), "Counter :12 · 7 recompositions");
+    assert_eq!(node.sources[1].label(), "Text :14");
+    assert_eq!(model.selected, "counter");
+    assert_eq!(
+        model.selected_source_request().expect("navigate")["line"],
+        14
+    );
+    model.handle("studio.child", &message(1, 0));
+    assert_eq!(model.snapshot.nodes[0].recompositions(), Some(7));
+    assert_eq!(old.snapshot.nodes[0].recompositions(), Some(0));
+    let untracked =
+        Snapshot::parse(r#"{"schema":2,"nodes":[{"id":"old","sources":[{"name":"Counter"}]}]}"#)
+            .expect("untracked snapshot");
+    assert_eq!(untracked.nodes[0].recompositions(), None);
 }
 
 #[test]

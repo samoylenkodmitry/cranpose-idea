@@ -1170,9 +1170,7 @@ fn LayoutTree(
                                     );
                                     Label(
                                         node.label(),
-                                        Modifier::empty()
-                                            .width((width - indent - 42.0).max(70.0))
-                                            .padding_horizontal(4.0),
+                                        Modifier::empty().weight(1.0).padding_horizontal(4.0),
                                         style(
                                             if selected {
                                                 look.palette.accent
@@ -1183,6 +1181,14 @@ fn LayoutTree(
                                             row.matches.then_some(FontWeight::SEMI_BOLD),
                                         ),
                                     );
+                                    if let Some(count) = node.recompositions() {
+                                        Glyph(icons::REFRESH, 12.0, look.palette.muted);
+                                        Label(
+                                            count.to_string(),
+                                            Modifier::empty().padding_horizontal(6.0),
+                                            style(look.palette.muted, 10.5, None),
+                                        );
+                                    }
                                 },
                             );
                         });
@@ -1298,15 +1304,18 @@ fn NodeDetails(
                 }
                 if !node.sources.is_empty() {
                     Section(look, "SOURCE STACK");
+                    if node.recompositions().is_some() {
+                        Text(
+                            "Recompositions since each instance was created; excludes its initial composition.",
+                            Modifier::empty().fill_max_width(),
+                            style(look.palette.muted, 11.0, None),
+                        );
+                    }
                 }
                 for (index, source) in node.sources.iter().enumerate().rev() {
                     let path = studio.resolve_source(source);
                     let line = source.line;
-                    let name = source
-                        .name
-                        .strip_prefix("__cranpose_call:")
-                        .unwrap_or(&source.name);
-                    let label = format!("{name} :{line}");
+                    let label = source.label();
                     cranpose::key(index, move || {
                         let path = path.clone();
                         ToolButton(

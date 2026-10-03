@@ -62,6 +62,9 @@ and event handlers.
   When elements overlap, choose from a popup beside the cursor showing their type,
   text, size and source location. A single hit jumps to source immediately.
   Inspect bounds, text, modifier values and composable origins, then jump to source.
+  With a framework that reports recomposition counts, the tree and source stack
+  show executions after each composable instance's initial composition.
+  Tracking runs only in the plugin's debug preview process; release builds omit it.
   Search by text, component, source file or modifier. Matching nodes keep their ancestor
   context. Fold branches, follow the hierarchy, or pause and refresh a captured layout.
   Wide workspaces dock inspection beside the preview and use a compact toolbar.
