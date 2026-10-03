@@ -746,7 +746,7 @@ fn Problems(state: MutableState<Studio>, look: Look, height: f32) {
                 move || {
                     Glyph(icons::WARNING, 13.0, look.danger);
                     Text(
-                        "Build failed. The previous preview is still running.",
+                        state.get().build_failure_message(),
                         Modifier::empty(),
                         style(look.palette.text, 11.5, Some(FontWeight::MEDIUM)),
                     );

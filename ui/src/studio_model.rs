@@ -699,7 +699,31 @@ impl Studio {
         self.targets
             .iter()
             .find(|target| target.id() == self.settings.target)
+            .or_else(|| {
+                self.targets
+                    .iter()
+                    .find(|target| target.source == self.source)
+            })
+            .or_else(|| {
+                self.targets
+                    .iter()
+                    .filter(|target| {
+                        Path::new(&target.manifest)
+                            .parent()
+                            .is_some_and(|root| Path::new(&self.source).starts_with(root))
+                    })
+                    .min_by_key(|target| {
+                        usize::MAX - Path::new(&target.manifest).components().count()
+                    })
+            })
             .or_else(|| self.targets.first())
+    }
+    pub fn build_failure_message(&self) -> &'static str {
+        if self.connected {
+            "Build failed. The previous preview is still running."
+        } else {
+            "Build failed. Fix the errors below, then retry."
+        }
     }
     pub fn start(&mut self) -> Option<Value> {
         self.pending_start = true;
@@ -737,7 +761,11 @@ impl Studio {
     /// Starts the preview on its own once the application is known, unless the
     /// user stopped it or a session is already running or starting.
     fn auto_start(&mut self) -> Option<Value> {
-        if !self.settings.auto_start || self.stopped || self.session > 0 || !self.setup.is_empty() {
+        if !self.settings.auto_start
+            || self.stopped
+            || self.next_session > 0
+            || !self.setup.is_empty()
+        {
             return None;
         }
         self.start()
@@ -836,13 +864,7 @@ impl Studio {
                     self.root = value["root"].as_str().unwrap_or_default().into();
                 }
                 if self.settings.target.is_empty() {
-                    self.settings.target = self
-                        .targets
-                        .iter()
-                        .find(|target| target.source == self.source)
-                        .or_else(|| self.targets.first())
-                        .map(Target::id)
-                        .unwrap_or_default();
+                    self.settings.target = self.target().map(Target::id).unwrap_or_default();
                 }
                 if self.pending_start || (!self.requested_function.is_empty() && self.session == 0)
                 {
@@ -870,6 +892,9 @@ impl Studio {
                 }
                 "showBuilt" | "showTarget" => {
                     if let Ok(target) = serde_json::from_value::<Target>(value["target"].clone()) {
+                        if target.id() == self.settings.target && (self.busy || self.connected) {
+                            return requests;
+                        }
                         self.settings.target = target.id();
                     }
                     requests.extend(self.start());
@@ -1095,9 +1120,7 @@ impl Studio {
                 if self.settings.target != id {
                     self.settings.target = id.into();
                     self.settings.preview.clear();
-                    if self.session > 0 {
-                        requests.extend(self.start());
-                    }
+                    requests.extend(self.start());
                 }
             }
             ("preview", id) if id.is_empty() || self.previews.iter().any(|p| p.id == id) => {
@@ -1269,7 +1292,7 @@ impl Studio {
                 .and_then(|span| span["line_start"].as_u64())
                 .unwrap_or(1);
             self.diagnostics.push(Diagnostic {
-                message: message.chars().take(300).collect(),
+                message: strip_ansi(message).chars().take(300).collect(),
                 file,
                 line,
             });
@@ -1278,7 +1301,7 @@ impl Studio {
             }
             self.busy = false;
             self.rebuilding = false;
-            self.status = "Build failed. The previous preview is still running.".into();
+            self.status = self.build_failure_message().into();
         }
         None
     }

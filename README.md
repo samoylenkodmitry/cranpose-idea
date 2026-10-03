@@ -52,9 +52,10 @@ structural source change rebuilds them. See the
 
 ## Preview and inspect
 
-Open a Rust source file and choose **Split**. Select a Cargo binary or example, then
-**Run**. The preview runs your compiled application, including its state
-and event handlers.
+Open a Rust source file and choose **Split**. The preview starts with the package's
+default or main binary. Select another Cargo binary or example to run it instead.
+Source tabs share the running preview, selected target and application state.
+The preview runs your compiled application, including its state and event handlers.
 
 - **Component previews:** register parameterless fixtures with `#[cranpose::preview]`.
   Choose named variants with their own dimensions and light or dark theme.

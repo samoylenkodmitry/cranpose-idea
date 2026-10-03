@@ -1001,6 +1001,74 @@ fn rebuild_waits_for_the_user_when_reload_on_save_is_off_or_the_build_fails() {
 const PROJECT: &str = r#"{"busy":false,"status":"","targets":[{"packageName":"app","name":"desktop","kind":"bin","manifest":"/project/Cargo.toml","source":"/project/src/main.rs"}]}"#;
 
 #[test]
+fn preview_uses_nearest_package_and_keeps_a_running_target() {
+    let mut model = Studio::default();
+    model.handle(
+        "studio.init",
+        r#"{"root":"/project","source":"/project/app/src/components/card.rs"}"#,
+    );
+    let requests = model.handle("cranpose.project", &json!({"targets":[
+        {"packageName":"other","name":"other","kind":"bin","manifest":"/project/other/Cargo.toml","source":"/project/other/src/main.rs"},
+        {"packageName":"app","name":"desktop","kind":"bin","manifest":"/project/app/Cargo.toml","source":"/project/app/src/main.rs"},
+        {"packageName":"app","name":"ios","kind":"bin","manifest":"/project/app/Cargo.toml","source":"/project/app/src/ios.rs"}
+    ]}).to_string());
+    assert_eq!(requests[0]["options"]["target"], "desktop");
+    let target = model.target().expect("desktop").clone();
+    assert!(
+        model
+            .handle(
+                "studio.command",
+                &json!({"action":"showTarget","target":target}).to_string()
+            )
+            .is_empty()
+    );
+    model.handle("studio.child", r#"{"session":1,"event":"connected"}"#);
+    assert!(
+        model
+            .handle(
+                "studio.command",
+                &json!({"action":"showTarget","target":target}).to_string()
+            )
+            .is_empty()
+    );
+    assert_eq!(model.session, 1);
+}
+
+#[test]
+fn first_build_failure_is_honest_and_selecting_another_target_retries() {
+    let mut model = Studio::default();
+    model.handle("studio.init", r#"{"root":"/project"}"#);
+    model.handle("cranpose.project", PROJECT);
+    runner(
+        &mut model,
+        1,
+        json!({"level":"ERROR","message":"\u{1b}[31mBuild failed\u{1b}[0m: missing desktop feature"}),
+    );
+    assert_eq!(
+        model.diagnostics[0].message,
+        "Build failed: missing desktop feature"
+    );
+    assert_eq!(
+        model.status,
+        "Build failed. Fix the errors below, then retry."
+    );
+    model.handle(
+        "studio.child",
+        r#"{"session":1,"event":"failed","message":"compile error","fallbackSession":0}"#,
+    );
+    assert!(
+        model.handle("cranpose.project", PROJECT).is_empty(),
+        "Metadata must not trigger a retry loop"
+    );
+    let mut other = model.targets[0].clone();
+    other.name = "other".into();
+    let id = other.id();
+    model.targets.push(other);
+    assert_eq!(model.choose("target", &id)[0]["options"]["target"], "other");
+    assert!(model.busy);
+}
+
+#[test]
 fn preview_starts_on_its_own_once_the_application_is_known() {
     let mut studio = Studio::default();
     let requests = studio.handle("studio.init", r#"{"root":"/project","cache":"/cache"}"#);
