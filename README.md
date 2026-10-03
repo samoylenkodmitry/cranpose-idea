@@ -64,6 +64,9 @@ and event handlers.
   Inspect bounds, text, modifier values and composable origins, then jump to source.
   With a framework that reports recomposition counts, the tree and source stack
   show executions after each composable instance's initial composition.
+  Live counters also appear above composable definitions in open code editors,
+  even with the Inspector closed or paused. Multiple live instances are summed
+  and show their instance count. Counters disappear when the preview stops.
   Tracking runs only in the plugin's debug preview process; release builds omit it.
   Search by text, component, source file or modifier. Matching nodes keep their ancestor
   context. Fold branches, follow the hierarchy, or pause and refresh a captured layout.

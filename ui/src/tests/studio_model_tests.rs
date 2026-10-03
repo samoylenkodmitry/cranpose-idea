@@ -434,6 +434,48 @@ fn recomposition_counts_refresh_without_layout_changes_and_preserve_selection() 
 }
 
 #[test]
+fn editor_counters_aggregate_instances_with_inspector_closed_and_reject_stale_sessions() {
+    let mut model = studio();
+    model.start();
+    model.handle("studio.child", r#"{"session":1,"event":"connected"}"#);
+    model.private_root = "/cache/session".into();
+    model.live = false;
+    assert!(!model.settings.inspect);
+    assert_eq!(
+        model.recomposition_request().expect("running")["payload"],
+        "1"
+    );
+    let reply = |session, request| {
+        json!({"session":session,"event":"message",
+        "channel":"cranpose.recompositions.v1.snapshot","payload":json!({"schema":1,
+        "requestId":request,"instances":[
+            {"instanceId":1,"name":"Counter","file":"src/main.rs","manifestDir":"/cache/session","line":12,"recompositions":2},
+            {"instanceId":2,"name":"Counter","file":"src/main.rs","manifestDir":"/cache/session","line":12,"recompositions":3},
+            {"instanceId":1,"name":"Counter","file":"src/main.rs","manifestDir":"/cache/session","line":12,"recompositions":2},
+            {"instanceId":3,"name":"Silent","file":"src/main.rs","manifestDir":"/cache/session","line":30,"recompositions":0}
+        ]}).to_string()}).to_string()
+    };
+    let requests = model.handle("studio.child", &reply(1, 2));
+    assert_eq!(requests.len(), 1);
+    assert_eq!(requests[0]["action"], "recompositions");
+    assert_eq!(
+        requests[0]["rows"],
+        json!([
+            {"file":"/project/src/main.rs","name":"Counter","line":12,"recompositions":5,"instances":2},
+            {"file":"/project/src/main.rs","name":"Silent","line":30,"recompositions":0,"instances":1}
+        ])
+    );
+    assert!(model.snapshot.nodes.is_empty());
+    assert!(model.handle("studio.child", &reply(1, 1)).is_empty());
+    assert!(model.handle("studio.child", &reply(2, 3)).is_empty());
+    model.handle("studio.child", r#"{"session":1,"event":"stopped"}"#);
+    assert!(model.recomposition_request().is_none());
+    assert!(model.handle("studio.child", &reply(1, 3)).is_empty());
+    model.handle("studio.child", r#"{"session":1,"event":"connected"}"#);
+    assert!(!model.handle("studio.child", &reply(1, 1)).is_empty());
+}
+
+#[test]
 fn hot_patch_acknowledgement_preserves_selection_and_viewport() {
     let mut studio = studio();
     studio.start();

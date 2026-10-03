@@ -180,6 +180,22 @@ pub struct Snapshot {
     pub truncated: bool,
     pub nodes: Vec<Node>,
 }
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct RecompositionInstance {
+    instance_id: u64,
+    #[serde(flatten)]
+    source: Source,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct Recompositions {
+    schema: u32,
+    request_id: u64,
+    instances: Vec<RecompositionInstance>,
+}
 impl Snapshot {
     pub fn rows(
         &self,
@@ -290,6 +306,8 @@ pub struct Studio {
     #[serde(skip)]
     inspection_sequence: cranpose_plugin_ux::delivery::SequenceGate,
     #[serde(skip)]
+    recomposition_sequence: cranpose_plugin_ux::delivery::SequenceGate,
+    #[serde(skip)]
     inspection_fresh: bool,
     #[serde(skip)]
     pub initialized: bool,
@@ -348,6 +366,7 @@ impl Default for Studio {
             previews: vec![],
             snapshot: Snapshot::default().into(),
             inspection_sequence: Default::default(),
+            recomposition_sequence: Default::default(),
             inspection_fresh: false,
             initialized: false,
             selected: String::new(),
@@ -496,6 +515,45 @@ impl Studio {
             // Cranpose's v2 request is a decimal u64, not a JSON object.
             "payload":self.inspection_sequence.next_request().to_string()})
         })
+    }
+
+    pub fn recomposition_request(&self) -> Option<Value> {
+        self.connected.then(|| {
+            json!({"action":"message", "session":self.session,
+            "channel":"cranpose.recompositions.v1.request",
+            "payload":self.recomposition_sequence.next_request().to_string()})
+        })
+    }
+
+    fn editor_recompositions(&self, payload: &str) -> Option<Value> {
+        let snapshot: Recompositions = serde_json::from_str(payload).ok()?;
+        if !self.connected
+            || snapshot.schema != 1
+            || !self.recomposition_sequence.accept(snapshot.request_id)
+        {
+            return None;
+        }
+        let mut seen = std::collections::HashSet::new();
+        let mut totals = std::collections::BTreeMap::new();
+        for instance in snapshot.instances {
+            let source = instance.source;
+            let Some(count) = source.recompositions else {
+                continue;
+            };
+            if !seen.insert(instance.instance_id) || source.line == 0 {
+                continue;
+            }
+            let file = self.resolve_source(&source);
+            let total = totals
+                .entry((file, source.name, source.line))
+                .or_insert((0u64, 0u64));
+            total.0 = total.0.saturating_add(count);
+            total.1 = total.1.saturating_add(1);
+        }
+        let rows: Vec<_> = totals.into_iter().map(|((file, name, line), (count, instances))| {
+            json!({"file":file,"name":name,"line":line,"recompositions":count,"instances":instances})
+        }).collect();
+        Some(json!({"action":"recompositions", "session":self.session,"rows":rows}))
     }
 
     /// Picking or navigating a node reveals its ancestors without losing other folds.
@@ -827,6 +885,7 @@ impl Studio {
                         self.pick_menu = None;
                         self.snapshot = Snapshot::default().into();
                         self.inspection_sequence = Default::default();
+                        self.recomposition_sequence = Default::default();
                         self.inspection_fresh = false;
                         self.selected.clear();
                         self.collapsed.clear();
@@ -878,6 +937,11 @@ impl Studio {
                             .clamp(-16384.0, 0.0);
                     }
                     "message" => match value["channel"].as_str().unwrap_or_default() {
+                        "cranpose.recompositions.v1.snapshot" => {
+                            requests.extend(self.editor_recompositions(
+                                value["payload"].as_str().unwrap_or_default(),
+                            ));
+                        }
                         "cranpose.previews.v1" => {
                             if let Ok(previews) =
                                 serde_json::from_str(value["payload"].as_str().unwrap_or_default())
