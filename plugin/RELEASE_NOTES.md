@@ -1,4 +1,21 @@
-# Cranpose 0.15.0
+# Cranpose 0.16.0
+
+Mac and iOS targets in **Build for a platform** get a **Build on** choice. On
+Linux and Windows the default is **GitHub**: the panel sends a snapshot of the
+working tree to a temporary branch, builds it on a GitHub macOS runner and
+downloads the package. Run `cranpose-build init-ci` once in the project and
+commit the workflow it writes. An iOS device build without a signing identity
+is an IPA; **Build & run** installs it on a USB iPhone through xtool, which signs
+it with your Apple account.
+
+New projects start from Showcase 0.1.28 on Cranpose 0.9.32, with the Wear OS
+and Apple Watch apps, CI and release builds of every target, a TestFlight
+workflow and the GitHub workflow for Apple builds.
+
+The plugin's own panels run on Cranpose 0.9.32. Uses plugin template and SDK
+0.10.0 and Cranpose Build 0.2.1.
+
+## Included since 0.15.0
 
 Preview recomposition counts appear above composable definitions. Counters and
 edit-to-preview lightning share native GPU rendering on macOS, Windows and
