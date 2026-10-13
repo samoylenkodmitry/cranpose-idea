@@ -1114,10 +1114,7 @@ fn LayoutTree(
                             scroll.scroll_to(limit);
                         }
                     });
-                    cranpose::Spacer(cranpose::Size {
-                        width: 0.0,
-                        height: window.before,
-                    });
+                    cranpose::Spacer(Modifier::empty().height(window.before));
                     for row in rows[window.rows.clone()].iter().cloned() {
                         let node = studio.snapshot.nodes[row.index].clone();
                         let id = node.id.clone();
@@ -1196,10 +1193,7 @@ fn LayoutTree(
                             );
                         });
                     }
-                    cranpose::Spacer(cranpose::Size {
-                        width: 0.0,
-                        height: window.after,
-                    });
+                    cranpose::Spacer(Modifier::empty().height(window.after));
                 },
             );
         },
