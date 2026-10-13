@@ -1,6 +1,6 @@
-//! The IDE invokes the same Rust library as the standalone local builder.
+//! The IDE invokes the same Rust library as the standalone builder.
 use anyhow::{Result, bail};
-use cranpose_build::{Host, Platform, Request, engine, tools};
+use cranpose_build::{Host, Platform, Request, engine, github, tools};
 use cranpose_host::{
     jobs::{self, Operation},
     jvm::{J, O},
@@ -19,6 +19,8 @@ struct Action {
     binary: String,
     release: bool,
     device: String,
+    /// Build an Apple platform on a GitHub macOS runner instead of this computer.
+    github: bool,
 }
 impl Default for Action {
     fn default() -> Self {
@@ -30,6 +32,7 @@ impl Default for Action {
             binary: String::new(),
             release: false,
             device: String::new(),
+            github: false,
         }
     }
 }
@@ -66,7 +69,11 @@ fn prepare(payload: &str) -> Result<Operation> {
             "devices" => context.send(&json!({"type":"devices","text":engine::devices(action.platform, &context.cancel)?})),
             "plan" => context.send(&json!({"type":"plan","value":engine::plan(&request, &context.cancel)?})),
             "build" | "run" => {
-                let artifact = engine::build(&request, &context.cancel, emit)?;
+                let artifact = if action.github {
+                    github::build(&request, &context.cancel, emit)?
+                } else {
+                    engine::build(&request, &context.cancel, emit)?
+                };
                 if action.action == "run" { engine::run(&artifact, request.device.as_deref(), &context.cancel, emit)?; }
             }
             _ => bail!("Unknown platform operation"),

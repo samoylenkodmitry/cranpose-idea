@@ -954,8 +954,8 @@ dependencies = [
 
 [[package]]
 name = "cranpose-build"
-version = "0.1.8"
-source = "git+https://github.com/samoylenkodmitry/cranpose-build?rev=fe6f8b6fa40561e3b7287789e45e1447c3bca80d#fe6f8b6fa40561e3b7287789e45e1447c3bca80d"
+version = "0.2.0"
+source = "git+https://github.com/samoylenkodmitry/cranpose-build?rev=7b2026789748ca43c4746c08739613f9cb02fef6#7b2026789748ca43c4746c08739613f9cb02fef6"
 dependencies = [
  "anyhow",
  "cargo_metadata",
