@@ -87,6 +87,8 @@ pub fn PlatformBuilds(manifest: String, package: String, binary: String) {
             _ => "linux",
         });
     let release = rememberMutableStateOf(|| false);
+    // Apple platforms compile on a Mac; elsewhere they build on a GitHub macOS runner.
+    let on_github = rememberMutableStateOf(|| std::env::consts::OS != "macos");
     let choosing = rememberMutableStateOf(|| false);
     let tools_open = rememberMutableStateOf(|| false);
     let device = remember(|| TextFieldState::new("")).with(|s| *s);
@@ -173,6 +175,35 @@ pub fn PlatformBuilds(manifest: String, package: String, binary: String) {
                     );
                 }
             }
+            let apple = platform.get().starts_with("ios") || platform.get().starts_with("mac");
+            if apple {
+                Row(
+                    Modifier::empty().fill_max_width(),
+                    RowSpec::default()
+                        .horizontal_arrangement(LinearArrangement::spaced_by(4.0))
+                        .vertical_alignment(VerticalAlignment::CenterVertically),
+                    move || {
+                        Text(
+                            "Build on",
+                            Modifier::empty(),
+                            kit::style(palette.muted, 11.5, None),
+                        );
+                        UiBox(Modifier::empty().weight(1.0), BoxSpec::default(), || {});
+                        for (github, text) in [(false, "This computer"), (true, "GitHub")] {
+                            ToolButton(
+                                look,
+                                "",
+                                text.into(),
+                                false,
+                                on_github.get() == github,
+                                !state.get().busy,
+                                ("", None),
+                                move |_| on_github.set(github),
+                            );
+                        }
+                    },
+                );
+            }
             let mobile = platform.get().starts_with("ios") || platform.get() == "android";
             if mobile {
                 Text(
@@ -192,7 +223,7 @@ pub fn PlatformBuilds(manifest: String, package: String, binary: String) {
                 );
             }
             let run = |action: &'static str| {
-                let payload = json!({"action":action,"platform":platform.get(),"manifest":manifest,"package":package,"binary":binary,"release":release.get(),"device":device.text()}).to_string();
+                let payload = json!({"action":action,"platform":platform.get(),"manifest":manifest,"package":package,"binary":binary,"release":release.get(),"device":device.text(),"github":apple && on_github.get()}).to_string();
                 move || {
                     let mut next = state.get();
                     next.begin();
