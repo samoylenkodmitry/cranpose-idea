@@ -194,16 +194,16 @@ fn only_failed_patch_mechanics_request_a_rebuild() {
     let failed = |compile_error| Compiler::BuildFailed { compile_error };
     // The initial build failing is the user's to fix; there is no running patch base.
     assert_eq!(patches.report(failed(false)), None);
-    patches.started();
+    patches.started(Path::new("src/main.rs"));
     assert_eq!(patches.report(Compiler::CompileError), None);
     assert_eq!(patches.report(failed(false)), None);
     // Workspace dependency crates embed their diagnostics in the failure itself.
-    patches.started();
+    patches.started(Path::new("src/main.rs"));
     assert_eq!(patches.report(failed(true)), None);
-    patches.started();
+    patches.started(Path::new("src/main.rs"));
     assert_eq!(patches.report(Compiler::Patched), None);
     assert_eq!(patches.report(failed(false)), None);
-    patches.started();
+    patches.started(Path::new("src/main.rs"));
     assert_eq!(
         patches.report(failed(false)),
         Some(Outcome::Unbuilt("Hot patch could not be built".into()))
@@ -214,6 +214,37 @@ fn only_failed_patch_mechanics_request_a_rebuild() {
         )),
         Some(Outcome::Behind("Hot patch failed: Invalid build id".into()))
     );
+}
+
+#[test]
+fn a_patch_dropped_before_the_preview_connects_is_sent_again() {
+    let main = Path::new("src/main.rs");
+    let mut patches = Patches::default();
+    patches.started(main);
+    // An edit saved right after launch reaches the compiler before the preview.
+    assert_eq!(patches.report(Compiler::Unconnected), Some(Outcome::Unsent));
+    assert!(
+        !patches.building,
+        "a dropped patch must not hold back later edits"
+    );
+    assert_eq!(patches.unsent().collect::<Vec<_>>(), [main]);
+    patches.resent();
+    assert_eq!(patches.report(Compiler::Patched), None);
+    assert_eq!(patches.unsent().count(), 0);
+
+    // A preview that never connects asks for a restart instead of retrying forever.
+    patches.started(main);
+    for _ in 0..Patches::UNCONNECTED_LIMIT {
+        assert_eq!(patches.report(Compiler::Unconnected), Some(Outcome::Unsent));
+        patches.resent();
+    }
+    assert_eq!(
+        patches.report(Compiler::Unconnected),
+        Some(Outcome::Behind(
+            "Hot patch failed: the preview is not connected to the compiler".into()
+        ))
+    );
+    assert_eq!(patches.unsent().count(), 0);
 }
 
 #[test]
@@ -268,6 +299,10 @@ fn recognizes_hot_patch_outcomes_in_compiler_output() {
         (
             r#"{"level":"WARN","message":"Ignoring patch rebuild for BuildId(0) since there is no existing build.","timestamp":"  1.14s"}"#,
             Some(Compiler::PatchFailed("Previous build failed".into())),
+        ),
+        (
+            r#"{"level":"WARN","message":"Ignoring hotpatch since there is no ASLR reference. Is the client connected?","timestamp":" 61.54s"}"#,
+            Some(Compiler::Unconnected),
         ),
         (
             r#"{"level":"INFO","message":"Build completed successfully in 1.2s, launching app! 💫"}"#,
