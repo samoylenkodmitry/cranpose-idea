@@ -27,6 +27,12 @@ use std::{
 /// Quiet period after the last edit that needs a new process before a rebuild is requested.
 pub const REBUILD_DELAY: Duration = Duration::from_millis(400);
 
+/// Wait before the sources of a patch the compiler dropped, because the preview
+/// had not connected to it yet, are written again.
+const RESEND_DELAY: Duration = Duration::from_millis(100);
+
+const NOT_CONNECTED: &str = "the preview is not connected to the compiler";
+
 /// A preview launch requested by the native Studio UI.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -327,6 +333,7 @@ pub fn run(options: RunOptions) -> Result<()> {
     // Once the running process cannot follow its sources, only a rebuild helps.
     let mut stale: Option<String> = None;
     let mut patches = Patches::default();
+    let mut resend: Option<Instant> = None;
     loop {
         if stop.load(Ordering::Acquire) {
             break;
@@ -345,8 +352,11 @@ pub fn run(options: RunOptions) -> Result<()> {
             let Some(outcome) = outcome else {
                 continue;
             };
+            let (Outcome::Unbuilt(reason) | Outcome::Behind(reason)) = &outcome else {
+                resend = Some(Instant::now() + RESEND_DELAY);
+                continue;
+            };
             if stale.is_none() {
-                let (Outcome::Unbuilt(reason) | Outcome::Behind(reason)) = &outcome;
                 emit("restartRequired", reason);
                 rebuild.request(reason, Instant::now() + REBUILD_DELAY);
             }
@@ -356,6 +366,14 @@ pub fn run(options: RunOptions) -> Result<()> {
         }
         if let Some(reason) = rebuild.due(Instant::now()) {
             emit("rebuildRequired", &reason);
+        }
+        if stale.is_none() && resend.take_if(|at| Instant::now() >= *at).is_some() {
+            for relative in patches.unsent() {
+                if let Some(source) = workspace.sources.get(relative) {
+                    workspace.write_source(relative, source)?;
+                }
+            }
+            patches.resent();
         }
         let wait = if patch_finished && !dirty.is_empty() {
             Duration::ZERO
@@ -417,6 +435,8 @@ pub fn run(options: RunOptions) -> Result<()> {
             continue;
         }
         rebuild.cancel();
+        // The next patch builds the current sources, including those of a dropped one.
+        resend = None;
         dirty.clear();
         for (relative, change) in decisions {
             let (source, catalog) = match change {
@@ -455,8 +475,8 @@ pub fn run(options: RunOptions) -> Result<()> {
             emit("patching", "Compiling the change");
             workspace.write_source(&relative, &source)?;
             workspace.sources.insert(relative.clone(), source.clone());
+            patches.started(&relative);
             compiled.insert(relative, source.into());
-            patches.started();
         }
     }
     child
@@ -547,6 +567,9 @@ pub(crate) enum Compiler {
     },
     Patched,
     PatchFailed(String),
+    /// The compiler dropped a patch before building it: the preview had not
+    /// connected to it yet.
+    Unconnected,
 }
 
 pub(crate) fn compiler_report(line: &str) -> Option<Compiler> {
@@ -575,8 +598,9 @@ pub(crate) fn compiler_report(line: &str) -> Option<Compiler> {
         "ERROR" if message.starts_with("Failed to hot-patch app") => Some(failure(
             message.trim_start_matches("Failed to hot-patch app: "),
         )),
-        "WARN" if message.starts_with("No clients to hotreload") => {
-            Some(failure("the preview is not connected to the compiler"))
+        "WARN" if message.starts_with("No clients to hotreload") => Some(failure(NOT_CONNECTED)),
+        "WARN" if message.starts_with("Ignoring hotpatch since there is no ASLR reference") => {
+            Some(Compiler::Unconnected)
         }
         // After a failed first build, the compiler has no base to patch and waits forever.
         "WARN" if message.starts_with("Ignoring patch rebuild") => {
@@ -605,9 +629,25 @@ fn plain(text: &str) -> String {
 pub(crate) struct Patches {
     building: bool,
     compile_error: bool,
+    /// Sources written since the last patch, written again when the patch is dropped.
+    written: BTreeSet<PathBuf>,
+    /// Patches dropped in a row because the preview had not connected.
+    unconnected: u32,
 }
 impl Patches {
-    pub(crate) fn started(&mut self) {
+    /// Dropped patches in a row before the preview counts as not connected:
+    /// five seconds of [`RESEND_DELAY`].
+    pub(crate) const UNCONNECTED_LIMIT: u32 = 50;
+
+    pub(crate) fn started(&mut self, relative: &Path) {
+        self.building = true;
+        self.written.insert(relative.to_owned());
+    }
+    /// The sources of a dropped patch.
+    pub(crate) fn unsent(&self) -> impl Iterator<Item = &Path> {
+        self.written.iter().map(PathBuf::as_path)
+    }
+    pub(crate) fn resent(&mut self) {
         self.building = true;
     }
     pub(crate) fn report(&mut self, report: Compiler) -> Option<Outcome> {
@@ -626,6 +666,17 @@ impl Patches {
                 failed.then(|| Outcome::Unbuilt("Hot patch could not be built".into()))
             }
             Compiler::PatchFailed(reason) => Some(Outcome::Behind(reason)),
+            Compiler::Unconnected => {
+                self.building = false;
+                self.unconnected += 1;
+                if self.unconnected > Self::UNCONNECTED_LIMIT {
+                    *self = Self::default();
+                    return Some(Outcome::Behind(format!(
+                        "Hot patch failed: {NOT_CONNECTED}"
+                    )));
+                }
+                Some(Outcome::Unsent)
+            }
         }
     }
 }
@@ -636,6 +687,8 @@ pub(crate) enum Outcome {
     Unbuilt(String),
     /// A built patch was not loaded; the process no longer follows its sources.
     Behind(String),
+    /// The compiler dropped the patch unbuilt; its sources are to be written again.
+    Unsent,
 }
 
 /// A rebuild request waits until edits needing a new process have been quiet.

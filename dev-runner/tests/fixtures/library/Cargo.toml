@@ -10,4 +10,4 @@ publish = false
 crate-type = ["rlib"]
 
 [dependencies]
-cranpose = { version = "0.9.32", features = ["preview"] }
+cranpose = { version = "0.13.0", features = ["preview"] }

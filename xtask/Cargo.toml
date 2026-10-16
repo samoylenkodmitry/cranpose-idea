@@ -7,4 +7,4 @@ publish = false
 
 [dependencies]
 anyhow = "1"
-cranpose-ide-tools = { package = "cranpose-plugin-tools", git = "https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template", rev = "4775cda8d7a716d6f2f209336fd2f602a6959b3e" }
+cranpose-ide-tools = { package = "cranpose-plugin-tools", git = "https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template", rev = "6d192bb9c1d0246a8baefabba61c28ffcbb00946" }

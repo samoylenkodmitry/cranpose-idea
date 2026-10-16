@@ -1,4 +1,10 @@
-# Cranpose 0.16.0
+# Cranpose 0.16.1
+
+The plugin's own panels run on Cranpose 0.13.0. New projects start from
+Showcase 0.1.30 on Cranpose 0.13.0. Uses plugin template and SDK 0.10.2 and
+Cranpose Build 0.3.2.
+
+## Included since 0.16.0
 
 Mac and iOS targets in **Build for a platform** get a **Build on** choice. On
 Linux and Windows the default is **GitHub**: the panel sends a snapshot of the

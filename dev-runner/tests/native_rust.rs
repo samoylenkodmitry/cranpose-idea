@@ -16,6 +16,10 @@ use std::{
 struct Preview {
     session: Session,
     runtime: Value,
+    /// The newest generation a composition has run with. `cranpose.dev.applied`
+    /// comes before that composition, so a click after it can still reach the
+    /// callback of the previous generation.
+    composed: u64,
     logs: Vec<String>,
     log: fs::File,
     request: u32,
@@ -45,6 +49,10 @@ impl Preview {
                 let payload: Value = serde_json::from_str(&payload)?;
                 if channel == "cranpose.dev.applied" {
                     self.runtime = payload.clone();
+                } else if channel == "cranpose.dev.composed" {
+                    self.composed = payload["generation"]
+                        .as_u64()
+                        .context("composed generation")?;
                 }
                 return Ok(Some((channel, payload)));
             }
@@ -82,11 +90,7 @@ impl Preview {
                     .filter_map(|node| node["text"].as_str().map(str::to_owned))
                     .collect();
                 if !self.runtime.is_null()
-                    && after.is_none_or(|old| {
-                        self.runtime["generation"]
-                            .as_u64()
-                            .is_some_and(|new| new > old)
-                    })
+                    && after.is_none_or(|old| self.composed > old)
                     && expected
                         .iter()
                         .all(|text| last.iter().any(|actual| actual == text))
@@ -172,6 +176,7 @@ fn native_rust_edits_keep_state_and_render_full_modifiers() -> Result<()> {
     let mut preview = Preview {
         session,
         runtime: Value::Null,
+        composed: 0,
         logs: Vec::new(),
         log: fs::File::create(cache.join("native-rust.log"))?,
         request: 0,
