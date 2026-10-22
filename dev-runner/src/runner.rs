@@ -10,6 +10,7 @@ use notify::Watcher;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::{
+    borrow::Cow,
     cell::OnceCell,
     collections::{BTreeMap, BTreeSet},
     fs,
@@ -370,7 +371,7 @@ pub fn run(options: RunOptions) -> Result<()> {
         if stale.is_none() && resend.take_if(|at| Instant::now() >= *at).is_some() {
             for relative in patches.unsent() {
                 if let Some(source) = workspace.sources.get(relative) {
-                    workspace.write_source(relative, source)?;
+                    workspace.write_source(relative, &patches.resent_source(relative, source))?;
                 }
             }
             patches.resent();
@@ -646,6 +647,20 @@ impl Patches {
     /// The sources of a dropped patch.
     pub(crate) fn unsent(&self) -> impl Iterator<Item = &Path> {
         self.written.iter().map(PathBuf::as_path)
+    }
+    /// `source` as written again for a dropped patch. The compiler took the
+    /// dropped text as its own before it dropped the patch, so the same text
+    /// would look unchanged to it and build nothing. A Rust file gains an item
+    /// that differs on each attempt.
+    pub(crate) fn resent_source<'a>(&self, relative: &Path, source: &'a str) -> Cow<'a, str> {
+        if relative
+            .extension()
+            .is_some_and(|extension| extension == "rs")
+        {
+            Cow::Owned(format!("{source}\nconst _: u32 = {};\n", self.unconnected))
+        } else {
+            Cow::Borrowed(source)
+        }
     }
     pub(crate) fn resent(&mut self) {
         self.building = true;

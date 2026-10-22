@@ -105,6 +105,22 @@ impl Preview {
         )
     }
 
+    /// Runs the session until a log line after `offset` satisfies `found`.
+    fn wait_for_log(
+        &mut self,
+        offset: usize,
+        within: Duration,
+        missing: &str,
+        found: impl Fn(&str) -> bool,
+    ) -> Result<()> {
+        let deadline = Instant::now() + within;
+        while !self.logs[offset..].iter().any(|line| found(line)) {
+            ensure!(Instant::now() < deadline, "{missing}");
+            self.event()?;
+        }
+        Ok(())
+    }
+
     fn click(&self, snapshot: &Value, text: &str) -> Result<()> {
         let node = snapshot["nodes"]
             .as_array()
@@ -182,7 +198,26 @@ fn native_rust_edits_keep_state_and_render_full_modifiers() -> Result<()> {
         request: 0,
         frames: 0,
     };
-    let initial = preview.snapshot(&["Count: 0", "Increment", "Rust", "modifiers"], None)?;
+    // An edit saved during the first build reaches the compiler as the app
+    // launches, before the app connects to it. The compiler drops that patch,
+    // and the runner must send it again until the app has it.
+    preview.wait_for_log(
+        0,
+        Duration::from_secs(180),
+        "The compiler did not start",
+        |line| line.contains("Serving your app"),
+    )?;
+    fs::write(
+        &source,
+        original.replace(
+            "    }\n    if value > 0 {",
+            "    }\n    Text(\"launched\", Modifier::empty(), TextStyle::default());\n    if value > 0 {",
+        ),
+    )?;
+    let initial = preview.snapshot(
+        &["Count: 0", "Increment", "Rust", "modifiers", "launched"],
+        Some(0),
+    )?;
     preview.click(&initial, "Increment")?;
     let before = preview.snapshot(&["Count: 1", "State retained"], None)?;
     let mut samples = Vec::new();
@@ -243,14 +278,12 @@ fn native_rust_edits_keep_state_and_render_full_modifiers() -> Result<()> {
         &source,
         callback.replace("caption(value)", "missing_function(value)"),
     )?;
-    let deadline = Instant::now() + Duration::from_secs(60);
-    while !preview.logs[offset..]
-        .iter()
-        .any(|line| line.contains("cannot find function"))
-    {
-        ensure!(Instant::now() < deadline, "Missing compiler diagnostic");
-        preview.event()?;
-    }
+    preview.wait_for_log(
+        offset,
+        Duration::from_secs(60),
+        "Missing compiler diagnostic",
+        |line| line.contains("cannot find function"),
+    )?;
     preview.snapshot(&["Count: 3", "Custom: 6"], None)?;
     preview.edit(
         &source,
@@ -276,20 +309,15 @@ fn native_rust_edits_keep_state_and_render_full_modifiers() -> Result<()> {
 
     let offset = preview.logs.len();
     fs::write(&source, original.replace("0_i32", "0_i64"))?;
-    let deadline = Instant::now() + Duration::from_secs(10);
-    loop {
-        preview.event()?;
-        if preview.logs[offset..].iter().any(|line| {
+    preview.wait_for_log(
+        offset,
+        Duration::from_secs(10),
+        "Incompatible state change did not request a rebuild",
+        |line| {
             serde_json::from_str::<Value>(line)
                 .is_ok_and(|event| event["cranposeDev"] == "rebuildRequired")
-        }) {
-            break;
-        }
-        ensure!(
-            Instant::now() < deadline,
-            "Incompatible state change did not request a rebuild"
-        );
-    }
+        },
+    )?;
     preview.snapshot(&["Count: 3"], None)?;
 
     let mut pids = vec![preview.runtime["pid"].as_u64().context("app pid")? as u32];
