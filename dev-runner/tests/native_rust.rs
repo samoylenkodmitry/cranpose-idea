@@ -68,6 +68,18 @@ impl Preview {
     }
 
     fn snapshot(&mut self, expected: &[&str], after: Option<u64>) -> Result<Value> {
+        self.snapshot_until(expected, after, |_| true)
+    }
+
+    /// A snapshot that shows `expected` and satisfies `ready`. Layout lags
+    /// the composition that changed it by a frame, so a layout check waits
+    /// here instead of reading the first snapshot with the new text.
+    fn snapshot_until(
+        &mut self,
+        expected: &[&str],
+        after: Option<u64>,
+        ready: impl Fn(&Value) -> bool,
+    ) -> Result<Value> {
         self.request += 1;
         let deadline = Instant::now() + Duration::from_secs(180);
         let mut next = Instant::now();
@@ -94,6 +106,7 @@ impl Preview {
                     && expected
                         .iter()
                         .all(|text| last.iter().any(|actual| actual == text))
+                    && ready(&payload)
                 {
                     return Ok(payload);
                 }
@@ -243,12 +256,17 @@ fn native_rust_edits_keep_state_and_render_full_modifiers() -> Result<()> {
             .as_f64()
             .context("left")
     };
-    ensure!(
-        (left(&after)? - left(&before)? - 16.0).abs() < 1.0,
-        "Modifier padding did not reach rendered layout: {} -> {}",
-        left(&before)?,
-        left(&after)?
-    );
+    let before_left = left(&before)?;
+    preview
+        .snapshot_until(&["Count: 1", "Edited Rust"], None, |snapshot| {
+            left(snapshot).is_ok_and(|after_left| (after_left - before_left - 16.0).abs() < 1.0)
+        })
+        .with_context(|| {
+            format!(
+                "Modifier padding did not reach rendered layout: {before_left} -> {:?}",
+                left(&after).ok()
+            )
+        })?;
 
     let composable = modifiers.replace(
         "Text(caption(value), Modifier::empty(), TextStyle::default());",
