@@ -316,6 +316,13 @@ pub struct Studio {
     pub inspector_details: bool,
     pub status: String,
     pub setup: String,
+    /// The installer names of the Visual Studio components a `windows`
+    /// setup lacks.
+    #[serde(skip)]
+    pub setup_missing: Vec<String>,
+    /// The PowerShell line that installs them.
+    #[serde(skip)]
+    pub setup_command: String,
     pub menu: String,
     pub pick: bool,
     #[serde(skip)]
@@ -374,6 +381,8 @@ impl Default for Studio {
             inspector_details: false,
             status: String::new(),
             setup: String::new(),
+            setup_missing: Vec::new(),
+            setup_command: String::new(),
             menu: String::new(),
             pick: false,
             pick_sequence: 0,
@@ -748,6 +757,8 @@ impl Studio {
         self.build_step.clear();
         self.built = 0;
         self.setup.clear();
+        self.setup_missing.clear();
+        self.setup_command.clear();
         self.diagnostics.clear();
         self.menu.clear();
         self.pick_menu = None;
@@ -932,7 +943,23 @@ impl Studio {
                         self.connected = false;
                         self.busy = false;
                         self.rebuilding = false;
-                        self.setup = value["setup"].as_str().unwrap_or_default().into();
+                        // A setup read from this session's link errors stays
+                        // when the stop names none.
+                        if let Some(setup) = value["setup"].as_str() {
+                            self.setup = setup.into();
+                            self.setup_missing = value["missing"]
+                                .as_array()
+                                .map(|missing| {
+                                    missing
+                                        .iter()
+                                        .filter_map(Value::as_str)
+                                        .map(Into::into)
+                                        .collect()
+                                })
+                                .unwrap_or_default();
+                            self.setup_command =
+                                value["command"].as_str().unwrap_or_default().into();
+                        }
                         if !self.setup.is_empty() {
                             self.session = 0;
                         }
@@ -1221,6 +1248,16 @@ impl Studio {
         }
     }
     fn log(&mut self, line: &str) -> Option<Value> {
+        if let Some(component) = cranpose_plugin_toolchain::missing_for_link_error(line) {
+            self.setup = "windows".into();
+            if !self
+                .setup_missing
+                .iter()
+                .any(|title| title == component.title)
+            {
+                self.setup_missing.push(component.title.into());
+            }
+        }
         let Ok(value) = serde_json::from_str::<Value>(line) else {
             let text = strip_ansi(line);
             if let Some(unit) = text.trim_start().strip_prefix("Compiling ") {

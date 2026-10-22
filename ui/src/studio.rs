@@ -522,6 +522,12 @@ fn Idle(state: MutableState<Studio>, look: Look, width: f32, height: f32) {
             "Rust is not installed".into(),
             "The preview builds the application with Cargo. On Windows, also install the C++ build tools.".into(),
         )
+    } else if studio.setup == "windows" {
+        (
+            icons::BUILD,
+            "Visual Studio lacks C++ parts".into(),
+            windows_setup_detail(&studio),
+        )
     } else if studio.busy {
         (
             icons::BUILD,
@@ -609,9 +615,14 @@ fn Idle(state: MutableState<Studio>, look: Look, width: f32, height: f32) {
                         .horizontal_arrangement(LinearArrangement::spaced_by(8.0))
                         .vertical_alignment(VerticalAlignment::CenterVertically),
                     move || {
-                        if state.get().setup == "rust" {
-                            PrimaryButton(look, icons::BUILD, "Install Rust".into(), move || {
-                                send(json!({"action":"setupRust"}));
+                        let setup = match state.get().setup.as_str() {
+                            "rust" => Some(("Install Rust", "setupRust")),
+                            "windows" => Some(("Install", "setupWindowsTools")),
+                            _ => None,
+                        };
+                        if let Some((label, action)) = setup {
+                            PrimaryButton(look, icons::BUILD, label.into(), move || {
+                                send(json!({ "action": action }));
                             });
                             ToolButton(
                                 look,
@@ -631,6 +642,25 @@ fn Idle(state: MutableState<Studio>, look: Look, width: f32, height: f32) {
             }
         },
     );
+}
+
+/// What a Windows PC lacks for the build, and how the Install button adds it.
+fn windows_setup_detail(studio: &Studio) -> String {
+    let mut detail = String::from(
+        "Cranpose's Windows renderer links Microsoft's DirectX shader compiler. The build needs these Visual Studio components:",
+    );
+    for title in &studio.setup_missing {
+        detail.push_str("\n• ");
+        detail.push_str(title);
+    }
+    detail.push_str(
+        "\nInstall opens the Visual Studio Installer with them selected. Confirm the installation there, then choose Retry.",
+    );
+    if !studio.setup_command.is_empty() {
+        detail.push_str("\nThe same in PowerShell: ");
+        detail.push_str(&studio.setup_command);
+    }
+    detail
 }
 
 #[composable]

@@ -15,7 +15,7 @@
         </ul>
         <p>Building applications requires Rust and the platform build tools. The preview uses a private debug copy of the project; release builds are not affected.</p>
     ]]></description>
-    <change-notes><![CDATA[<p>0.16.1</p><ul><li>New projects start from Showcase 0.1.30 on Cranpose 0.13.0.</li><li>The plugin's panels run on Cranpose 0.13.0.</li></ul>]]></change-notes>
+    <change-notes><![CDATA[<p>0.16.2</p><ul><li>Windows: the preview checks Visual Studio's C++ build tools, Windows SDK and ATL before it builds, and Install opens the Visual Studio Installer with the missing parts selected.</li><li>Windows: preview builds keep short paths in %LOCALAPPDATA%\cranpose-dev, under the 260 characters MSVC's linker accepts.</li></ul>]]></change-notes>
     <depends>com.intellij.modules.platform</depends>
     <extensions defaultExtensionNs="com.intellij">
         <postStartupActivity implementation="dev.cranpose.rust.Startup"/>

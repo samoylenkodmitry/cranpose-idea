@@ -1143,3 +1143,50 @@ fn build_progress_names_the_crate_being_compiled() {
     studio.handle("studio.child", r#"{"session":1,"event":"connected"}"#);
     assert!(studio.build_step.is_empty());
 }
+
+#[test]
+fn windows_setup_lists_missing_components_until_the_next_start() {
+    let mut studio = studio();
+    studio.start().expect("first start");
+    studio.handle(
+        "studio.child",
+        &json!({
+            "session": 1,
+            "event": "stopped",
+            "setup": "windows",
+            "message": "Visual Studio lacks C++ parts the build links with.",
+            "missing": ["C++ ATL for x64/x86 (Latest MSVC)"],
+            "command": "& setup.exe modify --add Microsoft.VisualStudio.Component.VC.ATL"
+        })
+        .to_string(),
+    );
+    assert_eq!(studio.setup, "windows");
+    assert_eq!(studio.setup_missing, ["C++ ATL for x64/x86 (Latest MSVC)"]);
+    assert!(studio.setup_command.contains("VC.ATL"));
+    assert_eq!(studio.session, 0, "no automatic retry");
+    studio.start().expect("retry");
+    assert!(studio.setup.is_empty() && studio.setup_missing.is_empty());
+    assert!(studio.setup_command.is_empty());
+}
+
+#[test]
+fn a_build_that_stops_on_atls_lib_shows_the_windows_setup() {
+    let mut studio = studio();
+    studio.start().expect("start");
+    for line in [
+        "   Compiling cranpose-showcase v0.1.30",
+        "          = note: LINK : fatal error LNK1104: cannot open file 'atls.lib'",
+        "error: could not compile `cranpose-showcase` (lib) due to 1 previous error",
+    ] {
+        studio.handle(
+            "studio.child",
+            &json!({"session": 1, "event": "log", "line": line}).to_string(),
+        );
+    }
+    studio.handle(
+        "studio.child",
+        r#"{"session":1,"event":"failed","message":"Build failed"}"#,
+    );
+    assert_eq!(studio.setup, "windows");
+    assert_eq!(studio.setup_missing, ["C++ ATL for x64/x86 (Latest MSVC)"]);
+}
