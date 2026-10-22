@@ -1,4 +1,18 @@
-# Cranpose 0.16.1
+# Cranpose 0.16.2
+
+On Windows the preview checks Visual Studio before it builds. When the MSVC
+build tools, a Windows SDK or C++ ATL are missing, the Studio panel names them,
+and **Install** opens the Visual Studio Installer with them selected. Cranpose's
+x64 renderer links Microsoft's DirectX shader compiler, which needs ATL; builds
+without it stopped with `LNK1104: cannot open file 'atls.lib'`. **Build for a
+platform** checks the same components, and its Windows builds from macOS or
+Linux get ATL through cargo-xwin.
+
+Preview builds on Windows keep their files in `%LOCALAPPDATA%\cranpose-dev`
+under short directory names. Under the IDE's system directory, the paths of
+their object files passed the 260 characters MSVC's linker accepts.
+
+## Cranpose 0.16.1
 
 The plugin's own panels run on Cranpose 0.13.0. New projects start from
 Showcase 0.1.30 on Cranpose 0.13.0. Uses plugin template and SDK 0.10.2 and

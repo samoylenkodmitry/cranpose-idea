@@ -520,7 +520,13 @@ fn Idle(state: MutableState<Studio>, look: Look, width: f32, height: f32) {
         (
             icons::BUILD,
             "Rust is not installed".into(),
-            "The preview builds the application with Cargo. On Windows, also install the C++ build tools.".into(),
+            "The preview builds the application with Cargo. Install Rust opens the Rust install page; on Windows keep its default MSVC toolchain. Then choose Retry. On Windows the panel next checks Visual Studio's C++ parts.".into(),
+        )
+    } else if studio.setup == "windows" {
+        (
+            icons::BUILD,
+            "Visual Studio lacks C++ parts".into(),
+            windows_setup_detail(&studio),
         )
     } else if studio.busy {
         (
@@ -609,9 +615,14 @@ fn Idle(state: MutableState<Studio>, look: Look, width: f32, height: f32) {
                         .horizontal_arrangement(LinearArrangement::spaced_by(8.0))
                         .vertical_alignment(VerticalAlignment::CenterVertically),
                     move || {
-                        if state.get().setup == "rust" {
-                            PrimaryButton(look, icons::BUILD, "Install Rust".into(), move || {
-                                send(json!({"action":"setupRust"}));
+                        let setup = match state.get().setup.as_str() {
+                            "rust" => Some(("Install Rust", "setupRust")),
+                            "windows" => Some(("Install", "setupWindowsTools")),
+                            _ => None,
+                        };
+                        if let Some((label, action)) = setup {
+                            PrimaryButton(look, icons::BUILD, label.into(), move || {
+                                send(json!({ "action": action }));
                             });
                             ToolButton(
                                 look,
@@ -631,6 +642,25 @@ fn Idle(state: MutableState<Studio>, look: Look, width: f32, height: f32) {
             }
         },
     );
+}
+
+/// What a Windows PC lacks for the build, and how the Install button adds it.
+fn windows_setup_detail(studio: &Studio) -> String {
+    let mut detail = String::from(
+        "Cranpose's Windows renderer links Microsoft's DirectX shader compiler. The build needs these Visual Studio components:",
+    );
+    for title in &studio.setup_missing {
+        detail.push_str("\n• ");
+        detail.push_str(title);
+    }
+    detail.push_str(
+        "\nInstall opens the Visual Studio Installer with them selected, or installs the Build Tools with winget on a PC without Visual Studio. Confirm the installation in that window, then choose Retry.\nBy hand: in the Visual Studio Installer choose Modify, open Individual components and tick the parts above.",
+    );
+    if !studio.setup_command.is_empty() {
+        detail.push_str("\nIn PowerShell: ");
+        detail.push_str(&studio.setup_command);
+    }
+    detail
 }
 
 #[composable]

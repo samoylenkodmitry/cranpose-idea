@@ -226,6 +226,31 @@ Metal, Vulkan or DX12-capable system. Software Vulkan is supported.
 Install JetBrains Rust support in IDEA for full Rust parsing, completion and
 refactoring.
 
+### Windows
+
+A Windows x64 PC needs Rust with its default MSVC toolchain and three parts of
+Visual Studio 2022 or newer, where the Build Tools edition is enough: the MSVC C++
+build tools, a Windows SDK and **C++ ATL for x64/x86 (Latest MSVC)**. Cranpose's
+x64 renderer links Microsoft's DirectX shader compiler, which uses ATL. Windows on
+ARM64 needs the ARM64 MSVC tools and no ATL.
+
+The Cranpose panel checks these parts before the first preview build:
+
+1. Without Rust it shows **Install Rust**, which opens the Rust install page.
+   Install Rust there, then choose **Retry**.
+2. Without a Visual Studio part it names the missing parts. **Install** opens the
+   Visual Studio Installer with them selected, or installs the Build Tools with
+   winget on a PC without Visual Studio. Confirm the installation in that window,
+   then choose **Retry**.
+3. The panel also shows the install as a PowerShell command. To add the parts by
+   hand, choose **Modify** in the Visual Studio Installer, open **Individual
+   components** and tick them.
+
+A build that stops with `LNK1104: cannot open file 'atls.lib'` opens the same
+panel. Preview builds keep their files in `%LOCALAPPDATA%\cranpose-dev`, so paths
+stay under the 260 characters MSVC's linker accepts. **Build for a platform**
+checks the same parts.
+
 Find the plugin on [JetBrains Marketplace](https://plugins.jetbrains.com/plugin/34594-cranpose).
 For versions awaiting Marketplace review, download the signed ZIP from
 [GitHub Releases](https://github.com/samoylenkodmitry/cranpose-idea/releases).
