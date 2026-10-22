@@ -1,4 +1,11 @@
-# Cranpose 0.16.3
+# Cranpose 0.16.4
+
+The plugin's own panels run on Cranpose 0.17.0, and its GPU code on the
+same wgpu as Cranpose. New projects still start from Showcase 0.1.30 on
+Cranpose 0.13.0. The daily check against Cranpose main runs again: it
+stopped at dependency resolution once main passed 0.13.
+
+## Cranpose 0.16.3
 
 An edit saved during the first preview build, or within a moment of launch,
 reaches the preview. The compiler drops a patch for an app that has not
