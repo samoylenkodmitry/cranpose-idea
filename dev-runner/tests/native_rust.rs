@@ -161,7 +161,13 @@ impl Preview {
         samples: &mut Vec<Value>,
         name: &str,
     ) -> Result<Value> {
-        let generation = self.runtime["generation"].as_u64().context("generation")?;
+        // `cranpose.dev.applied` comes from a poll and can still name the
+        // previous patch after its composition ran; waiting past that older
+        // generation would accept the previous patch's composition.
+        let generation = self.runtime["generation"]
+            .as_u64()
+            .context("generation")?
+            .max(self.composed);
         let pid = self.runtime["pid"].clone();
         let started = Instant::now();
         fs::write(path, source)?;

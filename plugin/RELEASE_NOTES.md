@@ -1,4 +1,12 @@
-# Cranpose 0.16.2
+# Cranpose 0.16.3
+
+An edit saved during the first preview build, or within a moment of launch,
+reaches the preview. The compiler drops a patch for an app that has not
+connected to it yet; the runner sent the same text again, which the compiler
+took as unchanged, so the edit and every later one stayed out of the preview
+until a restart.
+
+## Cranpose 0.16.2
 
 On Windows the preview checks Visual Studio before it builds. When the MSVC
 build tools, a Windows SDK or C++ ATL are missing, the Studio panel names them,
