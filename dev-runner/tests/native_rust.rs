@@ -68,6 +68,18 @@ impl Preview {
     }
 
     fn snapshot(&mut self, expected: &[&str], after: Option<u64>) -> Result<Value> {
+        self.snapshot_until(expected, after, |_| true)
+    }
+
+    /// A snapshot that shows `expected` and satisfies `ready`. Layout lags
+    /// the composition that changed it by a frame, so a layout check waits
+    /// here instead of reading the first snapshot with the new text.
+    fn snapshot_until(
+        &mut self,
+        expected: &[&str],
+        after: Option<u64>,
+        ready: impl Fn(&Value) -> bool,
+    ) -> Result<Value> {
         self.request += 1;
         let deadline = Instant::now() + Duration::from_secs(180);
         let mut next = Instant::now();
@@ -94,6 +106,7 @@ impl Preview {
                     && expected
                         .iter()
                         .all(|text| last.iter().any(|actual| actual == text))
+                    && ready(&payload)
                 {
                     return Ok(payload);
                 }
@@ -103,6 +116,22 @@ impl Preview {
             "Missing {expected:?}; visible: {last:?}; runtime: {}",
             self.runtime
         )
+    }
+
+    /// Runs the session until a log line after `offset` satisfies `found`.
+    fn wait_for_log(
+        &mut self,
+        offset: usize,
+        within: Duration,
+        missing: &str,
+        found: impl Fn(&str) -> bool,
+    ) -> Result<()> {
+        let deadline = Instant::now() + within;
+        while !self.logs[offset..].iter().any(|line| found(line)) {
+            ensure!(Instant::now() < deadline, "{missing}");
+            self.event()?;
+        }
+        Ok(())
     }
 
     fn click(&self, snapshot: &Value, text: &str) -> Result<()> {
@@ -132,7 +161,13 @@ impl Preview {
         samples: &mut Vec<Value>,
         name: &str,
     ) -> Result<Value> {
-        let generation = self.runtime["generation"].as_u64().context("generation")?;
+        // `cranpose.dev.applied` comes from a poll and can still name the
+        // previous patch after its composition ran; waiting past that older
+        // generation would accept the previous patch's composition.
+        let generation = self.runtime["generation"]
+            .as_u64()
+            .context("generation")?
+            .max(self.composed);
         let pid = self.runtime["pid"].clone();
         let started = Instant::now();
         fs::write(path, source)?;
@@ -182,7 +217,26 @@ fn native_rust_edits_keep_state_and_render_full_modifiers() -> Result<()> {
         request: 0,
         frames: 0,
     };
-    let initial = preview.snapshot(&["Count: 0", "Increment", "Rust", "modifiers"], None)?;
+    // An edit saved during the first build reaches the compiler as the app
+    // launches, before the app connects to it. The compiler drops that patch,
+    // and the runner must send it again until the app has it.
+    preview.wait_for_log(
+        0,
+        Duration::from_secs(180),
+        "The compiler did not start",
+        |line| line.contains("Serving your app"),
+    )?;
+    fs::write(
+        &source,
+        original.replace(
+            "    }\n    if value > 0 {",
+            "    }\n    Text(\"launched\", Modifier::empty(), TextStyle::default());\n    if value > 0 {",
+        ),
+    )?;
+    let initial = preview.snapshot(
+        &["Count: 0", "Increment", "Rust", "modifiers", "launched"],
+        Some(0),
+    )?;
     preview.click(&initial, "Increment")?;
     let before = preview.snapshot(&["Count: 1", "State retained"], None)?;
     let mut samples = Vec::new();
@@ -208,12 +262,17 @@ fn native_rust_edits_keep_state_and_render_full_modifiers() -> Result<()> {
             .as_f64()
             .context("left")
     };
-    ensure!(
-        (left(&after)? - left(&before)? - 16.0).abs() < 1.0,
-        "Modifier padding did not reach rendered layout: {} -> {}",
-        left(&before)?,
-        left(&after)?
-    );
+    let before_left = left(&before)?;
+    preview
+        .snapshot_until(&["Count: 1", "Edited Rust"], None, |snapshot| {
+            left(snapshot).is_ok_and(|after_left| (after_left - before_left - 16.0).abs() < 1.0)
+        })
+        .with_context(|| {
+            format!(
+                "Modifier padding did not reach rendered layout: {before_left} -> {:?}",
+                left(&after).ok()
+            )
+        })?;
 
     let composable = modifiers.replace(
         "Text(caption(value), Modifier::empty(), TextStyle::default());",
@@ -243,14 +302,12 @@ fn native_rust_edits_keep_state_and_render_full_modifiers() -> Result<()> {
         &source,
         callback.replace("caption(value)", "missing_function(value)"),
     )?;
-    let deadline = Instant::now() + Duration::from_secs(60);
-    while !preview.logs[offset..]
-        .iter()
-        .any(|line| line.contains("cannot find function"))
-    {
-        ensure!(Instant::now() < deadline, "Missing compiler diagnostic");
-        preview.event()?;
-    }
+    preview.wait_for_log(
+        offset,
+        Duration::from_secs(60),
+        "Missing compiler diagnostic",
+        |line| line.contains("cannot find function"),
+    )?;
     preview.snapshot(&["Count: 3", "Custom: 6"], None)?;
     preview.edit(
         &source,
@@ -276,20 +333,15 @@ fn native_rust_edits_keep_state_and_render_full_modifiers() -> Result<()> {
 
     let offset = preview.logs.len();
     fs::write(&source, original.replace("0_i32", "0_i64"))?;
-    let deadline = Instant::now() + Duration::from_secs(10);
-    loop {
-        preview.event()?;
-        if preview.logs[offset..].iter().any(|line| {
+    preview.wait_for_log(
+        offset,
+        Duration::from_secs(10),
+        "Incompatible state change did not request a rebuild",
+        |line| {
             serde_json::from_str::<Value>(line)
                 .is_ok_and(|event| event["cranposeDev"] == "rebuildRequired")
-        }) {
-            break;
-        }
-        ensure!(
-            Instant::now() < deadline,
-            "Incompatible state change did not request a rebuild"
-        );
-    }
+        },
+    )?;
     preview.snapshot(&["Count: 3"], None)?;
 
     let mut pids = vec![preview.runtime["pid"].as_u64().context("app pid")? as u32];

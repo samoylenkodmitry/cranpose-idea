@@ -228,6 +228,23 @@ fn a_patch_dropped_before_the_preview_connects_is_sent_again() {
         "a dropped patch must not hold back later edits"
     );
     assert_eq!(patches.unsent().collect::<Vec<_>>(), [main]);
+    // The compiler keeps the dropped text, so a resend must differ from it
+    // and from every earlier resend, and still be Rust.
+    let dropped = "fn main() {}\n";
+    let first = patches.resent_source(main, dropped).into_owned();
+    patches.resent();
+    assert_eq!(patches.report(Compiler::Unconnected), Some(Outcome::Unsent));
+    let second = patches.resent_source(main, dropped).into_owned();
+    assert_ne!(first, dropped);
+    assert_ne!(second, first);
+    for resent in [&first, &second] {
+        syn::parse_file(resent).expect("a resent source parses");
+    }
+    assert_eq!(
+        patches.resent_source(Path::new("Cargo.toml"), "[package]\n"),
+        "[package]\n",
+        "only Rust sources gain an item"
+    );
     patches.resent();
     assert_eq!(patches.report(Compiler::Patched), None);
     assert_eq!(patches.unsent().count(), 0);
