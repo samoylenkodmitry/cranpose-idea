@@ -1,0 +1,11 @@
+<idea-plugin>
+    <!-- Android Studio's New Project dialog lists no plugin generators, so it gets menu entries. -->
+    <actions>
+        <action id="Cranpose.NewProject" class="dev.cranpose.rust.NewProjectAction"
+                text="New Cranpose Project…" description="Create a project from the Cranpose Showcase sample"
+                icon="/icons/cranpose.svg">
+            <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
+            <add-to-group group-id="NewProjectOrModuleGroup" anchor="first"/>
+        </action>
+    </actions>
+</idea-plugin>

@@ -1,4 +1,24 @@
-# Cranpose 0.16.5
+# Cranpose 0.16.6
+
+New projects start on Cranpose 0.17.2, from Showcase 0.1.32. The plugin's own
+panels, the fixtures of its hot-reload tests and its sample run on Cranpose
+0.17.2, and the stability check uses cranpose-stability 0.2.1 on 0.17.2.
+
+Android Studio 2026.2 runs a Swing timer event without the IDE's write-intent
+lock, and the panel's events arrive that way. The document save before Run,
+Check and Test threw "Access is allowed from write thread only", so those three
+did nothing. The plugin now takes the lock for each such event.
+
+A project that has no run configuration gets one for its selected target when
+its targets are found, so the toolbar Run button has something to run in an
+IDE without a Rust plugin. A project that has any run configuration is left
+alone.
+
+Android Studio's New Project dialog lists no plugin generators. **New Cranpose
+Project** is now in File | New and on the Welcome screen. It asks for a folder,
+creates the Showcase sample there and opens it.
+
+## Cranpose 0.16.5
 
 New projects start on Cranpose 0.17.1, from Showcase 0.1.31. When a project
 uses an older Cranpose than the newest on crates.io, the Studio status bar
