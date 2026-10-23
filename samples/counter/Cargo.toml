@@ -7,4 +7,4 @@ publish = false
 [workspace]
 
 [dependencies]
-cranpose = { version = "0.13.0", features = ["desktop", "preview"] }
+cranpose = { version = "0.17.2", features = ["desktop", "preview"] }

@@ -1,4 +1,10 @@
-# Cranpose 0.16.5
+# Cranpose 0.16.6
+
+New projects start on Cranpose 0.17.2, from Showcase 0.1.32. The plugin's own
+panels, the fixtures of its hot-reload tests and its sample run on Cranpose
+0.17.2, and the stability check uses cranpose-stability 0.2.1 on 0.17.2.
+
+## Cranpose 0.16.5
 
 New projects start on Cranpose 0.17.1, from Showcase 0.1.31. When a project
 uses an older Cranpose than the newest on crates.io, the Studio status bar
