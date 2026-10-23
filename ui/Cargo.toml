@@ -21,10 +21,10 @@ default = ["desktop"]
 desktop = ["cranpose/desktop"]
 
 [dependencies]
-cranpose-plugin-ui = { git = "https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template", rev = "2dc23a2c2f746cf94d286229c4cf23d955dcd64a" }
-cranpose-plugin-authoring-ui = { git = "https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template", rev = "2dc23a2c2f746cf94d286229c4cf23d955dcd64a" }
-cranpose-plugin-ux = { git = "https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template", rev = "2dc23a2c2f746cf94d286229c4cf23d955dcd64a" }
-cranpose-plugin-toolchain = { git = "https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template", rev = "2dc23a2c2f746cf94d286229c4cf23d955dcd64a" }
+cranpose-plugin-ui = { git = "https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template", rev = "bb73b50059b97939474175613779c755b0dbcdfb" }
+cranpose-plugin-authoring-ui = { git = "https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template", rev = "bb73b50059b97939474175613779c755b0dbcdfb" }
+cranpose-plugin-ux = { git = "https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template", rev = "bb73b50059b97939474175613779c755b0dbcdfb" }
+cranpose-plugin-toolchain = { git = "https://github.com/samoylenkodmitry/cranpose-intellij-plugin-template", rev = "bb73b50059b97939474175613779c755b0dbcdfb" }
 cranpose = { version = "0.17.2", features = ["embed"] }
 cranpose-core = { version = "0.17.2" }
 cranpose-dev-runner = { version = "0.1.0", path = "../dev-runner" }
