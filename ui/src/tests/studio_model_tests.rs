@@ -1190,3 +1190,59 @@ fn a_build_that_stops_on_atls_lib_shows_the_windows_setup() {
     assert_eq!(studio.setup, "windows");
     assert_eq!(studio.setup_missing, ["C++ ATL for x64/x86 (Latest MSVC)"]);
 }
+
+#[test]
+fn suggests_the_newest_cranpose_and_reports_how_the_update_ended() {
+    let project = |busy: bool, status: &str, used: &str, newer: bool| {
+        json!({"busy": busy, "status": status, "targets": [],
+            "cranpose": {"used": used, "latest": "0.17.1", "newer": newer}})
+        .to_string()
+    };
+    let mut model = studio();
+    assert_eq!(
+        model.update_cranpose(),
+        None,
+        "nothing known, nothing to offer"
+    );
+
+    model.handle(
+        "cranpose.project",
+        &project(false, "1 application", "0.17.1", false),
+    );
+    assert_eq!(model.update_cranpose(), None, "the project already has it");
+
+    model.handle(
+        "cranpose.project",
+        &project(false, "1 application", "0.13.0", true),
+    );
+    assert_eq!(model.cranpose.latest.as_deref(), Some("0.17.1"));
+    assert_eq!(
+        model.update_cranpose(),
+        Some(json!({"action": "updateCranpose"}))
+    );
+    assert_eq!(model.status, "Updating Cranpose to 0.17.1…");
+    assert_eq!(model.update_cranpose(), None, "one update at a time");
+
+    model.handle(
+        "cranpose.project",
+        &project(true, "Updating Cranpose to 0.17.1…", "0.13.0", true),
+    );
+    assert!(model.updating_cranpose);
+    model.handle(
+        "cranpose.project",
+        &project(false, "1 application", "0.17.1", false),
+    );
+    assert!(!model.updating_cranpose);
+    assert_eq!(model.status, "1 application");
+
+    // A failed update leaves the suggestion and shows why.
+    model.handle(
+        "cranpose.project",
+        &project(false, "1 application", "0.13.0", true),
+    );
+    model.update_cranpose();
+    let error = "Cranpose was not updated to 0.17.1: no matching package";
+    model.handle("cranpose.project", &project(false, error, "0.13.0", true));
+    assert_eq!(model.status, error);
+    assert!(model.cranpose.newer);
+}

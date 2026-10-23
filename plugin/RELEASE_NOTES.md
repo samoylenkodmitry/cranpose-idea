@@ -1,4 +1,14 @@
-# Cranpose 0.16.4
+# Cranpose 0.16.5
+
+New projects start on Cranpose 0.17.1, from Showcase 0.1.31. When a project
+uses an older Cranpose than the newest on crates.io, the Studio status bar
+says so with **Update** and **What's new**. **Update** moves the project's
+Cranpose requirements to the newest release and updates Cargo.lock; if Cargo
+cannot resolve it, the files stay as they were and the status bar shows why.
+The plugin looks the version up with `cargo search`, so Cargo's own proxy
+and registry settings apply, and it asks again every six hours.
+
+## Cranpose 0.16.4
 
 The plugin's own panels run on Cranpose 0.17.0, and its GPU code on the
 same wgpu as Cranpose. New projects still start from Showcase 0.1.30 on

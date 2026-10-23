@@ -78,6 +78,17 @@ pub struct Preview {
     pub dark: bool,
 }
 
+/// The Cranpose the project resolves and the newest release, as the host
+/// reports them.
+#[derive(Clone, Debug, Default, PartialEq, Deserialize)]
+#[serde(default)]
+pub struct CranposeVersions {
+    pub used: Option<String>,
+    pub latest: Option<String>,
+    /// `latest` is a newer release than `used`.
+    pub newer: bool,
+}
+
 #[derive(Clone, Debug, Default, PartialEq, Deserialize)]
 #[serde(default)]
 pub struct Property {
@@ -323,6 +334,11 @@ pub struct Studio {
     /// The PowerShell line that installs them.
     #[serde(skip)]
     pub setup_command: String,
+    #[serde(skip)]
+    pub cranpose: CranposeVersions,
+    /// The project is moving to the newest Cranpose.
+    #[serde(skip)]
+    pub updating_cranpose: bool,
     pub menu: String,
     pub pick: bool,
     #[serde(skip)]
@@ -383,6 +399,8 @@ impl Default for Studio {
             setup: String::new(),
             setup_missing: Vec::new(),
             setup_command: String::new(),
+            cranpose: CranposeVersions::default(),
+            updating_cranpose: false,
             menu: String::new(),
             pick: false,
             pick_sequence: 0,
@@ -870,7 +888,16 @@ impl Studio {
                     self.targets = targets;
                 }
                 self.project_status = value["status"].as_str().unwrap_or_default().into();
-                self.project_read |= !value["busy"].as_bool().unwrap_or(false);
+                let busy = value["busy"].as_bool().unwrap_or(false);
+                self.project_read |= !busy;
+                self.cranpose =
+                    serde_json::from_value(value["cranpose"].clone()).unwrap_or_default();
+                // The host reports a finished update as the project it read
+                // with the new version, or as the error that stopped it.
+                if self.updating_cranpose && !busy {
+                    self.updating_cranpose = false;
+                    self.status = self.project_status.clone();
+                }
                 if self.root.is_empty() {
                     self.root = value["root"].as_str().unwrap_or_default().into();
                 }
@@ -1246,6 +1273,20 @@ impl Studio {
                 requests.extend(self.select_preview(id));
             }
         }
+    }
+    /// Starts moving the project to the newest Cranpose the host found.
+    pub fn update_cranpose(&mut self) -> Option<Value> {
+        let latest = self
+            .cranpose
+            .latest
+            .as_deref()
+            .filter(|_| self.cranpose.newer)?;
+        if self.updating_cranpose {
+            return None;
+        }
+        self.updating_cranpose = true;
+        self.status = format!("Updating Cranpose to {latest}…");
+        Some(json!({"action": "updateCranpose"}))
     }
     fn log(&mut self, line: &str) -> Option<Value> {
         if let Some(component) = cranpose_plugin_toolchain::missing_for_link_error(line) {
