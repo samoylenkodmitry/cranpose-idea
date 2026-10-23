@@ -740,6 +740,28 @@ fn StatusBar(state: MutableState<Studio>, look: Look) {
                             style(look.palette.muted, 11.0, None),
                         );
                     }
+                    if let Some(latest) = studio
+                        .cranpose
+                        .latest
+                        .clone()
+                        .filter(|_| studio.cranpose.newer && !studio.updating_cranpose)
+                    {
+                        Text(
+                            format!("Cranpose {latest} is available"),
+                            Modifier::empty(),
+                            style(look.palette.accent, 11.0, Some(FontWeight::MEDIUM)),
+                        );
+                        Link(look, "Update", move || {
+                            edit(state, |studio| {
+                                if let Some(request) = studio.update_cranpose() {
+                                    send(request);
+                                }
+                            });
+                        });
+                        Link(look, "What's new", || {
+                            send(json!({"action": "cranposeReleases"}));
+                        });
+                    }
                 },
             );
         },
