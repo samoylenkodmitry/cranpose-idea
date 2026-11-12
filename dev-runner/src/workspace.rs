@@ -111,12 +111,7 @@ impl Metadata {
                 .as_deref()
                 .and_then(|home| locked_manifest(home, &dependency.name, version, source))
                 .and_then(|manifest| manifest_offers(&manifest));
-            let released = {
-                let mut parts = version
-                    .split(['.', '-', '+'])
-                    .map(|part| part.parse::<u64>().unwrap_or(0));
-                [(); 3].map(|_| parts.next().unwrap_or(0)) >= [0, 1, 175]
-            };
+            let released = version_parts(version) >= [0, 1, 175];
             match offers {
                 Some(true) => return Some(true),
                 _ if released => return Some(true),
@@ -125,6 +120,34 @@ impl Metadata {
             }
         }
         answer
+    }
+
+    /// Whether the application's Cranpose is older than 0.20.0. Those releases
+    /// name the effect that runs an async block `LaunchedEffectAsync`; later
+    /// releases give that block to `LaunchedEffect`. The version comes from the
+    /// workspace's Cargo.lock. A path dependency, or a workspace without a
+    /// lockfile, counts as a current release.
+    pub fn cranpose_before_async_effect(&self, dependency: &Dependency) -> bool {
+        if dependency.path.is_some() {
+            return false;
+        }
+        let Some(lock) = fs::read_to_string(self.workspace_root.join("Cargo.lock"))
+            .ok()
+            .and_then(|text| text.parse::<toml_edit::DocumentMut>().ok())
+        else {
+            return false;
+        };
+        lock.get("package")
+            .and_then(toml_edit::Item::as_array_of_tables)
+            .into_iter()
+            .flatten()
+            .filter(|package| {
+                package.get("name").and_then(toml_edit::Item::as_str) == Some(&dependency.name)
+            })
+            .filter_map(|package| package.get("version").and_then(toml_edit::Item::as_str))
+            .map(version_parts)
+            .max()
+            .is_some_and(|version| version < [0, 20, 0])
     }
 
     pub fn read(root: &Path) -> Result<Self> {
@@ -138,6 +161,15 @@ impl Metadata {
         }
         serde_json::from_slice(&output.stdout).context("decode Cargo metadata")
     }
+}
+
+/// The major, minor and patch numbers of a Cargo version; missing or
+/// non-numeric parts count as zero.
+fn version_parts(version: &str) -> [u64; 3] {
+    let mut parts = version
+        .split(['.', '-', '+'])
+        .map(|part| part.parse::<u64>().unwrap_or(0));
+    [(); 3].map(|_| parts.next().unwrap_or(0))
 }
 
 fn manifest_offers(manifest: &Path) -> Option<bool> {
@@ -337,6 +369,7 @@ impl DevWorkspace {
             instrument_manifest(
                 &directory.join(manifest),
                 support.as_deref().context("hot-reload support")?,
+                metadata.cranpose_before_async_effect(dependency),
             )?;
         }
         let workspace = Self {
@@ -413,7 +446,7 @@ impl DevWorkspace {
     }
 }
 
-fn instrument_manifest(path: &Path, support: &Path) -> Result<()> {
+fn instrument_manifest(path: &Path, support: &Path, before_async_effect: bool) -> Result<()> {
     let mut document = fs::read_to_string(path)?.parse::<DocumentMut>()?;
     let mut macro_dependency = InlineTable::new();
     macro_dependency.insert("path", Value::from(support.to_string_lossy().as_ref()));
@@ -441,9 +474,23 @@ fn instrument_manifest(path: &Path, support: &Path) -> Result<()> {
     fs::create_dir_all(&runtime)?;
     fs::write(
         runtime.join("runtime.rs"),
-        include_str!("../assets/runtime.rs"),
+        runtime_source(before_async_effect),
     )?;
     Ok(())
+}
+
+/// The runtime included into the application. `before_async_effect` names the
+/// effect `LaunchedEffectAsync`, as Cranpose before 0.20.0 does.
+fn runtime_source(before_async_effect: bool) -> String {
+    let source = include_str!("../assets/runtime.rs");
+    if before_async_effect {
+        source.replace(
+            "__cranpose_api::LaunchedEffect((), ",
+            "__cranpose_api::LaunchedEffectAsync((), ",
+        )
+    } else {
+        source.to_owned()
+    }
 }
 
 // Relative dependencies outside the copied workspace must keep resolving to the real path.

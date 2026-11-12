@@ -19,7 +19,9 @@ pub fn observe_patch() {
         let _ = LIVE_RECEIVER.set(observer);
     }
     let observed = crate::__cranpose_api::rememberMutableStateOf(shared::generation);
-    crate::__cranpose_api::LaunchedEffectAsync((), move |_| Box::pin(async move {
+    // Cranpose before 0.20.0 names this effect `LaunchedEffectAsync`; the
+    // development workspace writes that name for such an application.
+    crate::__cranpose_api::LaunchedEffect((), move |_| Box::pin(async move {
         loop {
             crate::__cranpose_api::delay(std::time::Duration::from_millis(40)).await;
             let generation = shared::generation();

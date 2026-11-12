@@ -379,6 +379,53 @@ fn hot_reload_keys_follow_the_application_cranpose() {
 }
 
 #[test]
+fn the_runtime_effect_follows_the_application_cranpose() {
+    let root = tempfile::tempdir().expect("temporary workspace");
+    let metadata = metadata(root.path());
+    let registry = Dependency {
+        name: "cranpose".into(),
+        rename: None,
+        path: None,
+    };
+    assert!(
+        !metadata.cranpose_before_async_effect(&registry),
+        "no lock file"
+    );
+    for (version, expected) in [
+        ("0.17.2", true),
+        ("0.19.9", true),
+        ("0.20.0", false),
+        ("0.22.4", false),
+    ] {
+        fs::write(
+            root.path().join("Cargo.lock"),
+            format!(
+                "version = 4\n[[package]]\nname = \"cranpose\"\nversion = \"{version}\"\n\n[[package]]\nname = \"app\"\nversion = \"0.1.0\"\n"
+            ),
+        )
+        .expect("lock");
+        assert_eq!(
+            metadata.cranpose_before_async_effect(&registry),
+            expected,
+            "{version}"
+        );
+    }
+    let path = Dependency {
+        name: "cranpose".into(),
+        rename: None,
+        path: Some(root.path().join("cranpose")),
+    };
+    assert!(!metadata.cranpose_before_async_effect(&path));
+
+    let current = runtime_source(false);
+    assert!(current.contains("__cranpose_api::LaunchedEffect((), move |_| Box::pin("));
+    assert!(!current.contains("LaunchedEffectAsync(("));
+    let older = runtime_source(true);
+    assert!(older.contains("__cranpose_api::LaunchedEffectAsync((), move |_| Box::pin("));
+    assert!(!older.contains("__cranpose_api::LaunchedEffect((), "));
+}
+
+#[test]
 fn unresolved_graphs_ask_cargo_for_the_features() {
     let root = tempfile::tempdir().expect("temporary workspace");
     let framework = root.path().join("framework");

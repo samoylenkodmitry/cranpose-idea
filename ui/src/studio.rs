@@ -103,19 +103,17 @@ pub fn PreviewStudio() {
             });
         });
     }
-    cranpose::LaunchedEffectAsync((), move |_| {
-        Box::pin(async move {
-            loop {
-                cranpose::delay(std::time::Duration::from_millis(500)).await;
-                let studio = state.get();
-                if let Some(request) = studio.recomposition_request() {
-                    send(request);
-                }
-                if studio.connected && studio.live && (studio.settings.inspect || studio.pick) {
-                    request_snapshot(&studio);
-                }
+    cranpose::LaunchedEffect((), move |_| async move {
+        loop {
+            cranpose::delay(std::time::Duration::from_millis(500)).await;
+            let studio = state.get();
+            if let Some(request) = studio.recomposition_request() {
+                send(request);
             }
-        })
+            if studio.connected && studio.live && (studio.settings.inspect || studio.pick) {
+                request_snapshot(&studio);
+            }
+        }
     });
     // Observe the model in this composition scope so restored settings update layout immediately.
     let view = state.get();

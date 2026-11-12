@@ -1,4 +1,17 @@
-# Cranpose 0.16.6
+# Cranpose 0.16.7
+
+New projects start on Cranpose 0.22.4, from Showcase 0.1.33. The plugin's own
+panels, the fixtures of its hot-reload tests and its sample run on Cranpose
+0.22.4. The stability check uses cranpose-stability 0.2.2 on 0.22.4.
+
+Cranpose 0.20.0 removed `LaunchedEffectAsync`; its `LaunchedEffect` takes the
+async block. Hot reload of a project on Cranpose 0.20.0 or later failed to
+build, because the code Studio adds to the private debug build called
+`LaunchedEffectAsync`. Studio now reads the project's Cargo.lock and calls
+`LaunchedEffect` for Cranpose 0.20.0 and later, and `LaunchedEffectAsync` for
+older releases.
+
+## Cranpose 0.16.6
 
 New projects start on Cranpose 0.17.2, from Showcase 0.1.32. The plugin's own
 panels, the fixtures of its hot-reload tests and its sample run on Cranpose
