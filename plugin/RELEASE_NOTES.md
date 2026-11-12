@@ -1,7 +1,11 @@
-# Cranpose 0.16.8
+# Cranpose 0.16.9
 
 Studio builds on notify 8.2.2, toml_edit 0.25.19 and zip 4.6.1. It uses the
 template 0.10.6 SDK, which builds on rand 0.10, sha2 0.11, syn 3 and zip 9.
+
+Version 0.16.8 was not published. Its hot-reload runtime asked for rand 0.9
+but compiled the rand 0.10 code of the SDK, so the preview failed to build.
+The runtime now asks for rand 0.10.
 
 ## Cranpose 0.16.7
 

@@ -540,10 +540,12 @@ fn write_support(directory: &Path) -> Result<PathBuf> {
     manifest.remove("lints");
     manifest["workspace"] = Item::Table(toml_edit::Table::new());
     let manifest = manifest.to_string();
+    // The runtime compiles the transport source of cranpose-plugin-authoring, so
+    // its rand requirement must match the rand of that crate.
     let bundle = cranpose_plugin_cache::materialize(&root, &[
         ("dev-macros/Cargo.toml", manifest.as_bytes()),
         ("dev-macros/src/lib.rs", include_bytes!("../../dev-macros/src/lib.rs")),
-        ("runtime/Cargo.toml", b"[package]\nname='cranpose-dev-runtime'\nversion='0.1.0'\nedition='2024'\n[workspace]\n[dependencies]\nsubsecond='=0.7.10'\ndioxus-devtools='=0.7.10'\nserde={version='1',features=['derive']}\nserde_json='1'\nrand='0.9'\n"),
+        ("runtime/Cargo.toml", b"[package]\nname='cranpose-dev-runtime'\nversion='0.1.0'\nedition='2024'\n[workspace]\n[dependencies]\nsubsecond='=0.7.10'\ndioxus-devtools='=0.7.10'\nserde={version='1',features=['derive']}\nserde_json='1'\nrand='0.10'\n"),
         ("runtime/src/lib.rs", include_bytes!("../assets/shared_runtime.rs")),
         ("runtime/src/values.rs", cranpose_plugin_authoring::RUNTIME_SOURCE.as_bytes()),
         ("runtime/src/transport.rs", cranpose_plugin_authoring::TRANSPORT_SOURCE.as_bytes()),
