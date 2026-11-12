@@ -1,4 +1,9 @@
-# Cranpose 0.16.7
+# Cranpose 0.16.8
+
+Studio builds on notify 8.2.2, toml_edit 0.25.19 and zip 4.6.1. It uses the
+template 0.10.6 SDK, which builds on rand 0.10, sha2 0.11, syn 3 and zip 9.
+
+## Cranpose 0.16.7
 
 New projects start on Cranpose 0.22.4, from Showcase 0.1.33. The plugin's own
 panels, the fixtures of its hot-reload tests and its sample run on Cranpose
