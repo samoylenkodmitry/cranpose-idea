@@ -1054,7 +1054,7 @@ dependencies = [
  "tempfile",
  "toml_edit 0.25.19+spec-1.1.0",
  "walkdir",
- "zip 4.6.1",
+ "zip 9.5.1",
 ]
 
 [[package]]
